@@ -1,0 +1,24 @@
+{
+  "domain": "marees_france",
+  "name": "Marées France",
+  "documentation": "https://github.com/KipK/ha-marees-france",
+  "issue_tracker": "https://github.com/KipK/ha-marees-france/issues",
+  "codeowners": [
+    "@yKipK"
+  ],
+  "requirements": [
+    "aiohttp>=3.9.0"
+  ],
+  "version": "0.1.0",
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "quality_scale": "platinum",
+  "loggers": [
+    "marees_france"
+  ],
+  "integration_type": "service",
+  "dependencies": [
+    "frontend"
+  ],
+  "after_dependencies": []
+}

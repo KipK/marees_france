@@ -1,0 +1,36 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured",
+            "cannot_connect": "Failed to connect",
+            "unknown": "Unexpected error"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_harbor": "Selected harbor is invalid. Please choose from the list.",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "harbor_id": "Harbor Name",
+                    "scan_interval": "Update interval (hours)"
+                },
+                "description": "Select the harbor and the update frequency.",
+                "title": "Configure Mar\u00e9es France Harbor"
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "scan_interval": "Update interval (hours)"
+                },
+                "description": "Adjust the update frequency for this harbor.",
+                "title": "Mar\u00e9es France Options"
+            }
+        }
+    },
+    "title": "Mar\u00e9es France (SHOM)"
+}

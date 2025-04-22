@@ -1,0 +1,8 @@
+{
+	"name": "Marées France (SHOM)",
+	"homeassistant": "2023.1.0",
+	"render_readme": true,
+	"country": [
+		"FR"
+	]
+}
