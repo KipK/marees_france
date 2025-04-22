@@ -73,7 +73,7 @@ function getCurrentTideStatus(tideData, hass) {
           const coefficient = nextTide.coefficient || null; // Coefficient is on the high tide
           currentStatus = {
               statusText: `Monte jusqu'à ${nextTide.time} (${timeStr})`,
-              icon: 'mdi:waves-arrow-right',
+              icon: 'mdi:arrow-up',
               coefficient: coefficient,
               height: nextTide.height // Height at peak
           };
@@ -90,7 +90,7 @@ function getCurrentTideStatus(tideData, hass) {
 
           currentStatus = {
               statusText: `Descend jusqu'à ${nextTide.time} (${timeStr})`,
-              icon: 'mdi:waves-arrow-left',
+              icon: 'mdi:arrow-down',
               coefficient: coefficient, // Show next high tide's coeff
               height: nextTide.height // Height at low point
           };
@@ -99,7 +99,7 @@ function getCurrentTideStatus(tideData, hass) {
        // If only next tide is known (e.g., before the first tide)
        currentStatus = {
            statusText: `Prochaine marée (${nextTide.type === 'high' ? 'Haute' : 'Basse'}) à ${nextTide.time}`,
-           icon: nextTide.type === 'high' ? 'mdi:waves-arrow-right' : 'mdi:waves-arrow-left',
+           icon: nextTide.type === 'high' ? 'mdi:arrow-up' : 'mdi:arrow-down',
            coefficient: nextTide.coefficient,
            height: nextTide.height
        };
@@ -284,7 +284,7 @@ class MareesFranceCard extends LitElement {
 
   _renderTide(tide) {
     const isHigh = tide.type === 'high';
-    const icon = isHigh ? 'mdi:waves-arrow-right' : 'mdi:waves-arrow-left';
+    const icon = isHigh ? 'mdi:arrow-up' : 'mdi:arrow-down';
     const statusText = isHigh ? 'Haute' : 'Basse';
 
     return html`

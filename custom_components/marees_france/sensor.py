@@ -139,10 +139,7 @@ class MareesFranceSensor(
             # Use translated_type provided by coordinator
             type_label = tide_data.get("translated_type", "Unknown")
             time_str = tide_data.get("time")
-            coeff_str = tide_data.get("coefficient")
             parts = [type_label, time_str]
-            if coeff_str:
-                parts.append(coeff_str)
             return " ".join(parts)
 
         attrs = {
@@ -162,9 +159,9 @@ class MareesFranceSensor(
         tide_status = self.coordinator.data.get("tide_status")
 
         if tide_status == "rising":
-            return "mdi:waves-arrow-right" # Reverted to MDI icon
+            return "mdi:arrow-up" # Reverted to MDI icon
         if tide_status == "falling":
-            return "mdi:waves-arrow-left" # Reverted to MDI icon
+            return "mdi:arrow-down" # Reverted to MDI icon
 
         # Fallback if status is unknown or data is missing
         _LOGGER.debug("Tide status not available or unknown (%s), using default mdi:waves icon", tide_status)

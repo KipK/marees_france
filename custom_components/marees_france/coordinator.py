@@ -10,6 +10,7 @@ from typing import Any
 
 # Third-party imports
 import aiohttp
+import pytz
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
@@ -126,7 +127,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ] = []  # For easier next/previous calculation
 
         now_utc = datetime.now(timezone.utc)
-
+        paris_tz = pytz.timezone("Europe/Paris") # Define Paris timezone
+        
         for day_str, tides in raw_data.items():
             if day_str not in parsed_data:
                 parsed_data[day_str] = {"high_tides": [], "low_tides": []}
@@ -146,11 +148,10 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     tide_dt_naive = datetime.strptime(
                         f"{day_str} {time_str}", f"{DATE_FORMAT} %H:%M"
                     )
-                    # Make it timezone-aware (UTC for comparison baseline)
-                    # This is an approximation; ideally, we'd know the harbor's timezone.
-                    tide_dt_utc = tide_dt_naive.replace(
-                        tzinfo=timezone.utc
-                    )  # Approximation
+                    # Localize the naive datetime to the harbor's timezone (Europe/Paris)
+                    tide_dt_local = paris_tz.localize(tide_dt_naive)
+                    # Convert to UTC for consistent comparison and storage
+                    tide_dt_utc = tide_dt_local.astimezone(timezone.utc)
 
                 except ValueError:
                     _LOGGER.warning(
@@ -208,27 +209,28 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if len(all_tides_flat) > 1:
                     previous_tide = all_tides_flat[-2]
 
-        # Determine tide status (rising/falling)
+        # Determine tide status based on the type of the most recent past tide
         tide_status = None
-        if previous_tide and next_tide:
-            prev_type = previous_tide.get("type")
-            next_type = next_tide.get("type")
-            if prev_type == TIDE_LOW and next_type == TIDE_HIGH:
-                tide_status = "rising"
-            elif prev_type == TIDE_HIGH and next_type == TIDE_LOW:
-                tide_status = "falling"
+        if current_tide: # current_tide holds the most recent past tide event
+            current_tide_type = current_tide.get("type")
+            if current_tide_type == TIDE_LOW:
+                tide_status = "rising" # If last tide was low, it's now rising
+            elif current_tide_type == TIDE_HIGH:
+                tide_status = "falling" # If last tide was high, it's now falling
             else:
-                _LOGGER.warning(
-                    "Could not determine tide status from prev (%s) to next (%s)",
-                    prev_type,
-                    next_type,
-                )
-        elif not previous_tide:
-             _LOGGER.debug("No previous tide found, cannot determine status.")
-        elif not next_tide:
-             _LOGGER.debug("No next tide found, cannot determine status.")
-
-
+                _LOGGER.warning("Unknown type for current_tide: %s", current_tide_type)
+        else:
+            # If there's no past tide (e.g., first data point), try to infer from next tide
+            if next_tide:
+                next_tide_type = next_tide.get("type")
+                if next_tide_type == TIDE_HIGH:
+                     tide_status = "rising" # Approaching high tide
+                elif next_tide_type == TIDE_LOW:
+                     tide_status = "falling" # Approaching low tide
+            else:
+                _LOGGER.debug("Cannot determine tide status: No current or next tide data.")
+        
+        
         return {
             "data": parsed_data,
             "current_tide": current_tide, # Note: current_tide is the last past tide
