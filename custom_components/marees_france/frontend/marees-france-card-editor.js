@@ -44,7 +44,7 @@ class MareesFranceCardEditor extends LitElement {
         entity: {
           domain: "sensor", // Filter for sensor entities
           // Optional: Add integration filter if possible/reliable
-          // integration: "marees_france",
+          integration: "marees_france",
         },
       },
     },

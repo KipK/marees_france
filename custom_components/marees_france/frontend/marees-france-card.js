@@ -3,18 +3,6 @@ import {
   html,
   css,
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
-// mwc-icon should be globally available in Home Assistant
-// Import ha-form and related components if not globally available
-// These might be needed depending on the HA version and setup
-// import "https://unpkg.com/@polymer/paper-input/paper-input.js?module";
-// import "https://unpkg.com/@polymer/paper-item/paper-item.js?module";
-// import "https://unpkg.com/@polymer/paper-listbox/paper-listbox.js?module";
-// import "https://unpkg.com/@polymer/paper-dropdown-menu/paper-dropdown-menu.js?module";
-// import "https://unpkg.com/@polymer/paper-checkbox/paper-checkbox.js?module";
-// import "https://unpkg.com/home-assistant-js-websocket/dist/haws.umd.js?module"; // For hass object types if needed
-// import "https://unpkg.com/home-assistant-frontend/src/components/ha-form/ha-form?module";
-// import "https://unpkg.com/home-assistant-frontend/src/components/ha-entity-picker?module";
-// import "https://unpkg.com/home-assistant-frontend/src/components/ha-checkbox?module";
 
 
 const weekdayShort = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
