@@ -5,6 +5,7 @@ import {
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
 
 // --- Embedded Translations ---
+// --- Embedded Translations ---
 const translations = {
   en: {
     ui: { card: { marees_france: {
@@ -448,7 +449,7 @@ class MareesFranceCard extends LitElement {
         font-size: 0.9em;
         color: var(--secondary-text-color);
         display: flex;
-        gap: 15px;
+        gap: 10px;
         margin-top: 4px;
       }
       .status-details span {
@@ -457,7 +458,7 @@ class MareesFranceCard extends LitElement {
         gap: 4px;
       }
       .status-details ha-icon {
-         font-size: 1.2em;
+         font-size: 1em;
          color: var(--secondary-text-color);
       }
 
@@ -504,7 +505,7 @@ class MareesFranceCard extends LitElement {
 
       .tide-row {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        grid-template-columns: 1.2fr 1fr; /* Two columns */
         gap: 8px; /* Space between columns */
         align-items: start; /* Align items to the top of the cell */
       }
@@ -513,6 +514,8 @@ class MareesFranceCard extends LitElement {
         /* Cells will contain a tide-entry or be empty */
         min-height: 50px; /* Ensure empty cells have some height */
       }
+
+
 
       .tide-entry {
         display: flex;
@@ -543,7 +546,7 @@ class MareesFranceCard extends LitElement {
         display: flex;
         align-items: center;
         gap: 10px; /* Space between height and coefficient */
-        padding-left: 32px; /* Indent details to align under status text (icon width + gap) */
+        padding-left: 30px; /* Indent details to align under status text (icon width + gap) */
       }
 
       .tide-detail {
