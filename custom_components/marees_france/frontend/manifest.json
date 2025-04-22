@@ -1,7 +1,6 @@
 {
   "manifest_version": 1,
   "name": "Marée France",
-  "version": "0.1.0",
   "resources": [
     {
       "url": "maree-france-card-js",

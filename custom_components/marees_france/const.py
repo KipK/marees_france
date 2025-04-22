@@ -1,8 +1,20 @@
 """Constants for the Marées France integration."""
 
+import json
+from pathlib import Path
 from typing import Final
 
 from homeassistant.const import Platform
+
+# Read version from manifest.json
+MANIFEST_PATH = Path(__file__).parent / "manifest.json"
+try:
+    with open(MANIFEST_PATH, encoding="utf-8") as manifest_file:
+        manifest_data = json.load(manifest_file)
+    INTEGRATION_VERSION = manifest_data.get("version", "0.0.0")
+except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+    INTEGRATION_VERSION = "0.0.0" # Fallback version
+    # Consider logging an error
 
 DOMAIN: Final = "marees_france"
 PLATFORMS: Final = [Platform.SENSOR]
@@ -51,12 +63,13 @@ JSMODULES = [
     {
         "name": "Carte Marées France",
         "filename": "marees-france-card.js",
-        "version": "0.1.0",
+        "version": INTEGRATION_VERSION, # Use dynamic version
     },
-	{
-        "name": "Carte Marées France Editor",
+    # Add editor card definition if it's also managed this way
+    {
+        "name": "Editeur Carte Marées France",
         "filename": "marees-france-card-editor.js",
-        "version": "0.1.0",
+        "version": INTEGRATION_VERSION, # Use dynamic version
     }
 ]
 URL_BASE = "/marees-france"
