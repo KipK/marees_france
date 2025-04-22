@@ -1,29 +1,29 @@
-# Intégration Home-Assistant Marées France
+# Marées France Home-Assistant Integration
 
-Intégration Home-Assistant pour récupérer les marées sur 7 jours pour un port donné depuis Shom.fr
+Home-Assistant integration that grab french tides from Shom.fr
 
 ## Configuration
-Ajouter le repository 
-Installer l'intégration depuis HACS
 
-Dans Appareils et Services / Intégrations, ajouter une Intégration, sélectionner Marées France.
+Add the repository to hHACSacs and install it.
 
-Une fois le port sélectionné, l'entité apparaitra dans sensor.marees_france_[NOM_DU_PORT]
+In Devices & Services / Integrations, add and integration, select Marées France.
 
-## Utilisation
+Once you've selected the harbor, the entity will pop in sensor.marees_france[HARBOR_NAME]
 
-Une carte est pré-installée avec l'intégration pour afficher les données sur votre dashboard. Ajouter sur le dashboard la carte marees_france.
-Dans la configuration y rajouter l'entité:
+
+## Usage
+
+A Lovelace custom card is pre-installed with the integration
+In the card configuration add the missing entity:
 
 ```yaml
 type: custom:marees-france-card
 entity: sensor.marees_france_pornichet
 ```
 
+To get a "data" attribute value using template, here is an example:
 
-Pour récupérer une valeur de l'objet "data" en attribut de l'entité sensor.maree_france_[NOM_DU_PORT], voici un exemple:
-
-Afficher le coefficient de la première marée haute de demain:
+Display the coeff for first tomorrow tide:
 
 ```yaml
 {{ state_attr('sensor.maree_france_pornichet', 'data')[0]['high_tides'][0]['coefficient'] }}

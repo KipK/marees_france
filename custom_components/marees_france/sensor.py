@@ -7,8 +7,7 @@ from typing import Any
 
 from homeassistant.components.sensor import (
     SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
+    SensorEntityDescription
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -23,12 +22,9 @@ from .const import (
     ATTRIBUTION,
     CONF_HARBOR_ID,
     DOMAIN,
-    INTEGRATION_NAME,
     MANUFACTURER,
-    TIDE_HIGH,  # Keep original keys if needed elsewhere, but state keys unused now
+    TIDE_HIGH,
     TIDE_LOW,
-    # STATE_HIGH_TIDE, # No longer needed here
-    # STATE_LOW_TIDE, # No longer needed here
 )
 from .coordinator import MareesFranceUpdateCoordinator
 
