@@ -95,23 +95,33 @@ class MareesFranceSensor(
     @property
     def native_value(self) -> str | None:
         """Return the state of the sensor (formatted string)."""
-        current_tide = self.coordinator.data.get("current_tide")
-        if not current_tide:
-            return None
+        # We need both current status and next tide info for the new state format
+        tide_status = self.coordinator.data.get("tide_status") # Assumed key from coordinator
+        next_tide = self.coordinator.data.get("next_tide")
 
-        # Use translated_type provided by coordinator
-        type_label = current_tide.get("translated_type", "Unknown")
-        time_str = current_tide.get("time")
-        coeff_str = current_tide.get("coefficient")
+        if not tide_status or not next_tide:
+            _LOGGER.debug("Missing tide_status or next_tide data for state")
+            return None # Cannot determine state without status and next tide
 
-        if not time_str:  # Time is essential
-            return None
+        next_tide_time = next_tide.get("time")
+        next_tide_coeff = next_tide.get("coefficient") # Coeff always from next tide
 
-        state_parts = [type_label, time_str]
-        if coeff_str:
-            state_parts.append(coeff_str)
+        if not next_tide_time:
+            _LOGGER.debug("Missing next_tide time for state")
+            return None # Cannot determine state without next tide time
 
-        return " ".join(state_parts)
+        coeff_str = f"Coeff {next_tide_coeff}" if next_tide_coeff else ""
+
+        if tide_status == "rising": # Assumed value
+            state_str = f"Monte jusqu'à {next_tide_time}"
+        elif tide_status == "falling": # Assumed value
+            state_str = f"Descend jusqu'à {next_tide_time}"
+        else:
+            _LOGGER.warning("Unknown tide_status: %s", tide_status)
+            return None # Or return a default state?
+
+        # Combine state string and coefficient string, handling empty coeff
+        return f"{state_str} - {coeff_str}".strip().rstrip('-').strip()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -148,15 +158,17 @@ class MareesFranceSensor(
     @property
     def icon(self) -> str:
         """Return the icon to use in the frontend."""
-        # Dynamically change icon based on current tide type if available
-        current_tide = self.coordinator.data.get("current_tide")
-        if current_tide:
-            tide_type = current_tide.get("type")
-            if tide_type == TIDE_HIGH:
-                return "mdi:waves-arrow-up"
-            if tide_type == TIDE_LOW:
-                return "mdi:waves-arrow-down"
-        return "mdi:waves"  # Default icon
+        # Dynamically change icon based on tide status (rising/falling)
+        tide_status = self.coordinator.data.get("tide_status")
+
+        if tide_status == "rising":
+            return "mdi:waves-arrow-right" # Reverted to MDI icon
+        if tide_status == "falling":
+            return "mdi:waves-arrow-left" # Reverted to MDI icon
+
+        # Fallback if status is unknown or data is missing
+        _LOGGER.debug("Tide status not available or unknown (%s), using default mdi:waves icon", tide_status)
+        return "mdi:waves"
 
     @callback
     def _handle_coordinator_update(self) -> None:

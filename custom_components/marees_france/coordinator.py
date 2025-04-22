@@ -208,10 +208,32 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if len(all_tides_flat) > 1:
                     previous_tide = all_tides_flat[-2]
 
+        # Determine tide status (rising/falling)
+        tide_status = None
+        if previous_tide and next_tide:
+            prev_type = previous_tide.get("type")
+            next_type = next_tide.get("type")
+            if prev_type == TIDE_LOW and next_type == TIDE_HIGH:
+                tide_status = "rising"
+            elif prev_type == TIDE_HIGH and next_type == TIDE_LOW:
+                tide_status = "falling"
+            else:
+                _LOGGER.warning(
+                    "Could not determine tide status from prev (%s) to next (%s)",
+                    prev_type,
+                    next_type,
+                )
+        elif not previous_tide:
+             _LOGGER.debug("No previous tide found, cannot determine status.")
+        elif not next_tide:
+             _LOGGER.debug("No next tide found, cannot determine status.")
+
+
         return {
             "data": parsed_data,
-            "current_tide": current_tide,
+            "current_tide": current_tide, # Note: current_tide is the last past tide
             "next_tide": next_tide,
             "previous_tide": previous_tide,
+            "tide_status": tide_status, # Added status
             "last_update": now_utc.isoformat(),
         }

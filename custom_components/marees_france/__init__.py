@@ -15,7 +15,6 @@ from .frontend import JSModuleRegistration
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Marées France from a config entry."""
     _LOGGER.debug("Setting up Marées France entry: %s", entry.entry_id)
