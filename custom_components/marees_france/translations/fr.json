@@ -1,48 +1,48 @@
 {
-	"title": "Marées France (SHOM)",
-	"config": {
-		"step": {
-			"user": {
-				"title": "Configurer le port Marées France",
-				"description": "Sélectionnez le port et la fréquence de mise à jour.",
-				"data": {
-					"harbor_id": "Nom du port",
-					"scan_interval": "Intervalle de mise à jour (heures)"
-				}
-			}
-		},
-		"error": {
-			"cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-			"unknown": "[%key:common::config_flow::error::unknown%]",
-			"invalid_harbor": "Le port sélectionné est invalide. Veuillez choisir dans la liste."
-		},
-		"abort": {
-			"already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-			"cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-			"unknown": "[%key:common::config_flow::error::unknown%]"
-		}
-	},
-	"options": {
-		"step": {
-			"init": {
-				"title": "Options Marées France",
-				"description": "Ajustez la fréquence de mise à jour pour ce port.",
-				"data": {
-					"scan_interval": "Intervalle de mise à jour (heures)"
-				}
-			}
-		},
-		"error": {}
-	},
-	"entity": {
-		"sensor": {
-			"tides": {
-				"name": "Marées",
-				"state": {
-					"high_tide": "Marée Haute",
-					"low_tide": "Marée Basse"
-				}
-			}
-		}
-	}
+    "title": "Marées France (SHOM)",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configurer le port Marées France",
+                "description": "Sélectionnez le port et la fréquence de mise à jour.",
+                "data": {
+                    "harbor_id": "Nom du port",
+                    "scan_interval": "Intervalle de mise à jour (heures)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "unknown": "[%key:common::config_flow::error::unknown%]",
+            "invalid_harbor": "Le port sélectionné est invalide. Veuillez choisir dans la liste."
+        },
+        "abort": {
+            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "unknown": "[%key:common::config_flow::error::unknown%]"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Options Marées France",
+                "description": "Ajustez la fréquence de mise à jour pour ce port.",
+                "data": {
+                    "scan_interval": "Intervalle de mise à jour (heures)"
+                }
+            }
+        },
+        "error": {}
+    },
+    "entity": {
+        "sensor": {
+            "tides": {
+                "name": "Marées",
+                "state": {
+                    "high_tide": "Marée Haute",
+                    "low_tide": "Marée Basse"
+                }
+            }
+        }
+    }
 }

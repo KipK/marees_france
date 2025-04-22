@@ -134,8 +134,7 @@ class MareesFranceCard extends LitElement {
 
   // Define card editor
   static async getConfigElement() {
-    // Dynamically import the editor module
-    await import("./marees-france-card-editor.js");
+    // Dynamically import the editor module - Removed as HA should load it
     return document.createElement("marees-france-card-editor");
   }
 
@@ -198,6 +197,41 @@ class MareesFranceCard extends LitElement {
       ...(currentDayData.low_tides?.map(t => ({ ...t, type: 'low' })) || [])
     ].sort((a, b) => a.time.localeCompare(b.time)) : [];
 
+      // Process tides into rows [high, low]
+      const tideRows = [];
+      let currentRow = [null, null]; // [high, low]
+      allTides.forEach(tide => {
+        if (tide.type === 'high') {
+          // If there's a pending high tide without a low, or a low tide without a high, push the previous row
+          if (currentRow[0] !== null || currentRow[1] !== null) {
+             // Avoid pushing empty [null, null] if the day starts with high tide
+             if (currentRow[0] !== null || currentRow[1] !== null) {
+                 tideRows.push([...currentRow]);
+             }
+          }
+          // Start a new row with the high tide
+          currentRow = [tide, null];
+        } else if (tide.type === 'low') {
+          if (currentRow[0] === null) {
+            // If day starts with low or previous row was just completed
+             // Push the previous row only if it wasn't empty [null, null] and wasn't just a low tide
+             if (currentRow[1] !== null) { // Handles consecutive lows if data is weird
+                tideRows.push([...currentRow]);
+             }
+            currentRow = [null, tide]; // Start new row with low tide in the second slot
+          } else {
+            // Pair the low tide with the pending high tide
+            currentRow[1] = tide;
+            tideRows.push([...currentRow]);
+            currentRow = [null, null]; // Reset for the next pair
+          }
+        }
+      });
+      // Push the last row if it's not empty
+      if (currentRow[0] !== null || currentRow[1] !== null) {
+        tideRows.push([...currentRow]);
+      }
+
     return html`
       <ha-card header="${this.config.show_header !== false ? (this.config.title || 'Marées France') : ''}">
         <div class="card-content">
@@ -241,8 +275,17 @@ class MareesFranceCard extends LitElement {
 
           <!-- Tide List -->
           <div class="tide-list">
-            ${allTides.length > 0
-              ? allTides.map(tide => this._renderTide(tide))
+            ${tideRows.length > 0
+              ? tideRows.map(row => html`
+                  <div class="tide-row">
+                    <div class="tide-cell high-tide">
+                      ${row[0] ? this._renderTide(row[0]) : ''}
+                    </div>
+                    <div class="tide-cell low-tide">
+                      ${row[1] ? this._renderTide(row[1]) : ''}
+                    </div>
+                  </div>
+                `)
               : html`<div class="empty">Aucune donnée de marée pour ce jour.</div>`
             }
           </div>
@@ -374,18 +417,29 @@ class MareesFranceCard extends LitElement {
 
       .tide-list {
         display: flex;
-        flex-direction: column;
-        gap: 10px; /* Space between tide entries */
+        flex-direction: column; /* Keep column flex for overall list */
+        gap: 8px; /* Space between rows */
+      }
+
+      .tide-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 8px; /* Space between columns */
+        align-items: start; /* Align items to the top of the cell */
+      }
+
+      .tide-cell {
+        /* Cells will contain a tide-entry or be empty */
+        min-height: 50px; /* Ensure empty cells have some height */
       }
 
       .tide-entry {
         display: flex;
         flex-direction: column; /* Stack main info and details */
-        padding: 10px;
+        padding: 5px;
         background-color: var(--ha-card-background, var(--card-background-color, #ffffff)); /* Use card background */
         border-radius: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow */
-        border-left: 5px solid var(--primary-color); /* Accent border */
       }
 
       .tide-main {
@@ -407,7 +461,7 @@ class MareesFranceCard extends LitElement {
       .tide-details {
         display: flex;
         align-items: center;
-        gap: 15px; /* Space between height and coefficient */
+        gap: 10px; /* Space between height and coefficient */
         padding-left: 32px; /* Indent details to align under status text (icon width + gap) */
       }
 
@@ -434,6 +488,6 @@ class MareesFranceCard extends LitElement {
   }
 }
 
-customElements.define('marees-france-card', MareesFranceCard);
+customElements.define("marees-france-card", MareesFranceCard);
 
 // Registration is handled by frontend/__init__.py
