@@ -36,5 +36,5 @@ Pour récupérer une valeur de l'objet "data" en attribut de l'entité sensor.ma
 Afficher le coefficient de la première marée haute de demain:
 
 ```yaml
-{{ state_attr('sensor.marees_france_pornichet', 'data')[0]['high_tides'][0]['coefficient'] }}
+{{ state_attr('sensor.marees_france_pornichet', 'data')[1]['high_tides'][0]['coefficient'] }}
 ```

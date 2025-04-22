@@ -45,5 +45,5 @@ To get a "data" attribute value using template, here is an example:
 Display the coeff for first tomorrow tide:
 
 ```yaml
-{{ state_attr('sensor.marees_france_pornichet', 'data')[0]['high_tides'][0]['coefficient'] }}
+{{ state_attr('sensor.marees_france_pornichet', 'data')[1]['high_tides'][0]['coefficient'] }}
 ```
