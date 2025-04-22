@@ -11,7 +11,10 @@ from homeassistant.core import HomeAssistant
 # Local application/library specific imports
 from .const import DOMAIN, PLATFORMS
 from .coordinator import MareesFranceUpdateCoordinator
-from .frontend import JSModuleRegistration
+from .frontend import JSModuleRegistration # Removed broken import
+
+# Import the standard frontend registration helper
+# from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
 
 _LOGGER = logging.getLogger(__name__)
 

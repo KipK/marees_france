@@ -1,0 +1,26 @@
+{
+    "ui": {
+        "card": {
+            "marees_france": {
+                "default_title": "Marées France",
+                "missing_configuration": "Configuration manquante",
+                "error_entity_required": "Vous devez définir une entité",
+                "entity_not_found": "Entité non trouvée : {entity}",
+                "no_tide_data": "Aucune donnée de marée trouvée dans les attributs de l'entité.",
+                "waiting_next_tide": "En attente de la prochaine marée",
+                "rising_until": "Monte jusqu'à {time} ({duration})",
+                "falling_until": "Descend jusqu'à {time} ({duration})",
+                "high_tide_short": "Haute",
+                "low_tide_short": "Basse",
+                "next_tide_at": "Prochaine marée ({type}) à {time}",
+                "no_data_available": "Données de marée non disponibles",
+                "height": "Hauteur",
+                "coefficient": "Coefficient",
+                "no_data_for_day": "Aucune donnée de marée pour ce jour.",
+                "high_tide": "Haute",
+                "low_tide": "Basse",
+                "tide_at_time": "{status} à {time}"
+            }
+        }
+    }
+}

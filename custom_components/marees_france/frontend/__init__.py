@@ -9,7 +9,7 @@ from homeassistant.components.lovelace import LovelaceData
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 
-from ..const import JSMODULES, URL_BASE
+from ..const import JSMODULES, URL_BASE  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,6 +122,7 @@ class JSModuleRegistration:
         if self.lovelace.mode == "storage":
             for module in JSMODULES:
                 url = f"{URL_BASE}/{module.get('filename')}"
+                # Use a unique name for the list comprehension variable
                 integration_resources = [
                     resource
                     for resource in self.lovelace.resources.async_items()
@@ -136,6 +137,7 @@ class JSModuleRegistration:
 
     def remove_gzip_files(self):
         """Remove cached gzip files."""
+        # Corrected path for marees_france
         path = self.hass.config.path("custom_components/marees_france/frontend")
 
         gzip_files = [

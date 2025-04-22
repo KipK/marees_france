@@ -100,7 +100,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     STATE_LOW_TIDE.replace("_", " ").title(),  # Fallback: "Low Tide"
                 )
 
-                return self._parse_tide_data(data, translation_high, translation_low)
+                # Make the call async as _parse_tide_data is now async
+                return await self._parse_tide_data(data, translation_high, translation_low)
 
         except asyncio.TimeoutError as err:
             _LOGGER.warning("Timeout fetching data for %s", self.harbor_id)
@@ -114,7 +115,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             _LOGGER.exception("Unexpected error fetching data for %s", self.harbor_id)
             raise UpdateFailed(f"Unexpected error: {err}") from err
 
-    def _parse_tide_data(
+    async def _parse_tide_data( # Make method async
         self,
         raw_data: dict[str, list[list[str]]],
         translation_high: str,
@@ -127,8 +128,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ] = []  # For easier next/previous calculation
 
         now_utc = datetime.now(timezone.utc)
-        paris_tz = pytz.timezone("Europe/Paris") # Define Paris timezone
-        
+        # Wrap blocking call in async_add_executor_job
+        paris_tz = await self.hass.async_add_executor_job(pytz.timezone, "Europe/Paris")
+
         for day_str, tides in raw_data.items():
             if day_str not in parsed_data:
                 parsed_data[day_str] = {"high_tides": [], "low_tides": []}

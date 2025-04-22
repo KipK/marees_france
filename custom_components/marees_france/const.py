@@ -63,13 +63,7 @@ JSMODULES = [
     {
         "name": "Carte Marées France",
         "filename": "marees-france-card.js",
-        "version": INTEGRATION_VERSION, # Use dynamic version
-    },
-    # Add editor card definition if it's also managed this way
-    {
-        "name": "Editeur Carte Marées France",
-        "filename": "marees-france-card-editor.js",
-        "version": INTEGRATION_VERSION, # Use dynamic version
+        "version": INTEGRATION_VERSION # Use dynamic version
     }
 ]
 URL_BASE = "/marees-france"

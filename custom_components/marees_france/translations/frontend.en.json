@@ -1,0 +1,26 @@
+{
+    "ui": {
+        "card": {
+            "marees_france": {
+                "default_title": "France Tides",
+                "missing_configuration": "Missing configuration",
+                "error_entity_required": "You need to define an entity",
+                "entity_not_found": "Entity not found: {entity}",
+                "no_tide_data": "No tide data found in entity attributes.",
+                "waiting_next_tide": "Waiting for next tide",
+                "rising_until": "Rising until {time} ({duration})",
+                "falling_until": "Falling until {time} ({duration})",
+                "high_tide_short": "High",
+                "low_tide_short": "Low",
+                "next_tide_at": "Next tide ({type}) at {time}",
+                "no_data_available": "Tide data unavailable",
+                "height": "Height",
+                "coefficient": "Coefficient",
+                "no_data_for_day": "No tide data for this day.",
+                "high_tide": "High",
+                "low_tide": "Low",
+                "tide_at_time": "{status} at {time}"
+            }
+        }
+    }
+}

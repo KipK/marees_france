@@ -4,17 +4,99 @@ import {
   css,
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
 
+// --- Embedded Translations ---
+const translations = {
+  en: {
+    ui: { card: { marees_france: {
+      default_title: "France Tides",
+      missing_configuration: "Missing configuration",
+      error_entity_required: "You need to define an entity",
+      entity_not_found: "Entity not found: {entity}",
+      no_tide_data: "No tide data found in entity attributes.",
+      waiting_next_tide: "Waiting for next tide",
+      rising_until: "Rising until {time} ({duration})",
+      falling_until: "Falling until {time} ({duration})",
+      high_tide_short: "High",
+      low_tide_short: "Low",
+      next_tide_at: "Next tide ({type}) at {time}",
+      no_data_available: "Tide data unavailable",
+      height: "Height",
+      coefficient: "Coefficient",
+      no_data_for_day: "No tide data for this day.",
+      high_tide: "High",
+      low_tide: "Low",
+      tide_at_time: "{status} at {time}"
+    }}}
+  },
+  fr: {
+    ui: { card: { marees_france: {
+      default_title: "Marées France",
+      missing_configuration: "Configuration manquante",
+      error_entity_required: "Vous devez définir une entité",
+      entity_not_found: "Entité non trouvée : {entity}",
+      no_tide_data: "Aucune donnée de marée trouvée dans les attributs de l'entité.",
+      waiting_next_tide: "En attente de la prochaine marée",
+      rising_until: "Monte jusqu'à {time} ({duration})",
+      falling_until: "Descend jusqu'à {time} ({duration})",
+      high_tide_short: "Haute",
+      low_tide_short: "Basse",
+      next_tide_at: "Prochaine marée ({type}) à {time}",
+      no_data_available: "Données de marée non disponibles",
+      height: "Hauteur",
+      coefficient: "Coefficient",
+      no_data_for_day: "Aucune donnée de marée pour ce jour.",
+      high_tide: "Haute",
+      low_tide: "Basse",
+      tide_at_time: "{status} à {time}"
+    }}}
+  }
+};
 
-const weekdayShort = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+// --- Custom Localization Function ---
+function localizeCard(key, hass, ...args) {
+  const lang = hass?.language || 'en';
+  const langTranslations = translations[lang] || translations.en; // Fallback to English
+  let translated = key; // Default to key
 
-// Helper function to get current tide status
+  try {
+    translated = key.split('.').reduce((o, i) => o[i], langTranslations) || key;
+  } catch (e) {
+    // Key not found, use the key itself
+    translated = key;
+    // console.warn(`Translation key not found: ${key} in language: ${lang}`);
+  }
+
+  // Replace placeholders like {entity}
+  if (translated && args.length > 0) {
+    for (let i = 0; i < args.length; i += 2) {
+      const placeholder = `{${args[i]}}`;
+      const value = args[i + 1];
+      // Use a regex for global replacement to handle multiple occurrences
+      translated = translated.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), value !== undefined ? value : '');
+    }
+  }
+  return translated;
+}
+
+
+// Helper function to get localized weekday abbreviation
+function getWeekdayShort(dayIndex, locale) {
+    const date = new Date(2023, 0, 1 + dayIndex); // Use a known Sunday (Jan 1, 2023)
+    return date.toLocaleDateString(locale, { weekday: 'short' });
+}
+
+// Pass hass directly
 function getCurrentTideStatus(tideData, hass) {
+  // Check hass availability
   if (!tideData || !hass) return null;
+
+  // Use the new localizeCard function
+  const localize = (key, ...args) => localizeCard(key, hass, ...args);
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
-  const tomorrowStr = new Date(now.setDate(now.getDate() + 1)).toISOString().slice(0, 10);
-  now.setDate(now.getDate() -1); // Reset date back to today for calculations
+  const tomorrowStr = new Date(new Date(now).setDate(now.getDate() + 1)).toISOString().slice(0, 10);
+  // No need to reset date back, calculations use specific strings
 
   const todayTides = tideData[todayStr] ? [
       ...(tideData[todayStr].high_tides?.map(t => ({ ...t, type: 'high', date: todayStr })) || []),
@@ -29,7 +111,7 @@ function getCurrentTideStatus(tideData, hass) {
   const allRelevantTides = [...todayTides, ...tomorrowTides]
       .map(tide => ({
           ...tide,
-          dateTime: new Date(`${tide.date}T${tide.time}:00`) // Assume local timezone
+          dateTime: new Date(`${tide.date}T${tide.time}:00`) // Assume local timezone from HA
       }))
       .sort((a, b) => a.dateTime - b.dateTime);
 
@@ -59,7 +141,7 @@ function getCurrentTideStatus(tideData, hass) {
       // Edge case: If 'now' is before the very first tide available
        nextTide = allRelevantTides[0];
        // Cannot determine status reliably without a previous tide
-       return { statusText: "En attente de la prochaine marée", icon: "mdi:clock-outline", coefficient: null, height: null };
+       return { statusText: localize('ui.card.marees_france.waiting_next_tide'), icon: "mdi:clock-outline", coefficient: null, height: null };
   }
 
 
@@ -72,8 +154,8 @@ function getCurrentTideStatus(tideData, hass) {
       if (previousTide.type === 'low') { // Rising tide
           const coefficient = nextTide.coefficient || null; // Coefficient is on the high tide
           currentStatus = {
-              statusText: `Monte jusqu'à ${nextTide.time} (${timeStr})`,
-              icon: 'mdi:arrow-up',
+              statusText: localize('ui.card.marees_france.rising_until', 'time', nextTide.time, 'duration', timeStr),
+            icon: 'mdi:arrow-expand-up',
               coefficient: coefficient,
               height: nextTide.height // Height at peak
           };
@@ -89,22 +171,23 @@ function getCurrentTideStatus(tideData, hass) {
           const coefficient = nextHighTide ? nextHighTide.coefficient : null;
 
           currentStatus = {
-              statusText: `Descend jusqu'à ${nextTide.time} (${timeStr})`,
-              icon: 'mdi:arrow-down',
+              statusText: localize('ui.card.marees_france.falling_until', 'time', nextTide.time, 'duration', timeStr),
+            icon: 'mdi:arrow-expand-down',
               coefficient: coefficient, // Show next high tide's coeff
               height: nextTide.height // Height at low point
           };
       }
   } else if (nextTide) {
        // If only next tide is known (e.g., before the first tide)
+       const tideType = nextTide.type === 'high' ? localize('ui.card.marees_france.high_tide_short') : localize('ui.card.marees_france.low_tide_short');
        currentStatus = {
-           statusText: `Prochaine marée (${nextTide.type === 'high' ? 'Haute' : 'Basse'}) à ${nextTide.time}`,
-           icon: nextTide.type === 'high' ? 'mdi:arrow-up' : 'mdi:arrow-down',
+           statusText: localize('ui.card.marees_france.next_tide_at', 'type', tideType, 'time', nextTide.time),
+         icon: nextTide.type === 'high' ? 'mdi:arrow-expand-up' : 'mdi:arrow-expand-down',
            coefficient: nextTide.coefficient,
            height: nextTide.height
        };
   } else {
-      currentStatus = { statusText: "Données de marée non disponibles", icon: "mdi:help-circle-outline", coefficient: null, height: null };
+      currentStatus = { statusText: localize('ui.card.marees_france.no_data_available'), icon: "mdi:help-circle-outline", coefficient: null, height: null };
   }
 
   return currentStatus;
@@ -122,23 +205,25 @@ class MareesFranceCard extends LitElement {
 
   // Define card editor
   static async getConfigElement() {
-    // Dynamically import the editor module - Removed as HA should load it
     return document.createElement("marees-france-card-editor");
   }
 
   static getStubConfig(hass, entities) {
       const mareesEntities = entities.filter(eid => eid.startsWith("sensor.marees_france_"));
+      const localize = (key, ...args) => localizeCard(key, hass, ...args);
       return {
           entity: mareesEntities[0] || "sensor.marees_france_port_name", // Default or first found
           show_header: true,
-          title: "Marées France"
+          title: localize('ui.card.marees_france.default_title')
       };
   }
 
+  // _localize helper is no longer needed
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("You need to define an entity");
+      // Use localizeCard directly, hass might not be ready, so provide fallback text
+      throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
     }
     this.config = config;
     const today = new Date();
@@ -151,24 +236,29 @@ class MareesFranceCard extends LitElement {
 
   render() {
     if (!this.hass || !this.config || !this.config.entity) {
-      return html`<ha-card>Missing configuration</ha-card>`;
+      return html`<ha-card>${localizeCard('ui.card.marees_france.missing_configuration', this.hass)}</ha-card>`;
     }
 
     const entityState = this.hass.states[this.config.entity];
+    const defaultTitle = localizeCard('ui.card.marees_france.default_title', this.hass);
+    const cardTitle = this.config.show_header !== false ? (this.config.title || defaultTitle) : '';
+
     if (!entityState) {
-      return html`<ha-card header="${this.config.title || 'Marées France'}">
-        <div class="warning">Entity not found: ${this.config.entity}</div>
+      return html`<ha-card header="${cardTitle}">
+        <div class="warning">${localizeCard('ui.card.marees_france.entity_not_found', this.hass, 'entity', this.config.entity)}</div>
       </ha-card>`;
     }
 
     const tideData = entityState.attributes.data;
     if (!tideData) {
-      return html`<ha-card header="${this.config.title || 'Marées France'}">
-        <div class="warning">No tide data found in entity attributes.</div>
+      return html`<ha-card header="${cardTitle}">
+        <div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div>
       </ha-card>`;
     }
 
+    // Pass hass directly to getCurrentTideStatus
     const currentStatus = getCurrentTideStatus(tideData, this.hass);
+    const locale = this.hass.language || 'en'; // Default to English if language not set
 
     const today = new Date();
     const dayLabels = [...Array(7).keys()].map(offset => {
@@ -221,7 +311,7 @@ class MareesFranceCard extends LitElement {
       }
 
     return html`
-      <ha-card header="${this.config.show_header !== false ? (this.config.title || 'Marées France') : ''}">
+      <ha-card header="${cardTitle}">
         <div class="card-content">
           <!-- Current Status -->
           ${currentStatus ? html`
@@ -231,11 +321,11 @@ class MareesFranceCard extends LitElement {
                 <span>${currentStatus.statusText}</span>
                 <div class="status-details">
                   ${currentStatus.height !== null ? html`
-                    <span title="Hauteur">
-                      <ha-icon icon="mdi:waves-arrow-up"></ha-icon> ${currentStatus.height} m
+                    <span title="${localizeCard('ui.card.marees_france.height', this.hass)}">
+                      <ha-icon icon="mdi:arrow-expand-vertical"></ha-icon> ${currentStatus.height} m
                     </span>` : ''}
                   ${currentStatus.coefficient !== null ? html`
-                    <span title="Coefficient">
+                    <span title="${localizeCard('ui.card.marees_france.coefficient', this.hass)}">
                       <ha-icon icon="mdi:gauge"></ha-icon> ${currentStatus.coefficient}
                     </span>` : ''}
                 </div>
@@ -247,8 +337,10 @@ class MareesFranceCard extends LitElement {
           <div class="tabs">
             ${dayLabels.map(date => {
               const d = new Date(date);
-              const label = weekdayShort[d.getDay()];
-              const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+              // Use helper function for localized weekday
+              const label = getWeekdayShort(d.getDay(), locale);
+              // Use locale for date format
+              const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
               return html`
                 <div
                   class="tab ${this._selectedDay === date ? 'active' : ''}"
@@ -274,7 +366,7 @@ class MareesFranceCard extends LitElement {
                     </div>
                   </div>
                 `)
-              : html`<div class="empty">Aucune donnée de marée pour ce jour.</div>`
+              : html`<div class="empty">${localizeCard('ui.card.marees_france.no_data_for_day', this.hass)}</div>`
             }
           </div>
         </div>
@@ -284,21 +376,22 @@ class MareesFranceCard extends LitElement {
 
   _renderTide(tide) {
     const isHigh = tide.type === 'high';
-    const icon = isHigh ? 'mdi:arrow-up' : 'mdi:arrow-down';
-    const statusText = isHigh ? 'Haute' : 'Basse';
+    const icon = isHigh ? 'mdi:arrow-expand-up' : 'mdi:arrow-expand-down';
+    // Use localizeCard directly
+    const statusText = isHigh ? localizeCard('ui.card.marees_france.high_tide', this.hass) : localizeCard('ui.card.marees_france.low_tide', this.hass);
 
     return html`
       <div class="tide-entry">
         <div class="tide-main">
            <ha-icon .icon=${icon}></ha-icon>
-           <span class="tide-status">${statusText} à ${tide.time}</span>
+           <span class="tide-status">${localizeCard('ui.card.marees_france.tide_at_time', this.hass, 'status', statusText, 'time', tide.time)}</span>
         </div>
         <div class="tide-details">
-            <span class="tide-detail" title="Hauteur">
-                <ha-icon icon="mdi:waves-arrow-up"></ha-icon> ${tide.height} m
+            <span class="tide-detail" title="${localizeCard('ui.card.marees_france.height', this.hass)}">
+                <ha-icon icon="mdi:arrow-expand-vertical"></ha-icon> ${tide.height} m
             </span>
             ${isHigh && tide.coefficient ? html`
-                <span class="tide-detail" title="Coefficient">
+                <span class="tide-detail" title="${localizeCard('ui.card.marees_france.coefficient', this.hass)}">
                     <ha-icon icon="mdi:gauge"></ha-icon> ${tide.coefficient}
                 </span>
             ` : ''}
@@ -478,4 +571,13 @@ class MareesFranceCard extends LitElement {
 
 customElements.define("marees-france-card", MareesFranceCard);
 
-// Registration is handled by frontend/__init__.py
+// Register with Home Assistant
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: 'marees-france-card',
+  name: 'Carte Marées France',
+  preview: true,
+  description: 'Carte pour l\'integration Marées France',
+  documentationURL: 'https://github.com/KipK/marees_france/blob/main/README-fr.md'
+});
+
