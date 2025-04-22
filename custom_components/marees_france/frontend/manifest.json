@@ -1,10 +1,10 @@
 {
   "manifest_version": 1,
-  "name": "Tide Card",
-  "version": "1.0.0",
+  "name": "Marée France",
+  "version": "0.1.0",
   "resources": [
     {
-      "url": "tide-card.js",
+      "url": "maree-france-card-js",
       "type": "module"
     }
   ]
