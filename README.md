@@ -2,7 +2,7 @@
 
 Home-Assistant integration and its lovelace card to display french tides from Shom.
 
-![image info](./img/card.png)
+![image info](./img/card-en.png)
 
 ## Installation
 
@@ -22,7 +22,7 @@ In Devices & Services / Integrations, add and integration, select Marées France
 
 Select the nearest harbor.
 
-![image info](./img/integration-config.png)
+![image info](./img/integration-config-en.png)
 
 
 Once you've selected the harbor, the entity will pop in sensor.marees_france_[HARBOR_NAME]
@@ -32,7 +32,7 @@ Once you've selected the harbor, the entity will pop in sensor.marees_france_[HA
 
 A Lovelace custom card is pre-installed with the integration
 
-![image info](./img/card-editor.png)
+![image info](./img/card-editor-en.png)
 
 
 ```yaml

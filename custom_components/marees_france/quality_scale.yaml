@@ -1,7 +1,7 @@
 rules:
   # Bronze
-  action-setup: todo
-  appropriate-polling: todo
+  action-setup: done
+  appropriate-polling: done
   brands: todo
   common-modules: todo
   config-flow-test-coverage: todo

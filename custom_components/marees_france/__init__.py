@@ -1,4 +1,4 @@
-"""The Marées France integration."""
+""" Marées France integration."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 # Local application/library specific imports
 from .const import DOMAIN, PLATFORMS
 from .coordinator import MareesFranceUpdateCoordinator
-from .frontend import JSModuleRegistration # Removed broken import
+from .frontend import JSModuleRegistration
 
 # Import the standard frontend registration helper
 # from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import

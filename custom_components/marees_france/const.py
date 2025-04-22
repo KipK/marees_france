@@ -6,6 +6,8 @@ from typing import Final
 
 from homeassistant.const import Platform
 
+_LOGGER = logging.getLogger(__name__)
+
 # Read version from manifest.json
 MANIFEST_PATH = Path(__file__).parent / "manifest.json"
 try:
@@ -14,7 +16,11 @@ try:
     INTEGRATION_VERSION = manifest_data.get("version", "0.0.0")
 except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
     INTEGRATION_VERSION = "0.0.0" # Fallback version
-    # Consider logging an error
+    _LOGGER.debug(
+        "Failed to read version from manifest.json: %s. Using fallback version: %s",
+        e,
+        INTEGRATION_VERSION,
+    )
 
 DOMAIN: Final = "marees_france"
 PLATFORMS: Final = [Platform.SENSOR]
@@ -63,7 +69,7 @@ JSMODULES = [
     {
         "name": "Carte Marées France",
         "filename": "marees-france-card.js",
-        "version": INTEGRATION_VERSION # Use dynamic version
+        "version": INTEGRATION_VERSION
     }
 ]
 URL_BASE = "/marees-france"

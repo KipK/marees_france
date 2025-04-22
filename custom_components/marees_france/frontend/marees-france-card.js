@@ -5,7 +5,6 @@ import {
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
 
 // --- Embedded Translations ---
-// --- Embedded Translations ---
 const translations = {
   en: {
     ui: { card: { marees_france: {
@@ -91,7 +90,6 @@ function getCurrentTideStatus(tideData, hass) {
   // Check hass availability
   if (!tideData || !hass) return null;
 
-  // Use the new localizeCard function
   const localize = (key, ...args) => localizeCard(key, hass, ...args);
 
   const now = new Date();
