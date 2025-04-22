@@ -11,7 +11,7 @@ const translations = {
     ui: { card: { marees_france: {
       default_title: "France Tides",
       missing_configuration: "Missing configuration",
-      error_entity_required: "You need to define an entity",
+      error_entity_required: "Missing entity, please configure the card first",
       entity_not_found: "Entity not found: {entity}",
       no_tide_data: "No tide data found in entity attributes.",
       waiting_next_tide: "Waiting for next tide",
@@ -33,7 +33,7 @@ const translations = {
     ui: { card: { marees_france: {
       default_title: "Marées France",
       missing_configuration: "Configuration manquante",
-      error_entity_required: "Vous devez définir une entité",
+      error_entity_required: "Entité manquante, veuillez d'abord configurer la carte",
       entity_not_found: "Entité non trouvée : {entity}",
       no_tide_data: "Aucune donnée de marée trouvée dans les attributs de l'entité.",
       waiting_next_tide: "En attente de la prochaine marée",
@@ -222,10 +222,11 @@ class MareesFranceCard extends LitElement {
   // _localize helper is no longer needed
 
   setConfig(config) {
-    if (!config.entity) {
-      // Use localizeCard directly, hass might not be ready, so provide fallback text
-      throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
-    }
+    // No longer throw error here, let render handle it.
+    // if (!config.entity) {
+    //   // Use localizeCard directly, hass might not be ready, so provide fallback text
+    //   throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
+    // }
     this.config = config;
     const today = new Date();
     this._selectedDay = today.toISOString().slice(0, 10); // Default to today
@@ -237,7 +238,8 @@ class MareesFranceCard extends LitElement {
 
   render() {
     if (!this.hass || !this.config || !this.config.entity) {
-      return html`<ha-card>${localizeCard('ui.card.marees_france.missing_configuration', this.hass)}</ha-card>`;
+      // Use the more specific message when entity is missing
+      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.error_entity_required', this.hass)}</div></ha-card>`;
     }
 
     const entityState = this.hass.states[this.config.entity];
@@ -503,7 +505,7 @@ class MareesFranceCard extends LitElement {
         gap: 8px; /* Space between rows */
       }
 
-      .tide-row {
+      .tide-row { 
         display: grid;
         grid-template-columns: 1.2fr 1fr; /* Two columns */
         gap: 8px; /* Space between columns */
