@@ -71,7 +71,12 @@ JSMODULES = [
     {
         "name": "Carte Marées France",
         "filename": "marees-france-card.js",
-        "version": INTEGRATION_VERSION
-    }
+        "version": INTEGRATION_VERSION,
+    },
+    { 
+        "name": "Editeur Carte Marées France",
+        "filename": "marees-france-card-editor.js",
+        "version": INTEGRATION_VERSION,
+    },
 ]
 URL_BASE = "/marees-france"
