@@ -333,10 +333,10 @@ class MareesFranceCard extends LitElement {
             ${tideRows.length > 0
               ? tideRows.map(row => html`
                   <div class="tide-row">
-                    <div class="tide-cell high-tide">
+                    <div class="tide-cell tide-cell-left">
                       ${row[0] ? this._renderTide(row[0]) : ''}
                     </div>
-                    <div class="tide-cell low-tide">
+                    <div class="tide-cell tide-cell-right">
                       ${row[1] ? this._renderTide(row[1]) : ''}
                     </div>
                   </div>
@@ -477,9 +477,10 @@ class MareesFranceCard extends LitElement {
         gap: 8px; /* Space between rows */
       }
 
-      .tide-row { 
+      .tide-row {
         display: grid;
-        grid-template-columns: 1.2fr 1fr; /* Two columns */
+        /* Use 1fr 1fr for equal columns */
+        grid-template-columns: 1fr 1fr;
         gap: 8px; /* Space between columns */
         align-items: start; /* Align items to the top of the cell */
       }
@@ -487,9 +488,16 @@ class MareesFranceCard extends LitElement {
       .tide-cell {
         /* Cells will contain a tide-entry or be empty */
         min-height: 50px; /* Ensure empty cells have some height */
+        /* Removed specific high/low tide classes */
       }
 
+      .tide-cell-left {
+        /* Add specific styles for left cell if needed */
+      }
 
+      .tide-cell-right {
+         /* Add specific styles for right cell if needed */
+      }
 
       .tide-entry {
         display: flex;
