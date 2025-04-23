@@ -9,6 +9,10 @@
                     "harbor_id": "Nom du port",
                     "scan_interval": "Intervalle de mise à jour (heures)"
                 }
+            },
+            "confirm": {
+                "description": "Pensez à rafraîchir votre navigateur si vous venez d'installer l'integration pour voir la carte dans l'editeur Lovelace.",
+                "title": "Mar\u00e9es France"
             }
         },
         "error": {

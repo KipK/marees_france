@@ -18,6 +18,10 @@
                 },
                 "description": "Select the harbor and the update frequency.",
                 "title": "Configure Mar\u00e9es France Harbor"
+            },
+            "confirm": {
+                "description": "Please refresh your browser to see the card in Lovelace editor if you've just installed the integration.",
+                "title": "Mar\u00e9es France"
             }
         }
     },

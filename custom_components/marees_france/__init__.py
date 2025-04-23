@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 # Local application/library specific imports
 from .const import DOMAIN, PLATFORMS
 from .coordinator import MareesFranceUpdateCoordinator
-from .frontend import JSModuleRegistration
+# Frontend import moved into async_setup_entry
 
 # Import the standard frontend registration helper
 # from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
@@ -38,7 +38,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up update listener
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
-    # Register custom cards
+    # Register custom cards - Import frontend code only when setting up entry
+    from .frontend import JSModuleRegistration
     moodule_register = JSModuleRegistration(hass)
     await moodule_register.async_register()
 
