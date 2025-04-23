@@ -276,39 +276,13 @@ class MareesFranceCard extends LitElement {
       ...(currentDayData.low_tides?.map(t => ({ ...t, type: 'low' })) || [])
     ].sort((a, b) => a.time.localeCompare(b.time)) : [];
 
-      // Process tides into rows [high, low]
+      // Process tides into sequential pairs [first_tide, second_tide]
       const tideRows = [];
-      let currentRow = [null, null]; // [high, low]
-      allTides.forEach(tide => {
-        if (tide.type === 'high') {
-          // If there's a pending high tide without a low, or a low tide without a high, push the previous row
-          if (currentRow[0] !== null || currentRow[1] !== null) {
-             // Avoid pushing empty [null, null] if the day starts with high tide
-             if (currentRow[0] !== null || currentRow[1] !== null) {
-                 tideRows.push([...currentRow]);
-             }
-          }
-          // Start a new row with the high tide
-          currentRow = [tide, null];
-        } else if (tide.type === 'low') {
-          if (currentRow[0] === null) {
-            // If day starts with low or previous row was just completed
-             // Push the previous row only if it wasn't empty [null, null] and wasn't just a low tide
-             if (currentRow[1] !== null) { // Handles consecutive lows if data is weird
-                tideRows.push([...currentRow]);
-             }
-            currentRow = [null, tide]; // Start new row with low tide in the second slot
-          } else {
-            // Pair the low tide with the pending high tide
-            currentRow[1] = tide;
-            tideRows.push([...currentRow]);
-            currentRow = [null, null]; // Reset for the next pair
-          }
-        }
-      });
-      // Push the last row if it's not empty
-      if (currentRow[0] !== null || currentRow[1] !== null) {
-        tideRows.push([...currentRow]);
+      for (let i = 0; i < allTides.length; i += 2) {
+          const firstTide = allTides[i];
+          // Get the next tide if it exists, otherwise null
+          const secondTide = (i + 1 < allTides.length) ? allTides[i + 1] : null;
+          tideRows.push([firstTide, secondTide]);
       }
 
     return html`
