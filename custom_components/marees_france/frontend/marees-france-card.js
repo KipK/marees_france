@@ -3,6 +3,7 @@ import {
   html,
   css,
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
+import 'https://cdn.jsdelivr.net/npm/chart.js@%5E4/dist/chart.umd.js';
 
 // --- Embedded Translations ---
 const translations = {
@@ -25,7 +26,8 @@ const translations = {
       no_data_for_day: "No tide data for this day.",
       high_tide: "High",
       low_tide: "Low",
-      tide_at_time: "{status} at {time}"
+      tide_at_time: "{status} at {time}",
+      chart_js_missing: "Error: Chart.js library not loaded. Please add it as a frontend resource in Home Assistant."
     }}}
   },
   fr: {
@@ -47,7 +49,8 @@ const translations = {
       no_data_for_day: "Aucune donnée de marée pour ce jour.",
       high_tide: "Haute",
       low_tide: "Basse",
-      tide_at_time: "{status} à {time}"
+      tide_at_time: "{status} à {time}",
+      chart_js_missing: "Erreur : Librairie Chart.js non chargée. Veuillez l'ajouter comme ressource frontend dans Home Assistant."
     }}}
   }
 };
@@ -194,6 +197,8 @@ function getCurrentTideStatus(tideData, hass) {
 
 
 class MareesFranceCard extends LitElement {
+  _chart = null; // Property to hold the chart instance
+
   static get properties() {
     return {
       hass: {},
@@ -204,6 +209,8 @@ class MareesFranceCard extends LitElement {
 
   // Define card editor
   static async getConfigElement() {
+    // Dynamically import the editor module - REMOVED as requested
+    // await import('./marees-france-card-editor.js');
     return document.createElement("marees-france-card-editor");
   }
 
@@ -213,6 +220,7 @@ class MareesFranceCard extends LitElement {
       return {
           entity: mareesEntities[0] || "sensor.marees_france_port_name", // Default or first found
           show_header: true,
+          show_graph: false, // Add default for graph
           title: localize('ui.card.marees_france.default_title')
       };
   }
@@ -220,11 +228,9 @@ class MareesFranceCard extends LitElement {
   // _localize helper is no longer needed
 
   setConfig(config) {
-    // No longer throw error here, let render handle it.
-    // if (!config.entity) {
-    //   // Use localizeCard directly, hass might not be ready, so provide fallback text
-    //   throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
-    // }
+    if (!config.entity) {
+      throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
+    }
     this.config = config;
     const today = new Date();
     this._selectedDay = today.toISOString().slice(0, 10); // Default to today
@@ -344,6 +350,15 @@ class MareesFranceCard extends LitElement {
               : html`<div class="empty">${localizeCard('ui.card.marees_france.no_data_for_day', this.hass)}</div>`
             }
           </div>
+
+          <!-- Chart Canvas -->
+          ${this.config.show_graph ? html`
+            <div class="chart-container">
+              <canvas id="tideChart"></canvas>
+              <!-- Removed chart error message rendering -->
+            </div>
+          ` : ''}
+
         </div>
       </ha-card>
     `;
@@ -376,9 +391,303 @@ class MareesFranceCard extends LitElement {
   }
 
 
+  updated(changedProperties) {
+    super.updated(changedProperties);
+    // Check if graph is enabled and relevant properties changed
+    if (this.config.show_graph &&
+        (changedProperties.has('_selectedDay') || changedProperties.has('hass') || changedProperties.has('config'))) {
+       // Avoid rendering chart immediately if hass or config not ready, or entity state missing
+       if (this.hass && this.config && this.config.entity && this.hass.states[this.config.entity]) {
+          // Debounce or delay rendering slightly if needed, but often direct call is fine
+          this._renderOrUpdateChart();
+       }
+    }
+     // If graph was turned off, destroy chart
+     if (changedProperties.has('config') && !this.config.show_graph && this._chart) {
+        this._destroyChart();
+     }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._destroyChart(); // Destroy chart when card is removed
+  }
+
+  _destroyChart() {
+     if (this._chart) {
+        this._chart.destroy();
+        this._chart = null;
+        // console.log("Chart destroyed");
+     }
+  }
+
+  // Interpolates tide heights using cosine function between high and low points
+  _interpolateTides(tides) {
+    if (!tides || tides.length < 2) {
+      return { labels: [], data: [], points: [], yMin: 0, yMax: 5 }; // Default range if no data
+    }
+
+    const interpolatedData = [];
+    const labels = [];
+    const pointsData = []; // Store original points for chart dataset
+    let dayMinHeight = Infinity;
+    let dayMaxHeight = -Infinity;
+
+    // Convert tide times to minutes since midnight for easier calculation
+    const tidesInMinutes = tides.map(tide => {
+      const [hours, minutes] = tide.time.split(':').map(Number);
+      const timeInMinutes = hours * 60 + minutes;
+      // Store original points for chart dataset {x: timeLabel, y: height}
+      // Ensure height is a number before pushing
+      const height = parseFloat(tide.height);
+      if (!isNaN(height)) {
+          pointsData.push({ x: tide.time, y: height, type: tide.type });
+          // Track min/max height for the day
+          if (height < dayMinHeight) dayMinHeight = height;
+          if (height > dayMaxHeight) dayMaxHeight = height;
+      } else {
+          console.warn(`Invalid height found for tide at ${tide.time}: ${tide.height}`);
+      }
+      return { ...tide, timeInMinutes, height: height }; // Store parsed height
+    }).filter(t => !isNaN(t.height)); // Filter out tides with invalid heights
+
+    // Re-check if we still have enough points after filtering
+    if (tidesInMinutes.length < 2) {
+        console.warn("Not enough valid tide points for interpolation after filtering.");
+        return { labels: [], data: [], points: [], yMin: 0, yMax: 5 };
+    }
+
+
+    // Generate labels and calculate interpolated height every 30 minutes
+    for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += 30) {
+      const currentHour = Math.floor(totalMinutes / 60);
+      const currentMinute = totalMinutes % 60;
+      const currentTimeLabel = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+      labels.push(currentTimeLabel);
+
+      // Find the surrounding tides for the current time point
+      let prevTide = null;
+      let nextTide = null;
+      for (let i = 0; i < tidesInMinutes.length; i++) {
+        if (tidesInMinutes[i].timeInMinutes <= totalMinutes) {
+          prevTide = tidesInMinutes[i];
+        }
+        if (tidesInMinutes[i].timeInMinutes > totalMinutes) {
+          nextTide = tidesInMinutes[i];
+          break; // Found the next tide, no need to look further
+        }
+      }
+
+      let interpolatedHeight = null;
+
+      // Handle edge cases: before the first tide or after the last tide
+      if (!prevTide && nextTide) { // Before first tide
+        interpolatedHeight = nextTide.height; // Use the first tide's height
+      } else if (prevTide && !nextTide) { // After last tide
+        interpolatedHeight = prevTide.height; // Use the last tide's height
+      } else if (prevTide && nextTide) { // Between two tides
+         // Ensure heights are numbers before calculation
+         if (typeof prevTide.height !== 'number' || typeof nextTide.height !== 'number') {
+             console.warn("Invalid height in prevTide or nextTide during interpolation.");
+             interpolatedHeight = null; // Cannot interpolate with non-numeric heights
+         } else if (prevTide.timeInMinutes === totalMinutes) {
+             interpolatedHeight = prevTide.height;
+         } else {
+            const timeDiff = nextTide.timeInMinutes - prevTide.timeInMinutes;
+            // Avoid division by zero if tides are at the same time (unlikely but possible)
+            if (timeDiff === 0) {
+                interpolatedHeight = prevTide.height;
+            } else {
+                const heightDiff = nextTide.height - prevTide.height;
+                const timeProgress = (totalMinutes - prevTide.timeInMinutes) / timeDiff;
+
+                // Cosine interpolation formula: H(t) = H_low + (H_high - H_low) * (1 - cos(pi * t / T)) / 2
+                // Simplified for our case where we know the start/end heights and progress:
+                // Height = StartHeight + (EndHeight - StartHeight) * (1 - cos(PI * progress)) / 2
+                interpolatedHeight = prevTide.height + heightDiff * (1 - Math.cos(Math.PI * timeProgress)) / 2;
+            }
+         }
+      } else {
+         // Should not happen if tides array has >= 2 elements, but fallback
+         interpolatedHeight = null;
+      }
+
+      // Check if interpolatedHeight is a valid number before formatting
+      interpolatedData.push(typeof interpolatedHeight === 'number' ? interpolatedHeight.toFixed(2) : null);
+    }
+
+    // Calculate Y-axis limits with buffer, handle cases where min/max weren't updated
+    if (dayMinHeight === Infinity || dayMaxHeight === -Infinity) {
+        // Fallback if no valid heights were found
+        dayMinHeight = 0;
+        dayMaxHeight = 5;
+    }
+    const yMin = Math.floor((dayMinHeight - 0.5) * 2) / 2; // Round down to nearest 0.5
+    const yMax = Math.ceil((dayMaxHeight + 0.5) * 2) / 2;   // Round up to nearest 0.5
+
+    // Ensure yMin is not greater than yMax (can happen with very small tide ranges)
+    // Ensure a minimum range of 1m for visibility
+    const finalYMin = Math.min(yMin, yMax - 1);
+    const finalYMax = Math.max(yMax, yMin + 1);
+
+
+    return { labels, data: interpolatedData, points: pointsData, yMin: finalYMin, yMax: finalYMax };
+  }
+
+
+  // Renders or updates the tide chart
+  _renderOrUpdateChart() {
+    // Check if Chart object is available via import
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js module not loaded correctly!");
+        this._destroyChart();
+        // Optionally display an error message
+        const canvas = this.shadowRoot?.getElementById('tideChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'var(--error-color, red)';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("Error: Chart library failed to load.", canvas.width / 2, canvas.height / 2);
+        }
+        return;
+    }
+
+    if (!this.shadowRoot) {
+        return;
+    }
+    const canvas = this.shadowRoot.getElementById('tideChart');
+    if (!canvas) {
+        return;
+    }
+
+    const entityState = this.hass.states[this.config.entity];
+    if (!entityState || !entityState.attributes.data) {
+        this._destroyChart();
+        return;
+    }
+
+    const tideData = entityState.attributes.data;
+    const currentDayData = tideData[this._selectedDay];
+    const allTides = currentDayData ? [
+      ...(currentDayData.high_tides?.map(t => ({ ...t, type: 'high' })) || []),
+      ...(currentDayData.low_tides?.map(t => ({ ...t, type: 'low' })) || [])
+    ].sort((a, b) => a.time.localeCompare(b.time)) : [];
+
+    const { labels, data, points, yMin, yMax } = this._interpolateTides(allTides);
+
+    if (labels.length === 0 || data.length === 0) {
+        this._destroyChart();
+        return;
+    }
+
+    const pointDataset = {
+        label: 'Actual Tides',
+        data: points,
+        pointBackgroundColor: points.map(p => p.type === 'high' ? 'red' : 'blue'),
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        showLine: false,
+        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+        order: 0
+    };
+
+    this._destroyChart();
+
+    const ctx = canvas.getContext('2d');
+    try {
+        // Use the constructor from the imported namespace
+        this._chart = new Chart(ctx, { // Use ChartJS directly
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: localizeCard('ui.card.marees_france.height', this.hass) || 'Height (m)',
+                        data: data.map((y, index) => ({ x: labels[index], y: y === null ? null : parseFloat(y) })),
+                        borderColor: 'var(--primary-color, rgb(75, 192, 192))',
+                        tension: 0.4,
+                        pointRadius: 0,
+                        fill: false,
+                        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                        order: 1
+                    },
+                    pointDataset
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'category',
+                        labels: labels,
+                        title: { display: false },
+                        ticks: {
+                             maxTicksLimit: 13,
+                             maxRotation: 0,
+                             autoSkipPadding: 15
+                        }
+                    },
+                    y: {
+                        title: { display: true, text: localizeCard('ui.card.marees_france.height', this.hass) || 'Height (m)' },
+                        min: yMin,
+                        max: yMax,
+                        ticks: {
+                            stepSize: 0.5,
+                            callback: function(value) { return value.toFixed(1) + ' m'; }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            title: function(tooltipItems) { return tooltipItems[0].label; },
+                            label: (context) => {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 1) {
+                                        const pointType = context.raw.type === 'high'
+                                            ? (localizeCard('ui.card.marees_france.high_tide_short', this.hass) || 'High')
+                                            : (localizeCard('ui.card.marees_france.low_tide_short', this.hass) || 'Low');
+                                        label = `${pointType}: ${context.parsed.y.toFixed(2)} m`;
+                                    } else {
+                                        label = `${localizeCard('ui.card.marees_france.height', this.hass) || 'Height'}: ${context.parsed.y.toFixed(2)} m`;
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                interaction: {
+                     mode: 'nearest',
+                     axis: 'x',
+                     intersect: false
+                },
+                elements: {
+                    point: { hoverRadius: 7 }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error rendering chart:", error);
+        this._destroyChart();
+    }
+  }
+
+
   getCardSize() {
-    // Estimate based on content: header + current status + tabs + ~3 tides
-    return 1 + 1 + 1 + 3;
+    // Base size: header(1) + current_status(1) + tabs(1) + tide_rows(~3) = 6
+    let size = 6;
+    if (this.config && this.config.show_graph) {
+        size += 4; // Add ~4 units for the chart height
+    }
+    return size;
   }
 
   static get styles() {
@@ -550,6 +859,29 @@ class MareesFranceCard extends LitElement {
         text-align: center;
         padding: 10px;
       }
+
+      .chart-container {
+        position: relative; /* Needed for responsive chart */
+        height: 250px; /* Increased height for better visibility */
+        margin-top: 16px; /* Space above the chart */
+        width: 100%;
+      }
+      .chart-error { /* Style for the error message */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--error-color, red);
+        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+        text-align: center;
+        padding: 10px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
     `;
   }
 }
@@ -565,4 +897,3 @@ window.customCards.push({
   description: 'Carte pour l\'integration Marées France',
   documentationURL: 'https://github.com/KipK/marees_france/blob/main/README-fr.md'
 });
-

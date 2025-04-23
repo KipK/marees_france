@@ -7,13 +7,13 @@ import {
 const translations = {
   en: {
     title: "Title (Optional)",
+    graph_label: "Display tide graph",
     header: "Display header "
   },
   fr: {
     title: "Titre (Optionnel)",
-    header: "Afficher l'en-tête"
-
-
+    header: "Afficher l'en-tête",
+    graph_label: "Afficher le graphique des marées" // No comma here, removed empty lines below
   }
 };
 
@@ -103,6 +103,12 @@ class MareesFranceCardEditor extends LitElement {
         name: "title",
         label: localizeCard('title', this.hass.language), // Use this.hass here
         selector: { text: {} },
+      },
+      {
+        name: "show_graph",
+        label: localizeCard('graph_label', this.hass.language), // Use the new translation
+        selector: { boolean: {} },
+        default: false, // Default to not showing the graph
       },
       {
         name: "show_header",
