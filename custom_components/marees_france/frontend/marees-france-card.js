@@ -393,19 +393,65 @@ class MareesFranceCard extends LitElement {
 
   updated(changedProperties) {
     super.updated(changedProperties);
-    // Check if graph is enabled and relevant properties changed
-    if (this.config.show_graph &&
-        (changedProperties.has('_selectedDay') || changedProperties.has('hass') || changedProperties.has('config'))) {
-       // Avoid rendering chart immediately if hass or config not ready, or entity state missing
-       if (this.hass && this.config && this.config.entity && this.hass.states[this.config.entity]) {
-          // Debounce or delay rendering slightly if needed, but often direct call is fine
+
+    let needsChartUpdate = false;
+    const oldConfig = changedProperties.get('config');
+    const oldHass = changedProperties.get('hass');
+
+    // Check if graph should be shown *now*
+    if (this.config && this.config.show_graph) {
+        // Update if selected day changed
+        if (changedProperties.has('_selectedDay')) {
+            needsChartUpdate = true;
+        }
+
+        // Update if config changed (e.g., entity changed, or show_graph toggled on)
+        if (changedProperties.has('config')) {
+             if ((oldConfig && this.config.entity !== oldConfig.entity) ||
+                 (!oldConfig || !oldConfig.show_graph)) { // Graph was just enabled or entity changed
+                 needsChartUpdate = true;
+             }
+        }
+
+        // Update if hass changed and the relevant entity state or its data actually changed
+        if (changedProperties.has('hass')) {
+            if (this.config && this.config.entity && this.hass) {
+                const newEntityState = this.hass.states[this.config.entity];
+                const oldEntityState = oldHass ? oldHass.states[this.config.entity] : undefined;
+
+                if (oldEntityState !== newEntityState) { // State object reference changed
+                    needsChartUpdate = true;
+                } else if (oldEntityState && newEntityState) {
+                    // State object is the same, compare data attributes deeply (expensive but accurate)
+                    try { // Add try-catch for safety during stringify
+                        if (JSON.stringify(oldEntityState.attributes.data) !== JSON.stringify(newEntityState.attributes.data)) {
+                            needsChartUpdate = true;
+                        }
+                    } catch (e) {
+                        console.error("Error comparing tide data:", e);
+                        needsChartUpdate = true; // Update on error as a precaution
+                    }
+                } else if (!oldEntityState && newEntityState) { // Entity state became available
+                    needsChartUpdate = true;
+                }
+            } else if (!oldHass && this.hass) { // Hass became available
+                 needsChartUpdate = true;
+            }
+        }
+
+       // Render chart if needed and possible
+       if (needsChartUpdate && this.hass && this.config && this.config.entity && this.hass.states[this.config.entity]) {
           this._renderOrUpdateChart();
        }
     }
-     // If graph was turned off, destroy chart
-     if (changedProperties.has('config') && !this.config.show_graph && this._chart) {
+
+    // Destroy chart if graph was turned off
+    if (changedProperties.has('config') && oldConfig && oldConfig.show_graph && (!this.config || !this.config.show_graph) && this._chart) {
+       this._destroyChart();
+    } else if (changedProperties.has('config') && oldConfig && this.config.entity !== oldConfig.entity && this._chart) {
+        // Destroy chart also if entity changes while graph is shown
         this._destroyChart();
-     }
+    }
   }
 
   disconnectedCallback() {
@@ -616,8 +662,13 @@ class MareesFranceCard extends LitElement {
                 ]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
+                animations: {
+                  colors: false,
+                  x: false,
+                },
                 scales: {
                     x: {
                         type: 'category',
@@ -671,7 +722,14 @@ class MareesFranceCard extends LitElement {
                 },
                 elements: {
                     point: { hoverRadius: 7 }
+                },
+              transitions: {
+                active: {
+                  animation: {
+                    duration: 0
+                  }
                 }
+              }
             }
         });
     } catch (error) {
