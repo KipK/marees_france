@@ -48,5 +48,21 @@
                 }
             }
         }
+    },
+    "services": {
+      "get_water_levels": {
+        "name": "Obtenir les hauteurs d'eau",
+        "description": "Récupère les hauteurs d'eau détaillées pour un port et une date spécifiques depuis l'API SHOM.",
+        "fields": {
+          "harbor_name": {
+            "name": "Nom du port",
+            "description": "Le nom officiel du port (ex: LE_PALAIS)."
+          },
+          "date": {
+            "name": "Date",
+            "description": "La date pour laquelle récupérer les hauteurs d'eau (format AAAA-MM-JJ)."
+          }
+        }
+      }
     }
 }

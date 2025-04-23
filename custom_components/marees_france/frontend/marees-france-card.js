@@ -3,7 +3,7 @@ import {
   html,
   css,
 } from "https://unpkg.com/lit-element@^2.0.0/lit-element.js?module";
-import 'https://cdn.jsdelivr.net/npm/chart.js@%5E4/dist/chart.umd.js';
+import { SVG } from "https://unpkg.com/@svgdotjs/svg.js@^3.0/dist/svg.esm.js";
 
 // --- Embedded Translations ---
 const translations = {
@@ -66,7 +66,6 @@ function localizeCard(key, hass, ...args) {
   } catch (e) {
     // Key not found, use the key itself
     translated = key;
-    // console.warn(`Translation key not found: ${key} in language: ${lang}`);
   }
 
   // Replace placeholders like {entity}
@@ -88,17 +87,15 @@ function getWeekdayShort(dayIndex, locale) {
     return date.toLocaleDateString(locale, { weekday: 'short' });
 }
 
-// Pass hass directly
-function getCurrentTideStatus(tideData, hass) {
-  // Check hass availability
+// Returns data needed for the next tide peak display
+function getNextTideStatus(tideData, hass) {
   if (!tideData || !hass) return null;
-
-  const localize = (key, ...args) => localizeCard(key, hass, ...args);
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
+  // Look ahead 2 days to ensure we capture the next tide even if it's early tomorrow
   const tomorrowStr = new Date(new Date(now).setDate(now.getDate() + 1)).toISOString().slice(0, 10);
-  // No need to reset date back, calculations use specific strings
+  const dayAfterTomorrowStr = new Date(new Date(now).setDate(now.getDate() + 2)).toISOString().slice(0, 10);
 
   const todayTides = tideData[todayStr] ? [
       ...(tideData[todayStr].high_tides?.map(t => ({ ...t, type: 'high', date: todayStr })) || []),
@@ -110,20 +107,27 @@ function getCurrentTideStatus(tideData, hass) {
       ...(tideData[tomorrowStr].low_tides?.map(t => ({ ...t, type: 'low', date: tomorrowStr })) || [])
   ] : [];
 
-  const allRelevantTides = [...todayTides, ...tomorrowTides]
+  const dayAfterTomorrowTides = tideData[dayAfterTomorrowStr] ? [
+      ...(tideData[dayAfterTomorrowStr].high_tides?.map(t => ({ ...t, type: 'high', date: dayAfterTomorrowStr })) || []),
+      ...(tideData[dayAfterTomorrowStr].low_tides?.map(t => ({ ...t, type: 'low', date: dayAfterTomorrowStr })) || [])
+  ] : [];
+
+
+  const allRelevantTides = [...todayTides, ...tomorrowTides, ...dayAfterTomorrowTides]
       .map(tide => ({
           ...tide,
-          dateTime: new Date(`${tide.date}T${tide.time}:00`) // Assume local timezone from HA
+          dateTime: new Date(`${tide.date}T${tide.time}:00`)
       }))
       .sort((a, b) => a.dateTime - b.dateTime);
 
-  let currentStatus = null;
   let nextTide = null;
   let previousTide = null;
 
+  // Find the first tide strictly after 'now'
   for (let i = 0; i < allRelevantTides.length; i++) {
       if (allRelevantTides[i].dateTime > now) {
           nextTide = allRelevantTides[i];
+          // The tide immediately before this 'nextTide' is the 'previousTide' relative to now
           if (i > 0) {
               previousTide = allRelevantTides[i - 1];
           }
@@ -131,101 +135,70 @@ function getCurrentTideStatus(tideData, hass) {
       }
   }
 
-  if (!previousTide && allRelevantTides.length > 0 && allRelevantTides[0].dateTime <= now) {
-      // If 'now' is after the last tide of today but before the first of tomorrow
-      // Find the last tide of today if available
-      const lastTodayTide = todayTides.sort((a,b) => new Date(`${b.date}T${b.time}:00`) - new Date(`${a.date}T${a.time}:00`))[0];
-       if (lastTodayTide) {
-           previousTide = { ...lastTodayTide, dateTime: new Date(`${lastTodayTide.date}T${lastTodayTide.time}:00`) };
+   // If no previous tide was found in the loop (meaning 'now' is before the first tide in our list),
+   // and there are tides today before 'now', find the latest one that occurred before 'now'.
+   if (!previousTide && allRelevantTides.length > 0 && allRelevantTides[0].dateTime > now) {
+       const tidesBeforeNow = allRelevantTides.filter(t => t.dateTime <= now);
+       if (tidesBeforeNow.length > 0) {
+           previousTide = tidesBeforeNow[tidesBeforeNow.length - 1]; // Get the last one
        }
-       // nextTide should already be the first tide of tomorrow if it exists
-  } else if (!previousTide && !nextTide && allRelevantTides.length > 0) {
-      // Edge case: If 'now' is before the very first tide available
-       nextTide = allRelevantTides[0];
-       // Cannot determine status reliably without a previous tide
-       return { statusText: localize('ui.card.marees_france.waiting_next_tide'), icon: "mdi:clock-outline", coefficient: null, height: null };
+   }
+
+
+  if (!nextTide) {
+      // Return default/error state matching the new structure
+      return {
+          currentTrendIcon: "mdi:help-circle-outline",
+          nextPeakTime: "--:--",
+          nextPeakHeight: null,
+          nextPeakCoefficient: null,
+          nextPeakType: null // Indicate unknown type
+      };
   }
 
+  // Determine trend: If the previous tide was low, we are rising. If previous was high, we are falling.
+  // If there's no previous tide (e.g., right at the start), infer trend from the type of the *next* tide.
+  // If next is low, we must be falling towards it. If next is high, we must be rising towards it.
+  const isRising = previousTide ? previousTide.type === 'low' : nextTide.type === 'high';
 
-  if (previousTide && nextTide) {
-      const timeToNextTide = Math.round((nextTide.dateTime - now) / (1000 * 60)); // minutes
-      const hours = Math.floor(timeToNextTide / 60);
-      const minutes = timeToNextTide % 60;
-      const timeStr = `${hours > 0 ? `${hours}h` : ''}${minutes}min`;
-
-      if (previousTide.type === 'low') { // Rising tide
-          const coefficient = nextTide.coefficient || null; // Coefficient is on the high tide
-          currentStatus = {
-              statusText: localize('ui.card.marees_france.rising_until', 'time', nextTide.time, 'duration', timeStr),
-            icon: 'mdi:arrow-expand-up',
-              coefficient: coefficient,
-              height: nextTide.height // Height at peak
-          };
-      } else { // Falling tide
-          // If falling, show coefficient of the *next* high tide if available
-          let nextHighTide = null;
-          for (let i = 0; i < allRelevantTides.length; i++) {
-              if (allRelevantTides[i].dateTime > now && allRelevantTides[i].type === 'high') {
-                  nextHighTide = allRelevantTides[i];
-                  break;
-              }
-          }
-          const coefficient = nextHighTide ? nextHighTide.coefficient : null;
-
-          currentStatus = {
-              statusText: localize('ui.card.marees_france.falling_until', 'time', nextTide.time, 'duration', timeStr),
-            icon: 'mdi:arrow-expand-down',
-              coefficient: coefficient, // Show next high tide's coeff
-              height: nextTide.height // Height at low point
-          };
-      }
-  } else if (nextTide) {
-       // If only next tide is known (e.g., before the first tide)
-       const tideType = nextTide.type === 'high' ? localize('ui.card.marees_france.high_tide_short') : localize('ui.card.marees_france.low_tide_short');
-       currentStatus = {
-           statusText: localize('ui.card.marees_france.next_tide_at', 'type', tideType, 'time', nextTide.time),
-         icon: nextTide.type === 'high' ? 'mdi:arrow-expand-up' : 'mdi:arrow-expand-down',
-           coefficient: nextTide.coefficient,
-           height: nextTide.height
-       };
-  } else {
-      currentStatus = { statusText: localize('ui.card.marees_france.no_data_available'), icon: "mdi:help-circle-outline", coefficient: null, height: null };
-  }
-
-  return currentStatus;
+  // Return data matching the plan's requirements
+  return {
+      currentTrendIcon: isRising ? 'mdi:arrow-up' : 'mdi:arrow-down',
+      nextPeakTime: nextTide.time,
+      nextPeakHeight: nextTide.height, // Keep as number for potential calculations
+      nextPeakCoefficient: nextTide.type === 'high' ? nextTide.coefficient : null, // Only show coeff if next tide is high
+      nextPeakType: nextTide.type // 'high' or 'low'
+  };
 }
 
 
 class MareesFranceCard extends LitElement {
-  _chart = null; // Property to hold the chart instance
+  _svgDraw = null; // Property to hold the svg.js instance
+  _svgContainer = null; // Reference to the SVG container div
 
   static get properties() {
     return {
       hass: {},
       config: {},
       _selectedDay: { state: true },
+      _waterLevels: { state: true }, // Added state property for water level data
+      _isLoading: { state: true }, // Added state property for loading status
+      _isInitialLoading: { state: true }, // Track initial load vs subsequent loads
     };
   }
 
   // Define card editor
   static async getConfigElement() {
-    // Dynamically import the editor module - REMOVED as requested
-    // await import('./marees-france-card-editor.js');
     return document.createElement("marees-france-card-editor");
   }
 
   static getStubConfig(hass, entities) {
       const mareesEntities = entities.filter(eid => eid.startsWith("sensor.marees_france_"));
-      const localize = (key, ...args) => localizeCard(key, hass, ...args);
       return {
           entity: mareesEntities[0] || "sensor.marees_france_port_name", // Default or first found
-          show_header: true,
-          show_graph: false, // Add default for graph
-          title: localize('ui.card.marees_france.default_title')
+          show_header: true, // Keep header option, but we won't use the title from config
       };
   }
-
-  // _localize helper is no longer needed
 
   setConfig(config) {
     if (!config.entity) {
@@ -234,38 +207,98 @@ class MareesFranceCard extends LitElement {
     this.config = config;
     const today = new Date();
     this._selectedDay = today.toISOString().slice(0, 10); // Default to today
+    this._waterLevels = null; // Reset water levels on config change
+    this._isLoading = true; // Initialize loading state to true
+    this._isInitialLoading = true; // Set initial loading flag
+    // Fetch will be triggered by `updated`
   }
+
+  async _fetchWaterLevels() {
+    // Set loading true when fetch actually starts
+    this._isLoading = true;
+    this.requestUpdate(); // Show loader
+
+    if (!this.hass || !this.config || !this.config.entity || !this._selectedDay) {
+      console.warn("Marees Card: Fetch prerequisites not met.", { hass: !!this.hass, config: !!this.config, entity: this.config?.entity, day: this._selectedDay });
+      this._waterLevels = null; // Keep null if prerequisites fail
+      this._isLoading = false; // Set loading false
+      this.requestUpdate(); // Update UI
+      return;
+    }
+
+    // No need for immediate requestUpdate here, initial render/update cycle will handle loader
+
+    // Derive harbor_name from entity_id (e.g., sensor.marees_france_le_palais -> LE_PALAIS)
+    const entityParts = this.config.entity.split('.');
+    let harborName = "unknown";
+    if (entityParts.length === 2 && entityParts[0] === 'sensor' && entityParts[1].startsWith('marees_france_')) {
+        // Convert to uppercase as API seems to expect it (based on example LE_PALAIS)
+        harborName = entityParts[1].substring('marees_france_'.length).toUpperCase();
+    } else {
+        console.warn(`Marees France Card: Could not derive harbor name from entity: ${this.config.entity}`);
+        this._waterLevels = { error: "Invalid entity for harbor name derivation" };
+        this.requestUpdate(); // Request update to show error
+        return;
+    }
+    try {
+      // Using 6-argument callService based on user example
+      const response = await this.hass.callService(
+        'marees_france', // domain
+        'get_water_levels', // service
+        { // data
+          harbor_name: harborName,
+          date: this._selectedDay
+        },
+        undefined, // target (not needed)
+        false, // blocking (usually false for frontend calls)
+        true // return_response
+      );
+
+      // Refinement: Check response structure before assigning
+      if (response && response.response && typeof response.response === 'object') {
+          this._waterLevels = response;
+      } else {
+          console.error('Marees Card: Invalid data structure received from get_water_levels:', response);
+          this._waterLevels = { error: "Invalid data structure from service" };
+      }
+      this.requestUpdate(); // Explicitly request update after fetch attempt
+    } catch (error) {
+      console.error('Marees Card: Error calling marees_france.get_water_levels service:', error); // Log error
+      this._waterLevels = { error: error.message || "Service call failed" };
+      // Let LitElement handle update via state change on error
+      // No need for explicit requestUpdate here, state change handles it
+    } finally {
+        this._isLoading = false; // Set loading false after fetch completes or fails
+        this._isInitialLoading = false; // Turn off initial loading flag after first attempt
+        this.requestUpdate(); // Ensure UI updates after loading finishes
+    }
+  }
+
 
   _handleTabClick(ev) {
     this._selectedDay = ev.currentTarget.dataset.date;
+    // Don't set loading here, _fetchWaterLevels will handle it
+    this._fetchWaterLevels(); // Fetch data for the new day
   }
 
   render() {
     if (!this.hass || !this.config || !this.config.entity) {
-      // Use the more specific message when entity is missing
       return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.error_entity_required', this.hass)}</div></ha-card>`;
     }
 
     const entityState = this.hass.states[this.config.entity];
-    const defaultTitle = localizeCard('ui.card.marees_france.default_title', this.hass);
-    const cardTitle = this.config.show_header !== false ? (this.config.title || defaultTitle) : '';
-
     if (!entityState) {
-      return html`<ha-card header="${cardTitle}">
-        <div class="warning">${localizeCard('ui.card.marees_france.entity_not_found', this.hass, 'entity', this.config.entity)}</div>
-      </ha-card>`;
+      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.entity_not_found', this.hass, 'entity', this.config.entity)}</div></ha-card>`;
     }
 
     const tideData = entityState.attributes.data;
     if (!tideData) {
-      return html`<ha-card header="${cardTitle}">
-        <div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div>
-      </ha-card>`;
+      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div></ha-card>`;
     }
 
-    // Pass hass directly to getCurrentTideStatus
-    const currentStatus = getCurrentTideStatus(tideData, this.hass);
-    const locale = this.hass.language || 'en'; // Default to English if language not set
+    // Use the refined function to get status for the header display
+    const nextTideInfo = getNextTideStatus(tideData, this.hass);
+    const locale = this.hass.language || 'en';
 
     const today = new Date();
     const dayLabels = [...Array(7).keys()].map(offset => {
@@ -274,521 +307,445 @@ class MareesFranceCard extends LitElement {
       return date.toISOString().slice(0, 10);
     });
 
-    const currentDayData = tideData[this._selectedDay];
-
-    // Combine and sort tides for the selected day
-    const allTides = currentDayData ? [
-      ...(currentDayData.high_tides?.map(t => ({ ...t, type: 'high' })) || []),
-      ...(currentDayData.low_tides?.map(t => ({ ...t, type: 'low' })) || [])
-    ].sort((a, b) => a.time.localeCompare(b.time)) : [];
-
-      // Process tides into sequential pairs [first_tide, second_tide]
-      const tideRows = [];
-      for (let i = 0; i < allTides.length; i += 2) {
-          const firstTide = allTides[i];
-          // Get the next tide if it exists, otherwise null
-          const secondTide = (i + 1 < allTides.length) ? allTides[i + 1] : null;
-          tideRows.push([firstTide, secondTide]);
-      }
 
     return html`
-      <ha-card header="${cardTitle}">
+      <ha-card>
+        <div class="card-header">${this.config.title || localizeCard('ui.card.marees_france.default_title', this.hass)}</div>
         <div class="card-content">
-          <!-- Current Status -->
-          ${currentStatus ? html`
-            <div class="current-status">
-              <ha-icon .icon=${currentStatus.icon}></ha-icon>
-              <div class="status-text">
-                <span>${currentStatus.statusText}</span>
-                <div class="status-details">
-                  ${currentStatus.height !== null ? html`
-                    <span title="${localizeCard('ui.card.marees_france.height', this.hass)}">
-                      <ha-icon icon="mdi:arrow-expand-vertical"></ha-icon> ${currentStatus.height} m
-                    </span>` : ''}
-                  ${currentStatus.coefficient !== null ? html`
-                    <span title="${localizeCard('ui.card.marees_france.coefficient', this.hass)}">
-                      <ha-icon icon="mdi:gauge"></ha-icon> ${currentStatus.coefficient}
-                    </span>` : ''}
-                </div>
+          <!-- Next Tide Status Display -->
+          ${nextTideInfo ? html`
+            <div class="next-tide-status">
+              <div class="next-tide-icon-time">
+                  <ha-icon .icon=${nextTideInfo.currentTrendIcon}></ha-icon>
+                  <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
+              </div>
+              <div class="next-tide-details">
+                ${(() => {
+                  let parts = [];
+                  // Ensure height is a number before adding
+                  if (nextTideInfo.nextPeakHeight !== null && !isNaN(parseFloat(nextTideInfo.nextPeakHeight))) {
+                    parts.push(`${parseFloat(nextTideInfo.nextPeakHeight).toFixed(1)} m`);
+                  }
+                  // Coefficient is only shown for high tides (as per getNextTideStatus logic)
+                  if (nextTideInfo.nextPeakCoefficient !== null) {
+                    // Use secondary text color for coefficient like height
+                    parts.push(`Coef. ${nextTideInfo.nextPeakCoefficient}`);
+                  }
+                  // Join with separator only if both parts exist
+                  return parts.join(' - ');
+                })()}
               </div>
             </div>
-          ` : ''}
+          ` : html`<div class="warning">${localizeCard('ui.card.marees_france.waiting_next_tide', this.hass)}</div>`}
 
-          <!-- Tabs -->
+          <!-- Day Tabs (Simplified) -->
           <div class="tabs">
             ${dayLabels.map(date => {
               const d = new Date(date);
-              // Use helper function for localized weekday
-              const label = getWeekdayShort(d.getDay(), locale);
-              // Use locale for date format
-              const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
+              // Get 3-letter abbreviation, uppercase
+              const label = d.toLocaleDateString(locale, { weekday: 'short' }).toUpperCase();
               return html`
                 <div
                   class="tab ${this._selectedDay === date ? 'active' : ''}"
                   data-date="${date}"
                   @click="${this._handleTabClick}"
                 >
-                  ${label}<br /><span class="tab-date">${dateStr}</span>
+                  ${label}
                 </div>
               `;
             })}
           </div>
 
-          <!-- Tide List -->
-          <div class="tide-list">
-            ${tideRows.length > 0
-              ? tideRows.map(row => html`
-                  <div class="tide-row">
-                    <div class="tide-cell tide-cell-left">
-                      ${row[0] ? this._renderTide(row[0]) : ''}
-                    </div>
-                    <div class="tide-cell tide-cell-right">
-                      ${row[1] ? this._renderTide(row[1]) : ''}
-                    </div>
-                  </div>
-                `)
-              : html`<div class="empty">${localizeCard('ui.card.marees_france.no_data_for_day', this.hass)}</div>`
-            }
-          </div>
-
-          <!-- Chart Canvas -->
-          ${this.config.show_graph ? html`
-            <div class="chart-container">
-              <canvas id="tideChart"></canvas>
-              <!-- Removed chart error message rendering -->
+          <!-- SVG Graph Container -->
+          <div class="svg-graph-container">
+            ${this._isLoading ? html`
+              <ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>
+            ` : ''}
+            <!-- Target for svg.js -->
+            <div id="marees-graph-target" class="svg-graph-target">
+               <!-- SVG will be drawn here by svg.js -->
             </div>
-          ` : ''}
+          </div>
 
         </div>
       </ha-card>
     `;
   }
 
-  _renderTide(tide) {
-    const isHigh = tide.type === 'high';
-    const icon = isHigh ? 'mdi:arrow-expand-up' : 'mdi:arrow-expand-down';
-    // Use localizeCard directly
-    const statusText = isHigh ? localizeCard('ui.card.marees_france.high_tide', this.hass) : localizeCard('ui.card.marees_france.low_tide', this.hass);
 
-    return html`
-      <div class="tide-entry">
-        <div class="tide-main">
-           <ha-icon .icon=${icon}></ha-icon>
-           <span class="tide-status">${localizeCard('ui.card.marees_france.tide_at_time', this.hass, 'status', statusText, 'time', tide.time)}</span>
-        </div>
-        <div class="tide-details">
-            <span class="tide-detail" title="${localizeCard('ui.card.marees_france.height', this.hass)}">
-                <ha-icon icon="mdi:arrow-expand-vertical"></ha-icon> ${tide.height} m
-            </span>
-            ${isHigh && tide.coefficient ? html`
-                <span class="tide-detail" title="${localizeCard('ui.card.marees_france.coefficient', this.hass)}">
-                    <ha-icon icon="mdi:gauge"></ha-icon> ${tide.coefficient}
-                </span>
-            ` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-
+  // --- Lifecycle method to handle updates and SVG drawing ---
   updated(changedProperties) {
-    super.updated(changedProperties);
+    super.updated(changedProperties); // Always call super
 
-    let needsChartUpdate = false;
-    const oldConfig = changedProperties.get('config');
-    const oldHass = changedProperties.get('hass');
+    let needsGraphRedraw = false;
 
-    // Check if graph should be shown *now*
-    if (this.config && this.config.show_graph) {
-        // Update if selected day changed
-        if (changedProperties.has('_selectedDay')) {
-            needsChartUpdate = true;
+    // Initialize SVG on first update or if container ref is lost
+    if (!this._svgDraw || !this.shadowRoot.contains(this._svgContainer)) {
+        this._svgContainer = this.shadowRoot.querySelector('#marees-graph-target');
+        if (this._svgContainer) {
+            // Clear previous SVG content if any
+            while (this._svgContainer.firstChild) {
+                this._svgContainer.removeChild(this._svgContainer.firstChild);
+            }
+            // Initialize svg.js instance with viewBox for scaling
+            this._svgDraw = SVG().addTo(this._svgContainer).viewbox(0, 0, 500, 170);
+            needsGraphRedraw = true; // Need initial draw after SVG setup
         }
+    }
 
-        // Update if config changed (e.g., entity changed, or show_graph toggled on)
-        if (changedProperties.has('config')) {
-             if ((oldConfig && this.config.entity !== oldConfig.entity) ||
-                 (!oldConfig || !oldConfig.show_graph)) { // Graph was just enabled or entity changed
-                 needsChartUpdate = true;
-             }
-        }
+    // Trigger initial data fetch when hass becomes available and data hasn't been fetched yet
+    if (changedProperties.has('hass') && this.hass && this._waterLevels === null) {
+        // Removed !this._isLoading check - we want to fetch if hass is ready and data is null, regardless of initial loading state
+        console.log("Marees Card: Hass available and no data yet, triggering initial fetch.");
+        this._fetchWaterLevels();
+        needsGraphRedraw = true; // Ensure graph updates after fetch starts
+    }
 
-        // Update if hass changed and the relevant entity state or its data actually changed
-        if (changedProperties.has('hass')) {
-            if (this.config && this.config.entity && this.hass) {
-                const newEntityState = this.hass.states[this.config.entity];
-                const oldEntityState = oldHass ? oldHass.states[this.config.entity] : undefined;
+    // Check if other relevant properties changed
+    if (changedProperties.has('config') || changedProperties.has('_selectedDay') || changedProperties.has('_waterLevels') || changedProperties.has('_isLoading')) {
+        needsGraphRedraw = true;
+    }
 
-                if (oldEntityState !== newEntityState) { // State object reference changed
-                    needsChartUpdate = true;
-                } else if (oldEntityState && newEntityState) {
-                    // State object is the same, compare data attributes deeply (expensive but accurate)
-                    try { // Add try-catch for safety during stringify
-                        if (JSON.stringify(oldEntityState.attributes.data) !== JSON.stringify(newEntityState.attributes.data)) {
-                            needsChartUpdate = true;
-                        }
-                    } catch (e) {
-                        console.error("Error comparing tide data:", e);
-                        needsChartUpdate = true; // Update on error as a precaution
-                    }
-                } else if (!oldEntityState && newEntityState) { // Entity state became available
-                    needsChartUpdate = true;
-                }
-            } else if (!oldHass && this.hass) { // Hass became available
-                 needsChartUpdate = true;
+    // Redraw graph if needed, SVG is ready, AND loading is finished
+    if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoading) {
+        this._drawGraphWithSvgJs();
+    }
+  }
+
+
+  // --- New method to draw graph using svg.js ---
+  _drawGraphWithSvgJs() {
+    // Ensure SVG instance and container are ready
+    if (!this._svgDraw || !this._svgContainer) {
+        // console.warn("Marees Card SVG: SVG drawing area not ready yet."); // Optional: keep for debugging
+        return; // Exit if drawing area isn't set up
+    }
+
+    // Clear the canvas ONCE now that we know we are drawing the final state (not loading)
+    this._svgDraw.clear();
+
+    // Define viewBox dimensions here for use in error/no data positioning
+    const viewBoxWidth = 500;
+    const viewBoxHeight = 170;
+
+    // --- 1. Check for Errors or Missing Data (after loading is false) ---
+    // Check if the main response object exists, has an error, or lacks the 'response' property
+    if (!this._waterLevels || this._waterLevels.error || !this._waterLevels.response) {
+      // Draw error message in SVG container (canvas already cleared)
+      const errorMessage = this._waterLevels?.error
+          ? `Error: ${this._waterLevels.error}`
+          : localizeCard('ui.card.marees_france.no_data_available', this.hass);
+      this._svgDraw.text(errorMessage)
+          .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
+          .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+      return;
+    }
+
+    // Access the actual tide data array within the 'response' object using the selected day
+    const levelsData = this._waterLevels.response[this._selectedDay];
+
+    // --- 2. Check for Data for the Selected Day ---
+    if (!Array.isArray(levelsData) || levelsData.length === 0) {
+        // Draw 'no data' message (canvas already cleared)
+        this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass))
+            .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
+            .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
+        return;
+    }
+
+    // --- SVG Dimensions and Margins (Using already defined viewBoxWidth/Height) ---
+    // Adjust margins for text/arrows: more top/bottom space needed
+    const margin = { top: 55, right: 15, bottom: 35, left: 15 }; // Adjusted margins
+    const graphWidth = viewBoxWidth - margin.left - margin.right;
+    const graphHeight = viewBoxHeight - margin.top - margin.bottom; // Recalculated
+
+    // --- Process Data ---
+    let minHeight = Infinity;
+    let maxHeight = -Infinity;
+    const points = levelsData.map(item => {
+        const timeStr = item[0];
+        const heightNum = parseFloat(item[1]);
+        if (isNaN(heightNum)) return null;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes;
+        minHeight = Math.min(minHeight, heightNum);
+        maxHeight = Math.max(maxHeight, heightNum);
+        return { totalMinutes, heightNum };
+    }).filter(p => p !== null);
+
+    // --- 3. Check if enough points to draw ---
+    if (points.length < 2) {
+         // Draw 'not enough data' message (canvas already cleared)
+         this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // Or a more specific message like "Not enough data points"
+             .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
+             .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
+        return;
+    }
+
+    // Adjust Y domain slightly for padding
+    const yPadding = (maxHeight - minHeight) * 0.1 || 0.5; // Add 10% padding or 0.5m
+    const yDomainMin = Math.max(0, minHeight - yPadding); // Ensure min is not negative
+    const yDomainMax = maxHeight + yPadding;
+    const yRange = Math.max(1, yDomainMax - yDomainMin); // Avoid division by zero
+
+    // --- Coordinate Mapping Functions ---
+    const timeToX = (totalMinutes) => margin.left + (totalMinutes / (24 * 60)) * graphWidth;
+    // Y is inverted in SVG (0 is top)
+    const heightToY = (h) => margin.top + graphHeight - ((h - yDomainMin) / yRange) * graphHeight;
+
+    // --- Generate SVG Path Data Strings ---
+    const pathData = points.map((p, index) => {
+        const x = timeToX(p.totalMinutes);
+        const y = heightToY(p.heightNum);
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }).join(' ');
+
+    const xAxisY = margin.top + graphHeight; // Y position of the X-axis line/labels
+    const firstPointX = timeToX(points[0].totalMinutes);
+    const lastPointX = timeToX(points[points.length - 1].totalMinutes);
+    // Fill path goes from first point X on axis, along curve, to last point X on axis, then closes
+    const fillPathData = `M ${firstPointX.toFixed(2)} ${xAxisY} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${xAxisY} Z`;
+
+    // --- Calculate Ticks and Markers Data ---
+     // --- X-Axis Ticks and Labels ---
+    const xTicks = [];
+    const xLabelStep = 480; // Label every 8 hours (0, 8, 16, 24)
+    for (let totalMinutes = 0; totalMinutes <= 24 * 60; totalMinutes += xLabelStep) {
+        const x = timeToX(totalMinutes === 1440 ? 1439.9 : totalMinutes); // Map 24:00 correctly
+        const hour = Math.floor(totalMinutes / 60);
+        const label = hour === 24 ? '00:00' : `${String(hour).padStart(2, '0')}:00`;
+        xTicks.push({ x: x, label: label });
+    }
+    // --- Tide Markers Data ---
+    const entityState = this.hass.states[this.config.entity]; // Need entityState here
+    const tideEvents = [];
+    if (entityState && entityState.attributes.data && entityState.attributes.data[this._selectedDay]) {
+        const dayData = entityState.attributes.data[this._selectedDay];
+        (dayData.high_tides || []).forEach(t => tideEvents.push({ ...t, type: 'high' }));
+        (dayData.low_tides || []).forEach(t => tideEvents.push({ ...t, type: 'low' }));
+    }
+    const tideMarkers = tideEvents.map(event => {
+        const [hours, minutes] = event.time.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes;
+        const height = parseFloat(event.height);
+        if (isNaN(height)) return null; // Skip if height is invalid
+        const x = timeToX(totalMinutes);
+        const y = heightToY(height);
+        const isHigh = event.type === 'high';
+        return { x: x, y: y, time: event.time, height: height, coefficient: isHigh ? event.coefficient : null, isHigh: isHigh };
+    }).filter(m => m !== null); // Filter out invalid markers
+
+     // --- Current Time Marker Data ---
+    const now = new Date();
+    // Only show current time marker if the selected day is today
+    let currentTimeMarker = null;
+    if (this._selectedDay === now.toISOString().slice(0, 10)) {
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+        if (currentTotalMinutes >= 0 && currentTotalMinutes < 24 * 60 && points.length >= 2) {
+            // Interpolation logic
+            let prevPoint = null;
+            let nextPoint = null;
+            for (let i = 0; i < points.length; i++) {
+                if (points[i].totalMinutes <= currentTotalMinutes) prevPoint = points[i];
+                if (points[i].totalMinutes > currentTotalMinutes) { nextPoint = points[i]; break; }
+            }
+            let currentHeight = null;
+            if (prevPoint && nextPoint) {
+                const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
+                if (timeDiff > 0) {
+                    const timeProgress = (currentTotalMinutes - prevPoint.totalMinutes) / timeDiff;
+                    currentHeight = prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
+                } else { currentHeight = prevPoint.heightNum; }
+            } else if (prevPoint) { currentHeight = prevPoint.heightNum; }
+            else if (nextPoint) { currentHeight = nextPoint.heightNum; }
+
+            if (currentHeight !== null) {
+                const currentX = timeToX(currentTotalMinutes);
+                const currentY = heightToY(currentHeight);
+                // Store only position for the dot
+                currentTimeMarker = { x: currentX, y: currentY };
             }
         }
-
-       // Render chart if needed and possible
-       if (needsChartUpdate && this.hass && this.config && this.config.entity && this.hass.states[this.config.entity]) {
-          this._renderOrUpdateChart();
-       }
-    }
-
-    // Destroy chart if graph was turned off
-    if (changedProperties.has('config') && oldConfig && oldConfig.show_graph && (!this.config || !this.config.show_graph) && this._chart) {
-       this._destroyChart();
-    } else if (changedProperties.has('config') && oldConfig && this.config.entity !== oldConfig.entity && this._chart) {
-        // Destroy chart also if entity changes while graph is shown
-        this._destroyChart();
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._destroyChart(); // Destroy chart when card is removed
-  }
-
-  _destroyChart() {
-     if (this._chart) {
-        this._chart.destroy();
-        this._chart = null;
-        // console.log("Chart destroyed");
-     }
-  }
-
-  // Interpolates tide heights using cosine function between high and low points
-  _interpolateTides(tides) {
-    if (!tides || tides.length < 2) {
-      return { labels: [], data: [], points: [], yMin: 0, yMax: 5 }; // Default range if no data
-    }
-
-    const interpolatedData = [];
-    const labels = [];
-    const pointsData = []; // Store original points for chart dataset
-    let dayMinHeight = Infinity;
-    let dayMaxHeight = -Infinity;
-
-    // Convert tide times to minutes since midnight for easier calculation
-    const tidesInMinutes = tides.map(tide => {
-      const [hours, minutes] = tide.time.split(':').map(Number);
-      const timeInMinutes = hours * 60 + minutes;
-      // Store original points for chart dataset {x: timeLabel, y: height}
-      // Ensure height is a number before pushing
-      const height = parseFloat(tide.height);
-      if (!isNaN(height)) {
-          pointsData.push({ x: tide.time, y: height, type: tide.type });
-          // Track min/max height for the day
-          if (height < dayMinHeight) dayMinHeight = height;
-          if (height > dayMaxHeight) dayMaxHeight = height;
-      } else {
-          console.warn(`Invalid height found for tide at ${tide.time}: ${tide.height}`);
-      }
-      return { ...tide, timeInMinutes, height: height }; // Store parsed height
-    }).filter(t => !isNaN(t.height)); // Filter out tides with invalid heights
-
-    // Re-check if we still have enough points after filtering
-    if (tidesInMinutes.length < 2) {
-        console.warn("Not enough valid tide points for interpolation after filtering.");
-        return { labels: [], data: [], points: [], yMin: 0, yMax: 5 };
     }
 
 
-    // Generate labels and calculate interpolated height every 30 minutes
-    for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += 30) {
-      const currentHour = Math.floor(totalMinutes / 60);
-      const currentMinute = totalMinutes % 60;
-      const currentTimeLabel = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-      labels.push(currentTimeLabel);
+    // --- Drawing the Actual Graph --- (canvas already cleared)
+    const draw = this._svgDraw; // Get the instance
+    const axisColor = 'var(--secondary-text-color, grey)';
+    const primaryTextColor = 'var(--primary-text-color, black)';
+    const secondaryTextColor = 'var(--secondary-text-color, grey)';
+    const curveColor = 'var(--primary-color, blue)';
+    const bgColor = 'var(--ha-card-background, white)';
+    const markerDotColor = '#FFEB3B'; // Yellow for current time marker dot
+    const arrowAndTextColor = 'var(--primary-text-color, white)'; // White for arrows and text as per image request
+    const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)'; // Coefficient box background (using a lighter fallback)
+    const coefBoxBorderColor = 'var(--ha-card-border-color, var(--divider-color, grey))'; // Coefficient box border
+    const coefTextColor = 'var(--primary-text-color, black)'; // Coefficient text color - WILL BE OVERRIDDEN BELOW
+    const coefLineColor = 'var(--primary-text-color, #212121)'; // Color for the dotted line (matching primary text fallback)
 
-      // Find the surrounding tides for the current time point
-      let prevTide = null;
-      let nextTide = null;
-      for (let i = 0; i < tidesInMinutes.length; i++) {
-        if (tidesInMinutes[i].timeInMinutes <= totalMinutes) {
-          prevTide = tidesInMinutes[i];
-        }
-        if (tidesInMinutes[i].timeInMinutes > totalMinutes) {
-          nextTide = tidesInMinutes[i];
-          break; // Found the next tide, no need to look further
-        }
-      }
+    const axisFontSize = 14; // Increased font size to match tabs
+    const tideTimeFontSize = 18; // Increased font size for tide time
+    const tideHeightFontSize = 16; // One size smaller than new tide time font size
+    const coefFontSize = 16; // Increased font size for coefficient significantly
+    const arrowSize = 8;
+    const coefBoxPadding = { x: 6, y: 4 }; // Adjusted padding for larger font
+    const coefBoxRadius = 4; // Rounded corners for coefficient box
+    const coefBoxTopMargin = 10; // Fixed Y position for the top edge of all coefficient boxes
+    const coefLineToPeakGap = 3; // Small gap between dotted line end and peak dot
 
-      let interpolatedHeight = null;
+    // Draw Base Elements First (Fill, Curve, Axis Labels)
+    draw.path(fillPathData).fill({ color: curveColor, opacity: 0.4 }).stroke('none');
+    draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 });
 
-      // Handle edge cases: before the first tide or after the last tide
-      if (!prevTide && nextTide) { // Before first tide
-        interpolatedHeight = nextTide.height; // Use the first tide's height
-      } else if (prevTide && !nextTide) { // After last tide
-        interpolatedHeight = prevTide.height; // Use the last tide's height
-      } else if (prevTide && nextTide) { // Between two tides
-         // Ensure heights are numbers before calculation
-         if (typeof prevTide.height !== 'number' || typeof nextTide.height !== 'number') {
-             console.warn("Invalid height in prevTide or nextTide during interpolation.");
-             interpolatedHeight = null; // Cannot interpolate with non-numeric heights
-         } else if (prevTide.timeInMinutes === totalMinutes) {
-             interpolatedHeight = prevTide.height;
-         } else {
-            const timeDiff = nextTide.timeInMinutes - prevTide.timeInMinutes;
-            // Avoid division by zero if tides are at the same time (unlikely but possible)
-            if (timeDiff === 0) {
-                interpolatedHeight = prevTide.height;
-            } else {
-                const heightDiff = nextTide.height - prevTide.height;
-                const timeProgress = (totalMinutes - prevTide.timeInMinutes) / timeDiff;
-
-                // Cosine interpolation formula: H(t) = H_low + (H_high - H_low) * (1 - cos(pi * t / T)) / 2
-                // Simplified for our case where we know the start/end heights and progress:
-                // Height = StartHeight + (EndHeight - StartHeight) * (1 - cos(PI * progress)) / 2
-                interpolatedHeight = prevTide.height + heightDiff * (1 - Math.cos(Math.PI * timeProgress)) / 2;
-            }
+    // Draw X Axis Labels
+    xTicks.forEach(tick => {
+         if (tick.label) {
+            draw.text(tick.label)
+                .font({ fill: axisColor, size: axisFontSize, anchor: 'middle', weight: 'normal' })
+                .move(tick.x, xAxisY + 10); // Position further below axis line
          }
-      } else {
-         // Should not happen if tides array has >= 2 elements, but fallback
-         interpolatedHeight = null;
-      }
+    });
 
-      // Check if interpolatedHeight is a valid number before formatting
-      interpolatedData.push(typeof interpolatedHeight === 'number' ? interpolatedHeight.toFixed(2) : null);
-    }
+    // --- Draw Tide Markers (Arrows & Text) ---
+    // Store calculated positions first to check for collisions later
+    const markerElements = []; // To store { element: svgElement, bbox: SVGRect }
 
-    // Calculate Y-axis limits with buffer, handle cases where min/max weren't updated
-    if (dayMinHeight === Infinity || dayMaxHeight === -Infinity) {
-        // Fallback if no valid heights were found
-        dayMinHeight = 0;
-        dayMaxHeight = 5;
-    }
-    const yMin = Math.floor((dayMinHeight - 0.5) * 2) / 2; // Round down to nearest 0.5
-    const yMax = Math.ceil((dayMaxHeight + 0.5) * 2) / 2;   // Round up to nearest 0.5
+    tideMarkers.forEach(marker => {
+        // --- Draw Coefficient for High Tides ---
+        if (marker.isHigh && marker.coefficient) {
+            const coefText = String(marker.coefficient);
+            // Create temporary text to measure width/height for the box, ensure font settings match final text
+            const tempText = draw.text(coefText)
+                                 .font({ size: coefFontSize, weight: 'bold', anchor: 'middle' })
+                                 .attr('dominant-baseline', 'central') // Match final text attributes
+                                 .opacity(0); // Invisible
+            const textBBox = tempText.bbox(); // Get bounding box
+            tempText.remove(); // Remove temporary element
 
-    // Ensure yMin is not greater than yMax (can happen with very small tide ranges)
-    // Ensure a minimum range of 1m for visibility
-    const finalYMin = Math.min(yMin, yMax - 1);
-    const finalYMax = Math.max(yMax, yMin + 1);
+            const boxWidth = textBBox.width + 2 * coefBoxPadding.x;
+            const boxHeight = textBBox.height + 2 * coefBoxPadding.y;
+            const boxX = marker.x - boxWidth / 2;
+            const boxY = coefBoxTopMargin; // Position box near the top
 
+            // Draw Coefficient Box
+            const coefRect = draw.rect(boxWidth, boxHeight)
+                .attr({ x: boxX, y: boxY, rx: coefBoxRadius, ry: coefBoxRadius })
+                .fill(coefBoxBgColor)
+                .stroke({ color: coefBoxBorderColor, width: 1 });
 
-    return { labels, data: interpolatedData, points: pointsData, yMin: finalYMin, yMax: finalYMax };
-  }
+            // Draw Coefficient Text
+            const coefTextElement = draw.text(coefText)
+                // Use primary text color for coefficient, anchor middle, dominant-baseline middle
+                .font({ fill: primaryTextColor, size: coefFontSize, weight: 'bold', anchor: 'middle' })
+                .attr('dominant-baseline', 'central') // Vertical centering attribute
+                // Set x and y attributes directly for precise positioning
+                .attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
 
-
-  // Renders or updates the tide chart
-  _renderOrUpdateChart() {
-    // Check if Chart object is available via import
-    if (typeof Chart === 'undefined') {
-        console.error("Chart.js module not loaded correctly!");
-        this._destroyChart();
-        // Optionally display an error message
-        const canvas = this.shadowRoot?.getElementById('tideChart');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'var(--error-color, red)';
-            ctx.font = '14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText("Error: Chart library failed to load.", canvas.width / 2, canvas.height / 2);
-        }
-        return;
-    }
-
-    if (!this.shadowRoot) {
-        return;
-    }
-    const canvas = this.shadowRoot.getElementById('tideChart');
-    if (!canvas) {
-        return;
-    }
-
-    const entityState = this.hass.states[this.config.entity];
-    if (!entityState || !entityState.attributes.data) {
-        this._destroyChart();
-        return;
-    }
-
-    const tideData = entityState.attributes.data;
-    const currentDayData = tideData[this._selectedDay];
-    const allTides = currentDayData ? [
-      ...(currentDayData.high_tides?.map(t => ({ ...t, type: 'high' })) || []),
-      ...(currentDayData.low_tides?.map(t => ({ ...t, type: 'low' })) || [])
-    ].sort((a, b) => a.time.localeCompare(b.time)) : [];
-
-    const { labels, data, points, yMin, yMax } = this._interpolateTides(allTides);
-
-    if (labels.length === 0 || data.length === 0) {
-        this._destroyChart();
-        return;
-    }
-
-    // Map points to the closest category labels for correct positioning
-    const mappedPointsData = points.map(point => {
-        const [pointHours, pointMinutes] = point.x.split(':').map(Number);
-        const pointTotalMinutes = pointHours * 60 + pointMinutes;
-
-        let closestLabel = labels[0];
-        let minDiff = Infinity;
-
-        labels.forEach(label => {
-            const [labelHours, labelMinutes] = label.split(':').map(Number);
-            const labelTotalMinutes = labelHours * 60 + labelMinutes;
-            const diff = Math.abs(labelTotalMinutes - pointTotalMinutes);
-
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestLabel = label;
+            // Draw Dotted Line from Box to Peak
+            const lineStartY = boxY + boxHeight; // Bottom of the box
+            const lineEndY = marker.y - coefLineToPeakGap; // Slightly above the peak point
+            if (lineEndY > lineStartY) { // Only draw if line has positive length
+                 draw.line(marker.x, lineStartY, marker.x, lineEndY)
+                    // Use primary text color for the dotted line
+                    .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' });
             }
-            // Handle exact match edge case if point time is exactly on a label interval
-            if (diff === 0) return; // Already found the best match
-        });
+        }
 
-        return {
-            x: closestLabel, // Use the closest label for the x-axis category
-            y: point.y,
-            type: point.type // Keep original type for coloring/tooltip
-        };
+        // --- Draw Arrows and Time/Height Text ---
+        const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.0; // Offset from curve point
+        const textLineHeight = tideTimeFontSize * 1.1; // Adjusted line height factor
+        const visualPadding = 8; // Desired visual gap between arrow tip and text edge
+
+        const arrowGroup = draw.group(); // Group arrow and text
+
+        // Arrow Path (Simple Triangle)
+        let arrowPathData;
+        const arrowY = marker.y + arrowYOffset;
+        if (marker.isHigh) { // Up Arrow Triangle
+            arrowPathData = `M ${marker.x - arrowSize/2},${arrowY + arrowSize*0.4} L ${marker.x + arrowSize/2},${arrowY + arrowSize*0.4} L ${marker.x},${arrowY - arrowSize*0.4} Z`;
+        } else { // Down Arrow Triangle
+            arrowPathData = `M ${marker.x - arrowSize/2},${arrowY - arrowSize*0.4} L ${marker.x + arrowSize/2},${arrowY - arrowSize*0.4} L ${marker.x},${arrowY + arrowSize*0.4} Z`;
+        }
+        const arrow = arrowGroup.path(arrowPathData)
+           .fill(arrowAndTextColor)
+           .stroke('none');
+
+        // Text (Time and Height) - Positioning based on visual gap from arrow tip (Reverted Arrow Offset)
+        let timeTextY, heightTextY;
+        const arrowTipOffset = arrowSize * 0.4; // Vertical distance from arrowY center to the tip
+        // Estimate ascent/descent based on font size (adjust factor if needed, 0.8 is common for ascent)
+        const timeAscent = tideTimeFontSize * 0.8;
+        const heightDescent = tideHeightFontSize * 0.2; // Smaller factor for descent below baseline
+
+        if (marker.isHigh) { // High tide: Arrow points up, text below
+            const arrowTipY = arrowY - arrowTipOffset; // Y-coordinate of the arrow tip (top point)
+            // Position baseline of time text so its top edge (baseline - ascent) is 'visualPadding' below arrow tip
+            timeTextY = arrowTipY + visualPadding + timeAscent - 10; // Move 10px higher
+            heightTextY = timeTextY + textLineHeight;
+        } else { // Low tide: Arrow points down, text above
+            const arrowTipY = arrowY + arrowTipOffset; // Y-coordinate of the arrow tip (bottom point)
+            // Position baseline of height text so its bottom edge (baseline + descent) is the same distance above the arrow tip
+            // as the high tide's top edge is below its arrow tip (visualPadding - 22). Subtract 22 to move higher.
+            heightTextY = arrowTipY - visualPadding - heightDescent - 22;
+            timeTextY = heightTextY - textLineHeight;
+        }
+
+        // Use cx() for horizontal centering and y() for vertical positioning
+        const timeText = arrowGroup.text(marker.time)
+            .font({ fill: arrowAndTextColor, size: tideTimeFontSize, weight: 'bold' })
+            .attr('text-anchor', 'middle')
+            // Removed dominant-baseline
+            .cx(marker.x) // Center horizontally at marker.x
+            .y(timeTextY); // Set vertical position (baseline)
+
+        const heightText = arrowGroup.text(`${marker.height.toFixed(1)}m`)
+            .font({ fill: arrowAndTextColor, size: tideHeightFontSize })
+            .attr('text-anchor', 'middle')
+            // Removed dominant-baseline
+            .cx(marker.x) // Center horizontally at marker.x
+            .y(heightTextY); // Set vertical position (baseline)
+
+        // Store for collision detection (use group's bbox)
+        markerElements.push({ element: arrowGroup, bbox: arrowGroup.bbox(), isHigh: marker.isHigh, markerY: marker.y });
     });
 
 
-    const pointDataset = {
-        label: 'Actual Tides',
-        data: mappedPointsData, // Use the mapped data
-        pointBackgroundColor: mappedPointsData.map(p => p.type === 'high' ? 'red' : 'blue'), // Base color on mapped data type
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        showLine: false,
-        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
-        order: 0 // Ensure points are drawn on top of the line
-    };
-
-    this._destroyChart();
-
-    const ctx = canvas.getContext('2d');
-    try {
-        // Use the constructor from the imported namespace
-        this._chart = new Chart(ctx, { // Use ChartJS directly
-            type: 'line',
-            data: {
-                datasets: [
-                    {
-                        label: localizeCard('ui.card.marees_france.height', this.hass) || 'Height (m)',
-                        data: data.map((y, index) => ({ x: labels[index], y: y === null ? null : parseFloat(y) })),
-                        borderColor: 'var(--primary-color, rgb(75, 192, 192))',
-                        tension: 0.4,
-                        pointRadius: 0,
-                        fill: false,
-                        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
-                        order: 1
-                    },
-                    pointDataset
-                ]
-            },
-            options: {
-                animation: false,
-                responsive: true,
-                maintainAspectRatio: false,
-                animations: {
-                  colors: false,
-                  x: false,
-                },
-                scales: {
-                    x: {
-                        type: 'category',
-                        labels: labels,
-                        title: { display: false },
-                        ticks: {
-                             maxTicksLimit: 13,
-                             maxRotation: 0,
-                             autoSkipPadding: 15
-                        }
-                    },
-                    y: {
-                        title: { display: true, text: localizeCard('ui.card.marees_france.height', this.hass) || 'Height (m)' },
-                        min: yMin,
-                        max: yMax,
-                        ticks: {
-                            stepSize: 0.5,
-                            callback: function(value) { return value.toFixed(1) + ' m'; }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            title: function(tooltipItems) { return tooltipItems[0].label; },
-                            label: (context) => {
-                                let label = context.dataset.label || '';
-                                if (label) { label += ': '; }
-                                if (context.parsed.y !== null) {
-                                    if (context.datasetIndex === 1) {
-                                        const pointType = context.raw.type === 'high'
-                                            ? (localizeCard('ui.card.marees_france.high_tide_short', this.hass) || 'High')
-                                            : (localizeCard('ui.card.marees_france.low_tide_short', this.hass) || 'Low');
-                                        label = `${pointType}: ${context.parsed.y.toFixed(2)} m`;
-                                    } else {
-                                        label = `${localizeCard('ui.card.marees_france.height', this.hass) || 'Height'}: ${context.parsed.y.toFixed(2)} m`;
-                                    }
-                                }
-                                return label;
-                            }
-                        }
-                    },
-                    legend: { display: false }
-                },
-                interaction: {
-                     mode: 'nearest',
-                     axis: 'x',
-                     intersect: false
-                },
-                elements: {
-                    point: { hoverRadius: 7 }
-                },
-              transitions: {
-                active: {
-                  animation: {
-                    duration: 0
-                  }
-                }
-              }
-            }
-        });
-    } catch (error) {
-        console.error("Error rendering chart:", error);
-        this._destroyChart();
+    // --- Draw Current Time Marker (Yellow Dot) ---
+    // Removed finalDotY variable and collision detection logic
+    if (currentTimeMarker) {
+        const dotRadius = 4;
+        // Draw the dot directly at the calculated position
+        draw.circle(dotRadius * 2) // diameter
+            .center(currentTimeMarker.x, currentTimeMarker.y) // Use original calculated Y
+            .fill(markerDotColor)
+            .stroke({ color: bgColor, width: 1 }); // Add small background stroke for visibility
     }
+
   }
 
 
   getCardSize() {
-    // Base size: header(1) + current_status(1) + tabs(1) + tide_rows(~3) = 6
-    let size = 6;
-    if (this.config && this.config.show_graph) {
-        size += 4; // Add ~4 units for the chart height
-    }
+    // Base size: header(1) + next_tide_status(1) + tabs(1) + graph(~4) = 7
+    let size = 7; // Keep size, graph height increase is internal to SVG
     return size;
   }
 
   static get styles() {
     return css`
       :host {
+        /* Card specific vars using HA vars */
         --tide-icon-color: var(--primary-text-color);
         --tide-time-color: var(--primary-text-color);
         --tide-detail-color: var(--secondary-text-color);
-        --tab-inactive-background: var(--ha-card-background, var(--card-background-color, #f0f0f0));
+        /* Tab colors */
+        --tab-inactive-background: var(--ha-card-background); /* Use card background for inactive tabs */
         --tab-active-background: var(--primary-color);
         --tab-inactive-text-color: var(--secondary-text-color);
-        --tab-active-text-color: var(--text-primary-color, white); /* Color for text on active tab */
-        --current-status-background: rgba(var(--rgb-primary-color), 0.1); /* Subtle background for status */
+        --tab-active-text-color: var(--text-primary-color);
         display: block;
+      }
+      ha-card {
+        overflow: hidden; /* Prevent SVG overflow issues */
       }
       .warning {
         background-color: var(--error-color);
@@ -796,41 +753,57 @@ class MareesFranceCard extends LitElement {
         padding: 8px;
         text-align: center;
         border-radius: 4px;
-        margin-bottom: 10px;
+        margin: 10px 16px; /* Add horizontal margin */
       }
-      .current-status {
+      .card-header {
+          /* Standard HA card header style */
+          padding: 16px 16px 8px 16px; /* Less bottom padding */
+          font-size: 1.2em; /* Slightly larger */
+          font-weight: 500;
+          color: var(--primary-text-color);
+      }
+      .card-content {
+          padding: 0 16px 16px 16px; /* No top padding, standard sides/bottom */
+      }
+
+      /* Next Tide Status Display Styles */
+      .next-tide-status {
+        display: flex;
+        flex-direction: column; /* Stack icon/time and details */
+        align-items: flex-start; /* Align items to the left */
+        gap: 4px; /* Smaller gap between lines */
+        padding-bottom: 16px; /* Space before tabs */
+      }
+      .next-tide-icon-time {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px;
-        margin-bottom: 16px;
-        background-color: var(--current-status-background);
-        border-radius: 8px;
+        gap: 8px;
       }
-      .current-status ha-icon {
-        font-size: 2em; /* Larger icon for current status */
-        color: var(--primary-color);
+      .next-tide-icon-time ha-icon {
+        font-size: 2.2em; /* Slightly smaller icon */
+        color: var(--tide-icon-color);
       }
-      .status-text {
-        flex-grow: 1;
-        font-size: 1.1em;
+      .next-tide-time {
+        font-size: 2.0em; /* Slightly smaller time */
+        font-weight: 400; /* Normal weight */
+        color: var(--tide-time-color);
+        line-height: 1; /* Adjust line height */
       }
-      .status-details {
-        font-size: 0.9em;
-        color: var(--secondary-text-color);
-        display: flex;
-        gap: 10px;
-        margin-top: 4px;
+      .next-tide-details {
+        display: flex; /* Keep details on one line if possible */
+        flex-wrap: wrap; /* Allow wrapping */
+        gap: 8px; /* Space between height and coef */
+        padding-left: calc(2.2em + 8px); /* Indent details to align below time (icon width + gap) */
+        font-size: 1.0em; /* Slightly smaller details */
+        color: var(--tide-detail-color);
+        line-height: 1.3; /* Adjust line height */
       }
-      .status-details span {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
+      .next-tide-details span {
+         display: inline-block; /* Keep height and coef box inline */
+         vertical-align: middle; /* Align items vertically */
       }
-      .status-details ha-icon {
-         font-size: 1em;
-         color: var(--secondary-text-color);
-      }
+      /* Separator is now handled directly in the HTML template */
+
 
       .tabs {
         display: grid;
@@ -853,121 +826,52 @@ class MareesFranceCard extends LitElement {
       .tab:hover {
          filter: brightness(95%);
       }
-      .tab-date {
-        font-size: 11px;
-        color: var(--secondary-text-color); /* Ensure date color is subtle */
-      }
       .tab.active {
         background: var(--tab-active-background);
         color: var(--tab-active-text-color);
         font-weight: bold;
       }
-      .tab.active .tab-date {
-         color: var(--tab-active-text-color); /* Make date color match active tab text */
-         opacity: 0.8;
-      }
 
-      .tide-list {
-        display: flex;
-        flex-direction: column; /* Keep column flex for overall list */
-        gap: 8px; /* Space between rows */
+      /* Styles for SVG graph container and loader */
+      @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
-
-      .tide-row {
-        display: grid;
-        /* Use 1fr 1fr for equal columns */
-        grid-template-columns: 1fr 1fr;
-        gap: 8px; /* Space between columns */
-        align-items: start; /* Align items to the top of the cell */
-      }
-
-      .tide-cell {
-        /* Cells will contain a tide-entry or be empty */
-        min-height: 50px; /* Ensure empty cells have some height */
-        /* Removed specific high/low tide classes */
-      }
-
-      .tide-cell-left {
-        /* Add specific styles for left cell if needed */
-      }
-
-      .tide-cell-right {
-         /* Add specific styles for right cell if needed */
-      }
-
-      .tide-entry {
-        display: flex;
-        flex-direction: column; /* Stack main info and details */
-        padding: 5px;
-        background-color: var(--ha-card-background, var(--card-background-color, #ffffff)); /* Use card background */
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow */
-      }
-
-      .tide-main {
-        display: flex;
-        align-items: center;
-        gap: 8px; /* Space between icon and text */
-        margin-bottom: 6px; /* Space between main line and details */
-      }
-
-      .tide-main ha-icon {
-        color: var(--tide-icon-color);
-      }
-
-      .tide-status {
-        font-weight: 500; /* Slightly bolder status */
-        color: var(--tide-time-color);
-      }
-
-      .tide-details {
-        display: flex;
-        align-items: center;
-        gap: 10px; /* Space between height and coefficient */
-        padding-left: 30px; /* Indent details to align under status text (icon width + gap) */
-      }
-
-      .tide-detail {
-        display: flex;
-        align-items: center;
-        gap: 4px; /* Space between detail icon and value */
-        font-size: 0.9em;
-        color: var(--tide-detail-color);
-      }
-
-      .tide-detail ha-icon {
-        font-size: 1.1em; /* Slightly larger detail icons */
-        color: var(--tide-detail-color);
-      }
-
-      .empty {
-        font-style: italic;
-        color: var(--secondary-text-color);
-        text-align: center;
-        padding: 10px;
-      }
-
-      .chart-container {
-        position: relative; /* Needed for responsive chart */
-        height: 250px; /* Increased height for better visibility */
-        margin-top: 16px; /* Space above the chart */
-        width: 100%;
-      }
-      .chart-error { /* Style for the error message */
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
+      .svg-graph-container {
+        position: relative; /* Needed for absolute positioning of loader */
+        display: flex; /* Use flex to center loader */
         justify-content: center;
-        color: var(--error-color, red);
-        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
-        text-align: center;
-        padding: 10px;
-        box-sizing: border-box;
-        font-size: 14px;
+        align-items: center;
+        /* Use aspect-ratio for responsive height based on width */
+        aspect-ratio: 500 / 170; /* Updated aspect ratio */
+        width: 100%;
+        height: auto; /* Let aspect-ratio control height */
+        max-height: 220px; /* Optional max height increased */
+        margin-top: 10px; /* Space above graph */
+      }
+      .svg-graph-container .loading-icon {
+        position: absolute; /* Position over the graph area */
+        font-size: 3em; /* Adjust size as needed */
+        color: var(--primary-color); /* Use primary color */
+        animation: rotate 1.5s linear infinite; /* Apply rotation */
+        z-index: 10; /* Ensure loader is above SVG content */
+        opacity: 1; /* Final state */
+        transition: opacity 0.4s ease-in-out; /* Fade-in effect */
+      }
+      /* When the icon is added via the template, it should fade from implicit 0 to 1 */
+
+      .svg-graph-target {
+         /* Ensure the SVG target takes up the container space */
+         width: 100%;
+         height: 100%;
+         position: relative; /* Establish stacking context if needed */
+         z-index: 1; /* Ensure graph is below loader */
+      }
+      /* Removed .hidden class rule */
+      .svg-graph-target svg {
+          display: block; /* Remove extra space below SVG */
+          width: 100%;
+          height: 100%;
       }
     `;
   }

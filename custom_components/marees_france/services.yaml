@@ -1,0 +1,28 @@
+get_water_levels:
+  name: Get Water Levels
+  description: Fetches detailed water level heights for a specific harbor and date from the SHOM API.
+  fields:
+    harbor_name:
+      name: Harbor Name
+      description: The official name of the harbor (e.g., LE_PALAIS).
+      required: true
+      example: "LE_PALAIS"
+      selector:
+        text:
+    date:
+      name: Date
+      description: The date for which to fetch water levels (YYYY-MM-DD format).
+      required: true
+      example: "2025-04-24"
+      selector:
+        date:
+  response:
+    description: The raw water level data returned by the SHOM API, keyed by date.
+    example: >
+      {
+        "2025-04-23": [
+          ["00:00:00", 3.8],
+          ["00:05:00", 3.83],
+          ["00:10:00", 3.86]
+        ]
+      }

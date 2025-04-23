@@ -36,5 +36,21 @@
             }
         }
     },
+    "services": {
+      "get_water_levels": {
+        "name": "Get Water Levels",
+        "description": "Fetches detailed water level heights for a specific harbor and date from the SHOM API.",
+        "fields": {
+          "harbor_name": {
+            "name": "Harbor Name",
+            "description": "The official name of the harbor (e.g., LE_PALAIS)."
+          },
+          "date": {
+            "name": "Date",
+            "description": "The date for which to fetch water levels (YYYY-MM-DD format)."
+          }
+        }
+      }
+    },
     "title": "Mar\u00e9es France (SHOM)"
 }
