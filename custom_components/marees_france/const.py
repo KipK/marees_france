@@ -1,3 +1,5 @@
+import logging
+
 """Constants for the Marées France integration."""
 
 import json
