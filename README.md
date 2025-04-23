@@ -12,7 +12,7 @@ Home-Assistant integration and its lovelace card to display french tides from Sh
 
 #### Manually
 
-Add the custom repo link to HACS <https://github.com/KipK/marees_france>
+Add the custom repo link to HACS <KipK/marees_france>
 
 Search for "marees_france" in HACS and install.
 

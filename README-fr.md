@@ -12,7 +12,7 @@ Intégration Home-Assistant et sa carte Lovelace pour afficher les marées Fran�
 
 #### Manuelle
 
-Ajouter le repository à HACS:  <https://github.com/KipK/marees_france>
+Ajouter le repository à HACS:  <KipK/marees_france>
 
 Rechercher "Marées France" dans HACS et installer.
 
