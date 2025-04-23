@@ -1,0 +1,29 @@
+
+name: Release
+
+on:
+  release:
+
+jobs:
+  release_zip_file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Create ZIP archive
+        run: |
+          mkdir -p temp_dist
+          zip -r temp_dist/maree_france.zip custom_components/marees_france/
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./temp_dist/maree_france.zip
+          asset_name: maree_france.zip
+          asset_content_type: application/zip

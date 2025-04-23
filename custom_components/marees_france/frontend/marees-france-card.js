@@ -628,15 +628,44 @@ class MareesFranceCard extends LitElement {
         return;
     }
 
+    // Map points to the closest category labels for correct positioning
+    const mappedPointsData = points.map(point => {
+        const [pointHours, pointMinutes] = point.x.split(':').map(Number);
+        const pointTotalMinutes = pointHours * 60 + pointMinutes;
+
+        let closestLabel = labels[0];
+        let minDiff = Infinity;
+
+        labels.forEach(label => {
+            const [labelHours, labelMinutes] = label.split(':').map(Number);
+            const labelTotalMinutes = labelHours * 60 + labelMinutes;
+            const diff = Math.abs(labelTotalMinutes - pointTotalMinutes);
+
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestLabel = label;
+            }
+            // Handle exact match edge case if point time is exactly on a label interval
+            if (diff === 0) return; // Already found the best match
+        });
+
+        return {
+            x: closestLabel, // Use the closest label for the x-axis category
+            y: point.y,
+            type: point.type // Keep original type for coloring/tooltip
+        };
+    });
+
+
     const pointDataset = {
         label: 'Actual Tides',
-        data: points,
-        pointBackgroundColor: points.map(p => p.type === 'high' ? 'red' : 'blue'),
+        data: mappedPointsData, // Use the mapped data
+        pointBackgroundColor: mappedPointsData.map(p => p.type === 'high' ? 'red' : 'blue'), // Base color on mapped data type
         pointRadius: 5,
         pointHoverRadius: 7,
         showLine: false,
         parsing: { xAxisKey: 'x', yAxisKey: 'y' },
-        order: 0
+        order: 0 // Ensure points are drawn on top of the line
     };
 
     this._destroyChart();
