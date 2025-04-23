@@ -11,12 +11,24 @@ from homeassistant.core import HomeAssistant
 # Local application/library specific imports
 from .const import DOMAIN, PLATFORMS
 from .coordinator import MareesFranceUpdateCoordinator
-# Frontend import moved into async_setup_entry
+from .frontend import JSModuleRegistration # Import frontend helper here
 
 # Import the standard frontend registration helper
 # from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Marées France component."""
+    # Register the custom frontend panel (custom card)
+    # This should only happen once
+    module_register = JSModuleRegistration(hass)
+    await module_register.async_register()
+    _LOGGER.debug("Registered Marées France frontend module.")
+    # Return true to indicate successful setup of the component
+    return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Marées France from a config entry."""
@@ -38,10 +50,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up update listener
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
-    # Register custom cards - Import frontend code only when setting up entry
-    from .frontend import JSModuleRegistration
-    moodule_register = JSModuleRegistration(hass)
-    await moodule_register.async_register()
 
     return True
 
