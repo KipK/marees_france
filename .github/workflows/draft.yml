@@ -13,16 +13,10 @@ jobs:
         run: |
           yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
             "${{ github.workspace }}/custom_components/marees_france/manifest.json"
-      - name: Commit new version
-        run: |
-          git config --local user.name "GitHub Action"
-          git config --local user.email "
-          git config --global user.name "KipK"
-          git config --global user.email "KipK@nospam.org"
-          git add custom_components/marees_france/manifest.json
-          git commit -m "Bump version"
-          git push
-
+      - name: Commit & Push new version
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create ZIP archive
         run: mkdir -p tmp_dist && cd custom_components/marees_france/ && zip -r ../../tmp_dist/marees_france.zip .
       - name: Release
