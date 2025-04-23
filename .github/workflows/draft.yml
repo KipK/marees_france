@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v2	
       - name: "Set version number"
         run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
+          yq -i -o json '.version="${{ github.ref_name }}"' \
             "${{ github.workspace }}/custom_components/marees_france/manifest.json"
       - name: Commit & Push new version
         uses: actions-js/push@master
