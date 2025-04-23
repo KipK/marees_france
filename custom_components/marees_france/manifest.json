@@ -2,7 +2,7 @@
   "domain": "marees_france",
   "name": "Marées France",
   "version": "1.0.0",
-  "documentation": "https://github.com/KipK/hmarees_france",
+  "documentation": "https://github.com/KipK/marees_france",
   "issue_tracker": "https://github.com/KipK/marees_france/issues",
   "codeowners": [
     "@yKipK"
@@ -16,7 +16,6 @@
   "loggers": [
     "marees_france"
   ],
-  "integration_type": "service",
   "dependencies": [
     "frontend"
   ],
