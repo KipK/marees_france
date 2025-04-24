@@ -1089,33 +1089,36 @@ class MareesFranceCard extends LitElement {
       let tooltipX = markerX - bgWidth / 2;
       let tooltipY = markerY - bgHeight - offset;
 
-      // --- Boundary Checks ---
-      const svgRoot = this._svgDraw; // Get the root SVG element
+      // --- Boundary Checks (using SVG viewBox coordinates) ---
+      const svgRoot = this._svgDraw;
       const viewBox = svgRoot.viewbox();
 
-      // Check left boundary - ensure tooltipX is at least viewBox.x
+      // Check top boundary: If tooltip goes above viewBox.y, position it below the marker instead.
+      if (tooltipY < viewBox.y) {
+          tooltipY = markerY + offset;
+      }
+
+      // Check bottom boundary: Ensure tooltip bottom (tooltipY + bgHeight) doesn't exceed viewBox bottom.
+      if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
+          tooltipY = viewBox.y + viewBox.height - bgHeight;
+          // If adjusting for bottom pushes it above the top, clamp it to the top edge.
+          if (tooltipY < viewBox.y) {
+              tooltipY = viewBox.y;
+          }
+      }
+
+      // Check left boundary: Ensure tooltipX is at least viewBox.x.
       if (tooltipX < viewBox.x) {
           tooltipX = viewBox.x;
       }
-      // Check right boundary - ensure tooltipX + bgWidth does not exceed viewBox.x + viewBox.width
+
+      // Check right boundary: Ensure tooltip right (tooltipX + bgWidth) doesn't exceed viewBox right.
       if (tooltipX + bgWidth > viewBox.x + viewBox.width) {
           tooltipX = viewBox.x + viewBox.width - bgWidth;
-      }
-      // Check top boundary - if tooltip goes above viewBox.y, position it below the marker instead
-      if (tooltipY < viewBox.y) {
-          tooltipY = markerY + offset; // Position below the marker
-          // Re-check bottom boundary after flipping
-          if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
-              tooltipY = viewBox.y + viewBox.height - bgHeight; // Adjust if it still goes off bottom
-          }
-      } else {
-          // If positioned above, check bottom boundary - ensure tooltipY + bgHeight does not exceed viewBox.y + viewBox.height
-          if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
-              tooltipY = viewBox.y + viewBox.height - bgHeight; // Adjust to fit
-              // Re-check top boundary after adjusting for bottom (in case it pushes it too high)
-              if (tooltipY < viewBox.y) {
-                 tooltipY = viewBox.y; // Stick to top edge if it can't fit above or below
-              }
+          // If adjusting for right pushes it past the left edge, clamp it to the left edge.
+          // This handles cases where the tooltip is wider than the viewBox.
+          if (tooltipX < viewBox.x) {
+              tooltipX = viewBox.x;
           }
       }
 
