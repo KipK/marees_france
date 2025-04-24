@@ -1264,7 +1264,7 @@ class MareesFranceCard extends LitElement {
         justify-content: center;
         align-items: center;
         /* Use aspect-ratio for responsive height based on width */
-        aspect-ratio: 500 / 170; /* Updated aspect ratio */
+        aspect-ratio: 500 / 200; /* Updated aspect ratio */
         width: 100%;
         height: auto; /* Let aspect-ratio control height */
         max-height: 220px; /* Optional max height increased */
@@ -1277,7 +1277,7 @@ class MareesFranceCard extends LitElement {
         animation: rotate 1.5s linear infinite; /* Apply rotation */
         z-index: 10; /* Ensure loader is above SVG content */
         opacity: 1; /* Final state */
-        transition: opacity 0.4s ease-in-out; /* Fade-in effect */
+        transition: opacity 1s ease-in; /* Fade-in effect */
       }
       /* When the icon is added via the template, it should fade from implicit 0 to 1 */
 
