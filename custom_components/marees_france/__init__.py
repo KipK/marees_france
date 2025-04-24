@@ -6,6 +6,8 @@ import logging
 import asyncio
 import aiohttp
 import voluptuous as vol
+from datetime import date # Add date import
+from typing import Any # Add Any import
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
@@ -13,6 +15,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse # Add SupportsResponse here
 from homeassistant.exceptions import HomeAssistantError # Import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession # Import async_get_clientsession
+from homeassistant.helpers.storage import Store # Add Store import
 import homeassistant.helpers.config_validation as cv # Import cv
 
 # Local application/library specific imports
@@ -33,6 +36,10 @@ from .frontend import JSModuleRegistration # Import frontend helper here
 
 _LOGGER = logging.getLogger(__name__)
 
+# Storage constants for water levels cache
+WATERLEVELS_STORAGE_KEY = f"{DOMAIN}_water_levels_cache"
+WATERLEVELS_STORAGE_VERSION = 1
+
 # Service Schema Definition
 SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
     vol.Required(ATTR_HARBOR_NAME): cv.string,
@@ -41,27 +48,73 @@ SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
 
 # Service Handler Definition
 async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
-    """Handle the service call to get water levels."""
+    """Handle the service call to get water levels, using caching."""
     harbor_name = call.data[ATTR_HARBOR_NAME]
-    date_str = call.data[ATTR_DATE]
+    date_str = call.data[ATTR_DATE] # Expected format: YYYY-MM-DD
+
+    store = Store[dict[str, dict[str, Any]]](call.hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
+
+    # 1. Load cache
+    cache = await store.async_load() or {}
+    needs_save = False
+    today_date = date.today()
+
+    # 2. Prune cache
+    harbors_to_prune = list(cache.keys()) # Iterate over a copy of keys
+    for h_name in harbors_to_prune:
+        if h_name not in cache: # Check if harbor still exists (might be removed by inner loop)
+            continue
+        dates_to_prune = list(cache[h_name].keys()) # Iterate over a copy of date keys
+        for d_str in dates_to_prune:
+            try:
+                d_date = date.fromisoformat(d_str)
+                if d_date < today_date:
+                    del cache[h_name][d_str]
+                    needs_save = True
+                    _LOGGER.debug("Pruned old cache entry: %s for %s", d_str, h_name)
+            except ValueError:
+                # Invalid date format in cache key, remove it
+                del cache[h_name][d_str]
+                needs_save = True
+                _LOGGER.warning("Removed cache entry with invalid date key: %s for %s", d_str, h_name)
+
+        # Remove harbor entry if it becomes empty after pruning dates
+        if not cache[h_name]:
+            del cache[h_name]
+            needs_save = True # Ensure save happens if harbor entry is removed
+
+    # 3. Check cache
+    cached_entry = cache.get(harbor_name, {}).get(date_str)
+
+    if cached_entry is not None:
+        _LOGGER.debug("Cache hit for water levels: %s on %s", harbor_name, date_str)
+        # Save if pruning occurred
+        if needs_save:
+            await store.async_save(cache)
+            _LOGGER.debug("Saved pruned cache")
+        return cached_entry # Return cached data
+
+    # 4. Cache miss - Fetch from API
+    _LOGGER.debug("Cache miss for water levels: %s on %s. Fetching from API.", harbor_name, date_str)
     url = WATERLEVELS_URL_TEMPLATE.format(harbor_name=harbor_name, date=date_str)
-    # Get session from hass instance passed in the call object
     session = async_get_clientsession(call.hass)
 
-    _LOGGER.debug("Calling SHOM water level API: %s", url)
     try:
-        # Use asyncio.timeout for request timeout
         async with asyncio.timeout(30):
             response = await session.get(url, headers=HEADERS)
-            # Raise HTTPError for bad responses (4xx or 5xx)
             response.raise_for_status()
             data = await response.json()
             _LOGGER.debug("Received water level data for %s on %s", harbor_name, date_str)
-            # Return the data directly
-            return data
+
+            # 5. Store in cache and save
+            cache.setdefault(harbor_name, {})[date_str] = data
+            await store.async_save(cache)
+            _LOGGER.debug("Cached new water level data for %s on %s and saved cache", harbor_name, date_str)
+
+            return data # Return freshly fetched data
+
     except asyncio.TimeoutError as err:
         _LOGGER.error("Timeout fetching water levels for %s on %s", harbor_name, date_str)
-        # Raise HomeAssistantError for service call failures
         raise HomeAssistantError(f"Timeout fetching water levels: {err}") from err
     except aiohttp.ClientResponseError as err:
         _LOGGER.error("HTTP error fetching water levels for %s on %s: %s %s", harbor_name, date_str, err.status, err.message)
@@ -70,7 +123,6 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
         _LOGGER.error("Client error fetching water levels for %s on %s: %s", harbor_name, date_str, err)
         raise HomeAssistantError(f"Client error fetching water levels: {err}") from err
     except Exception as err:
-        # Log the full exception traceback for unexpected errors
         _LOGGER.exception("Unexpected error fetching water levels for %s on %s", harbor_name, date_str)
         raise HomeAssistantError(f"Unexpected error fetching water levels: {err}") from err
 
