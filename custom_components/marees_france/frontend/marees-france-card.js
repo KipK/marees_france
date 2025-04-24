@@ -1091,34 +1091,34 @@ class MareesFranceCard extends LitElement {
 
       // --- Boundary Checks (using SVG viewBox coordinates) ---
       const svgRoot = this._svgDraw;
-      const viewBox = svgRoot.viewbox();
+      const viewBox = svgRoot.viewbox(); // Get the current viewBox
+      const safetyMargin = 1; // Small margin to prevent visually exceeding due to stroke, etc.
 
       // Check top boundary: If tooltip goes above viewBox.y, position it below the marker instead.
-      if (tooltipY < viewBox.y) {
+      if (tooltipY < viewBox.y + safetyMargin) {
           tooltipY = markerY + offset;
       }
 
       // Check bottom boundary: Ensure tooltip bottom (tooltipY + bgHeight) doesn't exceed viewBox bottom.
-      if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
-          tooltipY = viewBox.y + viewBox.height - bgHeight;
+      if (tooltipY + bgHeight > viewBox.y + viewBox.height - safetyMargin) {
+          tooltipY = viewBox.y + viewBox.height - bgHeight - safetyMargin;
           // If adjusting for bottom pushes it above the top, clamp it to the top edge.
-          if (tooltipY < viewBox.y) {
-              tooltipY = viewBox.y;
+          if (tooltipY < viewBox.y + safetyMargin) {
+              tooltipY = viewBox.y + safetyMargin;
           }
       }
 
       // Check left boundary: Ensure tooltipX is at least viewBox.x.
-      if (tooltipX < viewBox.x) {
-          tooltipX = viewBox.x;
+      if (tooltipX < viewBox.x + safetyMargin) {
+          tooltipX = viewBox.x + safetyMargin;
       }
 
       // Check right boundary: Ensure tooltip right (tooltipX + bgWidth) doesn't exceed viewBox right.
-      if (tooltipX + bgWidth > viewBox.x + viewBox.width) {
-          tooltipX = viewBox.x + viewBox.width - bgWidth;
+      if (tooltipX + bgWidth > viewBox.x + viewBox.width - safetyMargin) {
+          tooltipX = viewBox.x + viewBox.width - bgWidth - safetyMargin;
           // If adjusting for right pushes it past the left edge, clamp it to the left edge.
-          // This handles cases where the tooltip is wider than the viewBox.
-          if (tooltipX < viewBox.x) {
-              tooltipX = viewBox.x;
+          if (tooltipX < viewBox.x + safetyMargin) {
+              tooltipX = viewBox.x + safetyMargin;
           }
       }
 
@@ -1131,10 +1131,74 @@ class MareesFranceCard extends LitElement {
       // Show tooltip
       tooltipGroup.opacity(1);
 
-      // Ensure tooltip is scaled correctly immediately after showing
-      // Need to defer this slightly to allow DOM update after opacity change
+      // Defer boundary check until after rendering and scaling
       window.requestAnimationFrame(() => {
+          // Ensure scale is applied before getting bounds
           this._updateElementScale();
+
+          const containerRect = this._svgContainer?.getBoundingClientRect();
+          const tooltipRect = tooltipBg.node?.getBoundingClientRect(); // Use the background rect's screen bounds
+
+          if (!containerRect || !tooltipRect) {
+              console.warn("Marees Card: Could not get bounding rects for boundary check.");
+              return;
+          }
+
+          let deltaX = 0;
+          let deltaY = 0;
+          const safetyMargin = 1; // 1px safety margin
+
+          // Check left boundary
+          if (tooltipRect.left < containerRect.left + safetyMargin) {
+              deltaX = (containerRect.left + safetyMargin) - tooltipRect.left;
+          }
+          // Check right boundary
+          else if (tooltipRect.right > containerRect.right - safetyMargin) {
+              deltaX = (containerRect.right - safetyMargin) - tooltipRect.right;
+          }
+
+          // Check top boundary
+          if (tooltipRect.top < containerRect.top + safetyMargin) {
+              deltaY = (containerRect.top + safetyMargin) - tooltipRect.top;
+          }
+          // Check bottom boundary
+          else if (tooltipRect.bottom > containerRect.bottom - safetyMargin) {
+              deltaY = (containerRect.bottom - safetyMargin) - tooltipRect.bottom;
+          }
+
+          // If adjustment is needed, apply relative translation in SVG coordinates
+          if (deltaX !== 0 || deltaY !== 0) {
+              const currentViewBox = this._svgDraw.viewbox();
+              let scaleFactor = 1;
+              if (containerRect.width > 0 && currentViewBox.width > 0) {
+                  scaleFactor = containerRect.width / currentViewBox.width;
+              }
+
+              // Convert screen delta to SVG delta
+              const svgDeltaX = deltaX / scaleFactor;
+              const svgDeltaY = deltaY / scaleFactor;
+
+              // Apply relative translation *in addition* to the existing scale transform
+              tooltipGroup.translate(tooltipGroup.x() + svgDeltaX, tooltipGroup.y() + svgDeltaY);
+              // Re-apply scaling after translation (needed because translate resets parts of transform)
+               const inverseScale = scaleFactor !== 0 ? 1 / scaleFactor : 1;
+               const bbox = tooltipGroup.bbox();
+               const cx = bbox.cx;
+               const cy = bbox.cy;
+               if (!isNaN(cx) && !isNaN(cy)) {
+                   tooltipGroup.transform({}) // Reset completely first
+                         .translate(tooltipGroup.x(), tooltipGroup.y()) // Apply new position
+                         .translate(cx, cy) // Translate origin to center for scaling
+                         .scale(inverseScale)
+                         .translate(-cx, -cy); // Translate back
+               } else {
+                   tooltipGroup.transform({ // Fallback simple scale
+                       translateX: tooltipGroup.x(),
+                       translateY: tooltipGroup.y(),
+                       scale: inverseScale
+                   });
+               }
+          }
       });
   }
 
