@@ -843,8 +843,10 @@ class MareesFranceCard extends LitElement {
     const coefBoxBorderColor = 'var(--ha-card-border-color, var(--divider-color, grey))'; // Coefficient box border
     const coefTextColor = 'var(--primary-text-color, black)'; // Coefficient text color - WILL BE OVERRIDDEN BELOW
     const coefLineColor = 'var(--primary-text-color, #212121)'; // Color for the dotted line (matching primary text fallback)
-    const tooltipBgColor = 'rgba(0, 0, 0, 0.7)'; // Tooltip background
-    const tooltipTextColor = 'white'; // Tooltip text color
+    // Use coef box colors for tooltip, but primary text color for tooltip text
+    const tooltipBgColor = coefBoxBgColor;
+    const tooltipBorderColor = coefBoxBorderColor;
+    const tooltipTextColor = primaryTextColor; // Use primary text color
 
     const axisFontSize = 14; // Increased font size to match tabs
     const tideTimeFontSize = 14; // Reduced font size for tide time
@@ -1015,12 +1017,13 @@ class MareesFranceCard extends LitElement {
         const tooltipBg = tooltipGroup.rect()
             .radius(tooltipRadius)
             .fill(tooltipBgColor)
-            .stroke('none');
+            .stroke({ color: tooltipBorderColor, width: 1 }) // Add border matching coef box
+            .attr('vector-effect', 'non-scaling-stroke'); // Keep stroke constant
         const tooltipTimeText = tooltipGroup.text('')
-            .font({ fill: tooltipTextColor, size: tooltipFontSize, weight: 'bold', anchor: 'start' })
+            .font({ fill: tooltipTextColor, size: tooltipFontSize, weight: 'bold', anchor: 'start' }) // Use updated text color
             .attr('dominant-baseline', 'hanging'); // Align text top
         const tooltipHeightText = tooltipGroup.text('')
-            .font({ fill: tooltipTextColor, size: tooltipFontSize, anchor: 'start' })
+            .font({ fill: tooltipTextColor, size: tooltipFontSize, anchor: 'start' }) // Use updated text color
             .attr('dominant-baseline', 'hanging'); // Align text top
 
         this._elementsToKeepSize.push(tooltipGroup); // Add tooltip group for scaling
@@ -1090,21 +1093,30 @@ class MareesFranceCard extends LitElement {
       const svgRoot = this._svgDraw; // Get the root SVG element
       const viewBox = svgRoot.viewbox();
 
-      // Check left boundary
+      // Check left boundary - ensure tooltipX is at least viewBox.x
       if (tooltipX < viewBox.x) {
           tooltipX = viewBox.x;
       }
-      // Check right boundary
+      // Check right boundary - ensure tooltipX + bgWidth does not exceed viewBox.x + viewBox.width
       if (tooltipX + bgWidth > viewBox.x + viewBox.width) {
           tooltipX = viewBox.x + viewBox.width - bgWidth;
       }
-      // Check top boundary (if it goes above, flip below)
+      // Check top boundary - if tooltip goes above viewBox.y, position it below the marker instead
       if (tooltipY < viewBox.y) {
           tooltipY = markerY + offset; // Position below the marker
-      }
-      // Check bottom boundary (less likely if positioned above, but good practice)
-      if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
-           tooltipY = viewBox.y + viewBox.height - bgHeight;
+          // Re-check bottom boundary after flipping
+          if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
+              tooltipY = viewBox.y + viewBox.height - bgHeight; // Adjust if it still goes off bottom
+          }
+      } else {
+          // If positioned above, check bottom boundary - ensure tooltipY + bgHeight does not exceed viewBox.y + viewBox.height
+          if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
+              tooltipY = viewBox.y + viewBox.height - bgHeight; // Adjust to fit
+              // Re-check top boundary after adjusting for bottom (in case it pushes it too high)
+              if (tooltipY < viewBox.y) {
+                 tooltipY = viewBox.y; // Stick to top edge if it can't fit above or below
+              }
+          }
       }
 
 
