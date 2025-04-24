@@ -926,7 +926,7 @@ class MareesFranceCard extends LitElement {
         }
 
         // --- Arrow & Text Group (Should NOT scale) ---
-        const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.0; // Offset from curve point
+        const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.2; // Offset from curve point
         const textLineHeight = tideTimeFontSize * 1.1; // Adjusted line height factor
         const visualPadding = 8; // Desired visual gap between arrow tip and text edge
 
