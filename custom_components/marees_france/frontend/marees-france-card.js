@@ -195,7 +195,9 @@ function getNextTideStatus(tideServiceData, hass) {
 class MareesFranceCard extends LitElement {
   _svgDraw = null; // Property to hold the svg.js instance
   _svgContainer = null; // Reference to the SVG container div
-
+  _elementsToKeepSize = []; // Store groups/elements that should not scale [NEW]
+  _resizeObserver = null;    // Store the ResizeObserver instance [NEW]
+ 
   static get properties() {
     return {
       hass: {},
@@ -240,7 +242,22 @@ class MareesFranceCard extends LitElement {
     // Fetch will be triggered by `updated` or explicitly call here if preferred
     // this._fetchData(); // Example: Call a combined fetch function
   }
-
+ 
+  // [NEW] Cleanup observer and references when element is disconnected
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+    this._elementsToKeepSize = []; // Clear references
+    // Optional: Consider clearing _svgDraw and _svgContainer if appropriate
+    // if (this._svgDraw) this._svgDraw.remove(); // Removes the SVG element itself
+    // this._svgDraw = null;
+    // this._svgContainer = null;
+    console.log("Marees Card: Disconnected and cleaned up observer.");
+  }
+ 
   // --- Combined Fetch Function (Optional but cleaner) ---
   async _fetchData() {
       if (!this.hass || !this.config || !this.config.device_id) {
@@ -501,6 +518,7 @@ class MareesFranceCard extends LitElement {
             }
             // Initialize svg.js instance with viewBox for scaling
             this._svgDraw = SVG().addTo(this._svgContainer).viewbox(0, 0, 500, 170);
+            this._setupResizeObserver(); // [NEW] Setup observer here
             needsGraphRedraw = true; // Need initial draw after SVG setup
         }
     }
@@ -531,10 +549,95 @@ class MareesFranceCard extends LitElement {
     // Redraw graph if needed, SVG is ready, AND NEITHER data source is loading
     if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoadingWater && !this._isLoadingTides) {
         this._drawGraphWithSvgJs();
+        // Trigger scale update after drawing is complete using requestAnimationFrame
+        // This ensures the DOM is updated and bounding boxes are available.
+        window.requestAnimationFrame(() => { // [NEW]
+             this._updateElementScale();       // [NEW]
+        });                                 // [NEW]
     }
   }
-
-
+ 
+  // [NEW] Method to setup the ResizeObserver
+  _setupResizeObserver() {
+    if (this._resizeObserver) {
+      // Disconnect previous observer if setting up again (e.g., container changed)
+      this._resizeObserver.disconnect();
+    }
+    if (!this._svgContainer) {
+        console.warn("Marees Card: Cannot setup ResizeObserver, SVG container not found.");
+        return;
+    }
+ 
+    this._resizeObserver = new ResizeObserver(entries => {
+      // Use rAF to batch updates, improve performance, and avoid layout thrashing
+      window.requestAnimationFrame(() => {
+        this._updateElementScale();
+      });
+    });
+    this._resizeObserver.observe(this._svgContainer);
+    console.log("Marees Card: ResizeObserver setup.");
+  }
+ 
+  // [NEW] Method to apply the inverse scaling to designated elements
+  _updateElementScale() {
+    // Ensure container, SVG instance, and elements array are ready
+    if (!this._svgContainer || !this._svgDraw || this._elementsToKeepSize.length === 0) {
+      return;
+    }
+ 
+    const svgRect = this._svgContainer.getBoundingClientRect();
+    // Ensure viewBox exists and has width before accessing
+    const viewBox = this._svgDraw.viewbox(); // Use svg.js method to get viewBox
+    const viewBoxWidth = viewBox ? viewBox.width : 500; // Default to 500 if somehow missing
+ 
+    // Check for invalid dimensions
+    if (svgRect.width <= 0 || viewBoxWidth <= 0) {
+        // console.warn("Marees Card: Invalid dimensions for scaling.", svgRect.width, viewBoxWidth);
+        return; // Avoid division by zero or invalid scaling
+    }
+ 
+    const scaleFactor = svgRect.width / viewBoxWidth;
+ 
+    // Check for invalid scale factor
+    if (scaleFactor <= 0 || !isFinite(scaleFactor)) {
+        // console.warn("Marees Card: Invalid scale factor for scaling.", scaleFactor);
+        return; // Avoid division by zero or NaN/Infinity
+    }
+ 
+    const inverseScale = 1 / scaleFactor;
+ 
+    // Filter out potentially invalid elements before iterating
+    this._elementsToKeepSize = this._elementsToKeepSize.filter(element =>
+        element && element.node?.isConnected && typeof element.bbox === 'function'
+    );
+ 
+    this._elementsToKeepSize.forEach(element => {
+      try {
+        const bbox = element.bbox();
+        // Use cx/cy provided by svg.js bbox for center
+        const cx = bbox.cx;
+        const cy = bbox.cy;
+ 
+        // Check if center coordinates are valid numbers
+        if (isNaN(cx) || isNaN(cy)) {
+            console.warn("Marees Card: Invalid bbox center for scaling element:", element, bbox);
+            return; // Skip this element if center is invalid
+        }
+ 
+        // Apply transform using translate/scale/translate for robust centering
+        element.transform({}) // Reset existing transforms first
+               .translate(cx, cy)
+               .scale(inverseScale)
+               .translate(-cx, -cy);
+ 
+      } catch (e) {
+        console.error("Marees Card: Error scaling element:", e, element);
+        // Consider removing the element from _elementsToKeepSize if errors persist
+        // (though the filter at the start should help prevent this)
+      }
+    });
+  }
+ 
   // --- New method to draw graph using svg.js ---
   _drawGraphWithSvgJs() {
     // Ensure SVG instance and container are ready
@@ -543,9 +646,10 @@ class MareesFranceCard extends LitElement {
         return; // Exit if drawing area isn't set up
     }
 
-    // Clear the canvas ONCE now that we know we are drawing the final state (not loading)
+    // Clear the canvas AND the list of elements to scale
     this._svgDraw.clear();
-
+    this._elementsToKeepSize = []; // [NEW & RENAMED] Clear array at the start of redraw
+ 
     // Define viewBox dimensions here for use in error/no data positioning
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
@@ -554,12 +658,13 @@ class MareesFranceCard extends LitElement {
 
     // Check Tide Data first (needed for markers)
     if (!this._tideData || this._tideData.error || !this._tideData.response) {
-        const errorMessage = this._tideData?.error
+        const errorMessage = this._tideData?.error // Re-add variable declaration
             ? `Tide Error: ${this._tideData.error}`
             : localizeCard('ui.card.marees_france.no_tide_data', this.hass);
-        this._svgDraw.text(errorMessage)
+        const errorText = this._svgDraw.text(errorMessage) // [MODIFIED] Store reference
             .move(viewBoxWidth / 2, viewBoxHeight / 2)
             .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+        this._elementsToKeepSize.push(errorText); // [NEW] Add error text to scale list
         return;
     }
     const tideResponse = this._tideData.response; // Store for use
@@ -569,9 +674,10 @@ class MareesFranceCard extends LitElement {
         const errorMessage = this._waterLevels?.error
             ? `Water Level Error: ${this._waterLevels.error}`
             : localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
-        this._svgDraw.text(errorMessage)
+        const errorText = this._svgDraw.text(errorMessage) // [MODIFIED] Store reference
             .move(viewBoxWidth / 2, viewBoxHeight / 2)
             .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+        this._elementsToKeepSize.push(errorText); // [NEW] Add error text to scale list
         return;
     }
     const waterLevelResponse = this._waterLevels.response; // Store for use
@@ -581,9 +687,10 @@ class MareesFranceCard extends LitElement {
 
     // --- 2. Check for Water Level Data for the Selected Day ---
     if (!Array.isArray(levelsData) || levelsData.length === 0) {
-        this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // Keep using this key, context implies water level here
+        const noDataText = this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // [MODIFIED] Store reference
             .move(viewBoxWidth / 2, viewBoxHeight / 2)
             .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
+        this._elementsToKeepSize.push(noDataText); // [NEW] Add message to scale list
         return;
     }
 
@@ -610,9 +717,10 @@ class MareesFranceCard extends LitElement {
     // --- 3. Check if enough points to draw ---
     if (points.length < 2) {
          // Draw 'not enough data' message (canvas already cleared)
-         this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // Or a more specific message like "Not enough data points"
+         const notEnoughDataText = this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // [MODIFIED] Store reference
              .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
              .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
+         this._elementsToKeepSize.push(notEnoughDataText); // [NEW] Add message to scale list
         return;
     }
 
@@ -732,8 +840,8 @@ class MareesFranceCard extends LitElement {
     const coefLineColor = 'var(--primary-text-color, #212121)'; // Color for the dotted line (matching primary text fallback)
 
     const axisFontSize = 14; // Increased font size to match tabs
-    const tideTimeFontSize = 18; // Increased font size for tide time
-    const tideHeightFontSize = 16; // One size smaller than new tide time font size
+    const tideTimeFontSize = 14; // Reduced font size for tide time
+    const tideHeightFontSize = 12; // Reduced font size for tide height
     const coefFontSize = 16; // Increased font size for coefficient significantly
     const arrowSize = 8;
     const coefBoxPadding = { x: 6, y: 4 }; // Adjusted padding for larger font
@@ -745,22 +853,24 @@ class MareesFranceCard extends LitElement {
     draw.path(fillPathData).fill({ color: curveColor, opacity: 0.4 }).stroke('none');
     draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 });
 
-    // Draw X Axis Labels
+    // Draw X Axis Labels (Should NOT scale)
     xTicks.forEach(tick => {
          if (tick.label) {
-            draw.text(tick.label)
+            const textEl = draw.text(tick.label) // [MODIFIED] Store reference
                 .font({ fill: axisColor, size: axisFontSize, anchor: 'middle', weight: 'normal' })
                 .move(tick.x, xAxisY + 10); // Position further below axis line
+            this._elementsToKeepSize.push(textEl); // [NEW] Add standalone text
          }
     });
 
     // --- Draw Tide Markers (Arrows & Text) ---
     // Store calculated positions first to check for collisions later
-    const markerElements = []; // To store { element: svgElement, bbox: SVGRect }
+    const markerElements = []; // To store { element: svgElement, bbox: SVGRect } // Keep for potential future collision logic
 
     tideMarkers.forEach(marker => {
-        // --- Draw Coefficient for High Tides ---
+        // --- Coefficient Group (High Tides Only - Should NOT scale) ---
         if (marker.isHigh && marker.coefficient) {
+            const coefGroup = draw.group(); // [NEW] Create group for coefficient elements
             const coefText = String(marker.coefficient);
             // Create temporary text to measure width/height for the box, ensure font settings match final text
             const tempText = draw.text(coefText)
@@ -776,13 +886,14 @@ class MareesFranceCard extends LitElement {
             const boxY = coefBoxTopMargin; // Position box near the top
 
             // Draw Coefficient Box
-            const coefRect = draw.rect(boxWidth, boxHeight)
+            const coefRect = coefGroup.rect(boxWidth, boxHeight) // [MODIFIED] Add to group
                 .attr({ x: boxX, y: boxY, rx: coefBoxRadius, ry: coefBoxRadius })
                 .fill(coefBoxBgColor)
-                .stroke({ color: coefBoxBorderColor, width: 1 });
+                .stroke({ color: coefBoxBorderColor, width: 1 })
+                .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke constant
 
             // Draw Coefficient Text
-            const coefTextElement = draw.text(coefText)
+            const coefTextElement = coefGroup.text(coefText) // [MODIFIED] Add to group
                 // Use primary text color for coefficient, anchor middle, dominant-baseline middle
                 .font({ fill: primaryTextColor, size: coefFontSize, weight: 'bold', anchor: 'middle' })
                 .attr('dominant-baseline', 'central') // Vertical centering attribute
@@ -793,13 +904,15 @@ class MareesFranceCard extends LitElement {
             const lineStartY = boxY + boxHeight; // Bottom of the box
             const lineEndY = marker.y - coefLineToPeakGap; // Slightly above the peak point
             if (lineEndY > lineStartY) { // Only draw if line has positive length
-                 draw.line(marker.x, lineStartY, marker.x, lineEndY)
+                 const dottedLine = coefGroup.line(marker.x, lineStartY, marker.x, lineEndY) // [MODIFIED] Add to group
                     // Use primary text color for the dotted line
-                    .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' });
+                    .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' })
+                    .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke/dash constant
             }
+            this._elementsToKeepSize.push(coefGroup); // [NEW] Add the coefficient group to the list
         }
 
-        // --- Draw Arrows and Time/Height Text ---
+        // --- Arrow & Text Group (Should NOT scale) ---
         const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.0; // Offset from curve point
         const textLineHeight = tideTimeFontSize * 1.1; // Adjusted line height factor
         const visualPadding = 8; // Desired visual gap between arrow tip and text edge
@@ -853,21 +966,34 @@ class MareesFranceCard extends LitElement {
             .cx(marker.x) // Center horizontally at marker.x
             .y(heightTextY); // Set vertical position (baseline)
 
-        // Store for collision detection (use group's bbox)
+        // Store group for scaling and original markerElements for potential future collision logic
+        this._elementsToKeepSize.push(arrowGroup); // [NEW] Add the arrow/text group
         markerElements.push({ element: arrowGroup, bbox: arrowGroup.bbox(), isHigh: marker.isHigh, markerY: marker.y });
     });
 
 
-    // --- Draw Current Time Marker (Yellow Dot) ---
-    // Removed finalDotY variable and collision detection logic
+    // --- Draw Current Time Marker (Yellow Dot - Should NOT scale) ---
     if (currentTimeMarker) {
         const dotRadius = 4;
-        // Draw the dot directly at the calculated position
-        draw.circle(dotRadius * 2) // diameter
+        const dotGroup = draw.group(); // [NEW] Group the dot and its stroke
+
+        // Draw the fill
+        dotGroup.circle(dotRadius * 2) // diameter
             .center(currentTimeMarker.x, currentTimeMarker.y) // Use original calculated Y
-            .fill(markerDotColor)
-            .stroke({ color: bgColor, width: 1 }); // Add small background stroke for visibility
+            .fill(markerDotColor);
+
+        // Draw the border separately for non-scaling stroke
+        dotGroup.circle(dotRadius * 2)
+             .center(currentTimeMarker.x, currentTimeMarker.y)
+             .fill('none') // No fill for the border circle
+             .stroke({ color: bgColor, width: 1 }) // Add small background stroke for visibility
+             .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke constant
+
+        this._elementsToKeepSize.push(dotGroup); // [NEW] Add dot group to scale list
     }
+
+    // --- Final check: Ensure all error/message texts added to _elementsToKeepSize ---
+    // (Already handled in the error checking sections above)
 
   }
 
