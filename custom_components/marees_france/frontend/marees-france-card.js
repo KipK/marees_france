@@ -498,7 +498,8 @@ class MareesFranceCard extends LitElement {
                <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
             </div>
           </div>
-
+          <!-- HTML Tooltip Element -->
+          <div id="marees-html-tooltip" class="chart-tooltip"></div>
         </div>
       </ha-card>
     `;
@@ -1006,40 +1007,17 @@ class MareesFranceCard extends LitElement {
 
         this._elementsToKeepSize.push(dotGroup); // [NEW] Add dot group to scale list
 
-        // Store data needed for tooltip on the group itself
-        dotGroup.data('current-time', now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }));
-        dotGroup.data('current-height', currentTimeMarker.height !== null ? currentTimeMarker.height.toFixed(2) : 'N/A'); // Use interpolated height
-        dotGroup.data('marker-x', currentTimeMarker.x);
-        dotGroup.data('marker-y', currentTimeMarker.y);
+        // Store data needed for tooltip
+        const currentTimeStr = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+        const currentHeightStr = currentTimeMarker.height !== null ? currentTimeMarker.height.toFixed(2) : 'N/A';
 
-        // --- Create Tooltip Elements (Initially Hidden) ---
-        const tooltipGroup = draw.group().attr('id', 'marker-tooltip').opacity(0);
-        const tooltipBg = tooltipGroup.rect()
-            .radius(tooltipRadius)
-            .fill(tooltipBgColor)
-            .stroke({ color: tooltipBorderColor, width: 1 }) // Add border matching coef box
-            .attr('vector-effect', 'non-scaling-stroke'); // Keep stroke constant
-        const tooltipTimeText = tooltipGroup.text('')
-            .font({ fill: tooltipTextColor, size: tooltipFontSize, weight: 'bold', anchor: 'start' }) // Use updated text color
-            .attr('dominant-baseline', 'hanging'); // Align text top
-        const tooltipHeightText = tooltipGroup.text('')
-            .font({ fill: tooltipTextColor, size: tooltipFontSize, anchor: 'start' }) // Use updated text color
-            .attr('dominant-baseline', 'hanging'); // Align text top
-
-        this._elementsToKeepSize.push(tooltipGroup); // Add tooltip group for scaling
-
-        // --- Add Event Listeners for Tooltip ---
-        dotGroup.on('mouseover', (e) => this._showTooltip(e, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, tooltipPadding, tooltipOffset, tooltipFontSize));
-        dotGroup.on('mouseout', () => this._hideTooltip(tooltipGroup));
-        dotGroup.on('touchstart', (e) => {
-            e.preventDefault(); // Prevent potential scroll/zoom on touch devices
-            this._showTooltip(e, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, tooltipPadding, tooltipOffset, tooltipFontSize);
-        }, { passive: false });
-        dotGroup.on('touchend', (e) => {
-            e.preventDefault();
-            this._hideTooltip(tooltipGroup);
-        });
-        dotGroup.on('touchcancel', () => this._hideTooltip(tooltipGroup)); // Hide if touch is interrupted
+        // --- Add Event Listeners for HTML Tooltip ---
+        // Use .node to attach standard DOM events to the underlying SVG element
+        dotGroup.node.addEventListener('mouseover', (e) => this._showHtmlTooltip(e, currentTimeStr, currentHeightStr));
+        dotGroup.node.addEventListener('mouseout', () => this._hideHtmlTooltip());
+        // Optional: Add touch events if needed, mapping to mouse events
+        // dotGroup.node.addEventListener('touchstart', (e) => { e.preventDefault(); this._showHtmlTooltip(e, currentTimeStr, currentHeightStr); }, { passive: false });
+        // dotGroup.node.addEventListener('touchend', (e) => { e.preventDefault(); this._hideHtmlTooltip(); });
 
     }
 
@@ -1048,166 +1026,78 @@ class MareesFranceCard extends LitElement {
 
   }
 
+  // --- HTML Tooltip Helper Functions ---
+  _showHtmlTooltip(evt, time, height) {
+      const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
+      if (!tooltip) return;
 
-  // --- Tooltip Helper Functions ---
-  _showTooltip(event, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, padding, offset, fontSize) {
-      const targetGroup = SVG(event.currentTarget); // Get the SVG.js element
-      const time = targetGroup.data('current-time');
-      const height = targetGroup.data('current-height');
-      const markerX = targetGroup.data('marker-x');
-      const markerY = targetGroup.data('marker-y');
+      // Format the content
+      tooltip.innerHTML = `<strong>${time}</strong><br>${height} m`;
 
-      if (time === undefined || height === undefined || markerX === undefined || markerY === undefined) {
-          console.warn("Marees Card: Tooltip data missing from marker.");
-          return;
+      // --- Position the tooltip centered above the target element ---
+      const targetElement = evt.currentTarget; // The SVG group (<g>) that triggered the event
+      if (!targetElement) return;
+
+      const cardRect = this.getBoundingClientRect(); // Card's position relative to viewport
+      const targetRect = targetElement.getBoundingClientRect(); // Target's position relative to viewport
+
+      // Calculate target's center X and top Y relative to the card's top-left corner
+      const targetCenterX = targetRect.left + targetRect.width / 2 - cardRect.left;
+      const targetTopY = targetRect.top - cardRect.top;
+
+      // Temporarily display tooltip to measure its dimensions
+      tooltip.style.visibility = 'hidden'; // Keep it from flashing
+      tooltip.style.display = 'block';
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+      tooltip.style.display = 'none'; // Hide again before final positioning
+      tooltip.style.visibility = 'visible';
+
+      const offsetAbove = 5; // Pixels above the target element
+
+      // Calculate desired position
+      let left = targetCenterX - tooltipWidth / 2;
+      let top = targetTopY - tooltipHeight - offsetAbove;
+
+      // --- Basic Boundary Check (relative to card) ---
+      const safetyMargin = 2; // Small margin
+
+      // Check left boundary
+      if (left < safetyMargin) {
+          left = safetyMargin;
       }
-
-      const timeString = `${time}`;
-      const heightString = `${height} m`;
-
-      // Update text content first to measure
-      tooltipTimeText.text(timeString);
-      tooltipHeightText.text(heightString);
-
-      // Measure text dimensions (use bbox which accounts for transforms)
-      // Need to temporarily show the group to measure correctly if it was hidden
-      const initialOpacity = tooltipGroup.opacity();
-      if (initialOpacity === 0) tooltipGroup.opacity(1); // Temporarily show
-      const timeBBox = tooltipTimeText.bbox();
-      const heightBBox = tooltipHeightText.bbox();
-      if (initialOpacity === 0) tooltipGroup.opacity(0); // Hide again immediately
-
-      const textWidth = Math.max(timeBBox.width, heightBBox.width);
-      // Estimate height based on font size and line gap
-      const textHeight = (fontSize * 1.2) * 2 + (padding.y / 2); // Two lines of text
-
-      // Calculate background dimensions
-      const bgWidth = textWidth + 2 * padding.x;
-      const bgHeight = textHeight + 2 * padding.y;
-
-      // Calculate tooltip position (try to position above the marker)
-      let tooltipX = markerX - bgWidth / 2;
-      let tooltipY = markerY - bgHeight - offset;
-
-      // --- Boundary Checks (using SVG viewBox coordinates) ---
-      const svgRoot = this._svgDraw;
-      const viewBox = svgRoot.viewbox(); // Get the current viewBox
-      const safetyMargin = 1; // Small margin to prevent visually exceeding due to stroke, etc.
-
-      // Check top boundary: If tooltip goes above viewBox.y, position it below the marker instead.
-      if (tooltipY < viewBox.y + safetyMargin) {
-          tooltipY = markerY + offset;
+      // Check right boundary
+      if (left + tooltipWidth > cardRect.width - safetyMargin) {
+          left = cardRect.width - tooltipWidth - safetyMargin;
       }
-
-      // Check bottom boundary: Ensure tooltip bottom (tooltipY + bgHeight) doesn't exceed viewBox bottom.
-      if (tooltipY + bgHeight > viewBox.y + viewBox.height - safetyMargin) {
-          tooltipY = viewBox.y + viewBox.height - bgHeight - safetyMargin;
-          // If adjusting for bottom pushes it above the top, clamp it to the top edge.
-          if (tooltipY < viewBox.y + safetyMargin) {
-              tooltipY = viewBox.y + safetyMargin;
+      // Check top boundary (if it goes above card, maybe position below instead?)
+      if (top < safetyMargin) {
+          // Option 1: Clamp to top
+          // top = safetyMargin;
+          // Option 2: Position below the dot
+          top = targetTopY + targetRect.height + offsetAbove;
+          // Re-check bottom boundary if positioned below
+          if (top + tooltipHeight > cardRect.height - safetyMargin) {
+              top = cardRect.height - tooltipHeight - safetyMargin; // Clamp to bottom
           }
       }
+      // Check bottom boundary (less likely if positioned above initially)
+      // if (top + tooltipHeight > cardRect.height - safetyMargin) {
+      //     top = cardRect.height - tooltipHeight - safetyMargin;
+      // }
 
-      // Check left boundary: Ensure tooltipX is at least viewBox.x.
-      if (tooltipX < viewBox.x + safetyMargin) {
-          tooltipX = viewBox.x + safetyMargin;
-      }
-
-      // Check right boundary: Ensure tooltip right (tooltipX + bgWidth) doesn't exceed viewBox right.
-      if (tooltipX + bgWidth > viewBox.x + viewBox.width - safetyMargin) {
-          tooltipX = viewBox.x + viewBox.width - bgWidth - safetyMargin;
-          // If adjusting for right pushes it past the left edge, clamp it to the left edge.
-          if (tooltipX < viewBox.x + safetyMargin) {
-              tooltipX = viewBox.x + safetyMargin;
-          }
-      }
-
-
-      // Position background and text
-      tooltipBg.size(bgWidth, bgHeight).move(tooltipX, tooltipY);
-      tooltipTimeText.move(tooltipX + padding.x, tooltipY + padding.y);
-      tooltipHeightText.move(tooltipX + padding.x, tooltipY + padding.y + (fontSize * 1.2) + (padding.y / 2)); // Position second line
-
-      // Show tooltip
-      tooltipGroup.opacity(1);
-
-      // Defer boundary check until after rendering and scaling
-      window.requestAnimationFrame(() => {
-          // Ensure scale is applied before getting bounds
-          this._updateElementScale();
-
-          const containerRect = this._svgContainer?.getBoundingClientRect();
-          const tooltipRect = tooltipBg.node?.getBoundingClientRect(); // Use the background rect's screen bounds
-
-          if (!containerRect || !tooltipRect) {
-              console.warn("Marees Card: Could not get bounding rects for boundary check.");
-              return;
-          }
-
-          let deltaX = 0;
-          let deltaY = 0;
-          const safetyMargin = 1; // 1px safety margin
-
-          // Check left boundary
-          if (tooltipRect.left < containerRect.left + safetyMargin) {
-              deltaX = (containerRect.left + safetyMargin) - tooltipRect.left;
-          }
-          // Check right boundary
-          else if (tooltipRect.right > containerRect.right - safetyMargin) {
-              deltaX = (containerRect.right - safetyMargin) - tooltipRect.right;
-          }
-
-          // Check top boundary
-          if (tooltipRect.top < containerRect.top + safetyMargin) {
-              deltaY = (containerRect.top + safetyMargin) - tooltipRect.top;
-          }
-          // Check bottom boundary
-          else if (tooltipRect.bottom > containerRect.bottom - safetyMargin) {
-              deltaY = (containerRect.bottom - safetyMargin) - tooltipRect.bottom;
-          }
-
-          // If adjustment is needed, apply relative translation in SVG coordinates
-          if (deltaX !== 0 || deltaY !== 0) {
-              const currentViewBox = this._svgDraw.viewbox();
-              let scaleFactor = 1;
-              if (containerRect.width > 0 && currentViewBox.width > 0) {
-                  scaleFactor = containerRect.width / currentViewBox.width;
-              }
-
-              // Convert screen delta to SVG delta
-              const svgDeltaX = deltaX / scaleFactor;
-              const svgDeltaY = deltaY / scaleFactor;
-
-              // Apply relative translation *in addition* to the existing scale transform
-              tooltipGroup.translate(tooltipGroup.x() + svgDeltaX, tooltipGroup.y() + svgDeltaY);
-              // Re-apply scaling after translation (needed because translate resets parts of transform)
-               const inverseScale = scaleFactor !== 0 ? 1 / scaleFactor : 1;
-               const bbox = tooltipGroup.bbox();
-               const cx = bbox.cx;
-               const cy = bbox.cy;
-               if (!isNaN(cx) && !isNaN(cy)) {
-                   tooltipGroup.transform({}) // Reset completely first
-                         .translate(tooltipGroup.x(), tooltipGroup.y()) // Apply new position
-                         .translate(cx, cy) // Translate origin to center for scaling
-                         .scale(inverseScale)
-                         .translate(-cx, -cy); // Translate back
-               } else {
-                   tooltipGroup.transform({ // Fallback simple scale
-                       translateX: tooltipGroup.x(),
-                       translateY: tooltipGroup.y(),
-                       scale: inverseScale
-                   });
-               }
-          }
-      });
+      // Apply final position and display
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.display = 'block';
   }
 
-  _hideTooltip(tooltipGroup) {
-      if (tooltipGroup) {
-          tooltipGroup.opacity(0);
+  _hideHtmlTooltip() {
+      const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
+      if (tooltip) {
+          tooltip.style.display = 'none';
       }
   }
-
 
   getCardSize() {
     // Base size: header(1) + next_tide_status(1) + tabs(1) + graph(~4) = 7
@@ -1381,6 +1271,25 @@ class MareesFranceCard extends LitElement {
       #marker-tooltip {
           pointer-events: none; /* Tooltip should not capture mouse events */
           transition: opacity 0.1s ease-in-out;
+      }
+
+      /* HTML Tooltip Styles */
+      .chart-tooltip {
+        position: absolute; /* Position relative to the card content area */
+        display: none; /* Hidden by default */
+        background-color: var(--secondary-background-color, #f0f0f0); /* Match coef box background */
+        color: var(--primary-text-color, black); /* Keep text color primary */
+        border: 1px solid var(--ha-card-border-color, var(--divider-color, grey)); /* Match coef box border */
+        border-radius: 4px;
+        padding: 4px 6px; /* Reduced padding */
+        font-size: 12px;
+        white-space: nowrap; /* Prevent wrapping */
+        z-index: 100; /* Ensure it's above the SVG */
+        pointer-events: none; /* Tooltip should not interfere with mouse */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      .chart-tooltip strong {
+        font-weight: bold;
       }
     `;
   }
