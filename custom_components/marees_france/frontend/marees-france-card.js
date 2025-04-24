@@ -472,14 +472,17 @@ class MareesFranceCard extends LitElement {
             ${dayLabels.map(date => {
               const d = new Date(date);
               // Get 3-letter abbreviation, uppercase
-              const label = d.toLocaleDateString(locale, { weekday: 'short' }).toUpperCase();
+              const dayLabel = d.toLocaleDateString(locale, { weekday: 'short' }).toUpperCase();
+              // Get dd/mm date format
+              const dateLabel = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
               return html`
                 <div
                   class="tab ${this._selectedDay === date ? 'active' : ''}"
                   data-date="${date}"
                   @click="${this._handleTabClick}"
                 >
-                  ${label}
+                  <div class="tab-day">${dayLabel}</div>
+                  <div class="tab-date">${dateLabel}</div>
                 </div>
               `;
             })}
@@ -795,8 +798,9 @@ class MareesFranceCard extends LitElement {
     const now = new Date();
     // Only show current time marker if the selected day is today
     let currentTimeMarker = null;
+    let currentTotalMinutes = null; // Store total minutes for tooltip data
     if (this._selectedDay === now.toISOString().slice(0, 10)) {
-        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+        currentTotalMinutes = now.getHours() * 60 + now.getMinutes(); // Assign here
         if (currentTotalMinutes >= 0 && currentTotalMinutes < 24 * 60 && points.length >= 2) {
             // Interpolation logic
             let prevPoint = null;
@@ -818,8 +822,8 @@ class MareesFranceCard extends LitElement {
             if (currentHeight !== null) {
                 const currentX = timeToX(currentTotalMinutes);
                 const currentY = heightToY(currentHeight);
-                // Store only position for the dot
-                currentTimeMarker = { x: currentX, y: currentY };
+                // Store position and interpolated height for the dot and tooltip
+                currentTimeMarker = { x: currentX, y: currentY, height: currentHeight, totalMinutes: currentTotalMinutes };
             }
         }
     }
@@ -827,6 +831,7 @@ class MareesFranceCard extends LitElement {
 
     // --- Drawing the Actual Graph --- (canvas already cleared)
     const draw = this._svgDraw; // Get the instance
+    const locale = this.hass.language || 'en'; // Get locale for time formatting
     const axisColor = 'var(--secondary-text-color, grey)';
     const primaryTextColor = 'var(--primary-text-color, black)';
     const secondaryTextColor = 'var(--secondary-text-color, grey)';
@@ -838,16 +843,22 @@ class MareesFranceCard extends LitElement {
     const coefBoxBorderColor = 'var(--ha-card-border-color, var(--divider-color, grey))'; // Coefficient box border
     const coefTextColor = 'var(--primary-text-color, black)'; // Coefficient text color - WILL BE OVERRIDDEN BELOW
     const coefLineColor = 'var(--primary-text-color, #212121)'; // Color for the dotted line (matching primary text fallback)
+    const tooltipBgColor = 'rgba(0, 0, 0, 0.7)'; // Tooltip background
+    const tooltipTextColor = 'white'; // Tooltip text color
 
     const axisFontSize = 14; // Increased font size to match tabs
     const tideTimeFontSize = 14; // Reduced font size for tide time
     const tideHeightFontSize = 12; // Reduced font size for tide height
     const coefFontSize = 16; // Increased font size for coefficient significantly
+    const tooltipFontSize = 12;
     const arrowSize = 8;
     const coefBoxPadding = { x: 6, y: 4 }; // Adjusted padding for larger font
     const coefBoxRadius = 4; // Rounded corners for coefficient box
     const coefBoxTopMargin = 10; // Fixed Y position for the top edge of all coefficient boxes
     const coefLineToPeakGap = 3; // Small gap between dotted line end and peak dot
+    const tooltipPadding = { x: 6, y: 4 };
+    const tooltipRadius = 4;
+    const tooltipOffset = 10; // Offset from the dot
 
     // Draw Base Elements First (Fill, Curve, Axis Labels)
     draw.path(fillPathData).fill({ color: curveColor, opacity: 0.4 }).stroke('none');
@@ -974,8 +985,10 @@ class MareesFranceCard extends LitElement {
 
     // --- Draw Current Time Marker (Yellow Dot - Should NOT scale) ---
     if (currentTimeMarker) {
-        const dotRadius = 4;
+        const dotRadius = 4 * 1.2; // Increased size by 1.2x
         const dotGroup = draw.group(); // [NEW] Group the dot and its stroke
+        dotGroup.attr('id', 'current-time-marker'); // Add ID for tooltip handling
+        dotGroup.addClass('has-tooltip'); // Add class for cursor style
 
         // Draw the fill
         dotGroup.circle(dotRadius * 2) // diameter
@@ -990,11 +1003,130 @@ class MareesFranceCard extends LitElement {
              .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke constant
 
         this._elementsToKeepSize.push(dotGroup); // [NEW] Add dot group to scale list
+
+        // Store data needed for tooltip on the group itself
+        dotGroup.data('current-time', now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }));
+        dotGroup.data('current-height', currentTimeMarker.height !== null ? currentTimeMarker.height.toFixed(2) : 'N/A'); // Use interpolated height
+        dotGroup.data('marker-x', currentTimeMarker.x);
+        dotGroup.data('marker-y', currentTimeMarker.y);
+
+        // --- Create Tooltip Elements (Initially Hidden) ---
+        const tooltipGroup = draw.group().attr('id', 'marker-tooltip').opacity(0);
+        const tooltipBg = tooltipGroup.rect()
+            .radius(tooltipRadius)
+            .fill(tooltipBgColor)
+            .stroke('none');
+        const tooltipTimeText = tooltipGroup.text('')
+            .font({ fill: tooltipTextColor, size: tooltipFontSize, weight: 'bold', anchor: 'start' })
+            .attr('dominant-baseline', 'hanging'); // Align text top
+        const tooltipHeightText = tooltipGroup.text('')
+            .font({ fill: tooltipTextColor, size: tooltipFontSize, anchor: 'start' })
+            .attr('dominant-baseline', 'hanging'); // Align text top
+
+        this._elementsToKeepSize.push(tooltipGroup); // Add tooltip group for scaling
+
+        // --- Add Event Listeners for Tooltip ---
+        dotGroup.on('mouseover', (e) => this._showTooltip(e, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, tooltipPadding, tooltipOffset, tooltipFontSize));
+        dotGroup.on('mouseout', () => this._hideTooltip(tooltipGroup));
+        dotGroup.on('touchstart', (e) => {
+            e.preventDefault(); // Prevent potential scroll/zoom on touch devices
+            this._showTooltip(e, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, tooltipPadding, tooltipOffset, tooltipFontSize);
+        }, { passive: false });
+        dotGroup.on('touchend', (e) => {
+            e.preventDefault();
+            this._hideTooltip(tooltipGroup);
+        });
+        dotGroup.on('touchcancel', () => this._hideTooltip(tooltipGroup)); // Hide if touch is interrupted
+
     }
 
     // --- Final check: Ensure all error/message texts added to _elementsToKeepSize ---
     // (Already handled in the error checking sections above)
 
+  }
+
+
+  // --- Tooltip Helper Functions ---
+  _showTooltip(event, tooltipGroup, tooltipBg, tooltipTimeText, tooltipHeightText, padding, offset, fontSize) {
+      const targetGroup = SVG(event.currentTarget); // Get the SVG.js element
+      const time = targetGroup.data('current-time');
+      const height = targetGroup.data('current-height');
+      const markerX = targetGroup.data('marker-x');
+      const markerY = targetGroup.data('marker-y');
+
+      if (time === undefined || height === undefined || markerX === undefined || markerY === undefined) {
+          console.warn("Marees Card: Tooltip data missing from marker.");
+          return;
+      }
+
+      const timeString = `${time}`;
+      const heightString = `${height} m`;
+
+      // Update text content first to measure
+      tooltipTimeText.text(timeString);
+      tooltipHeightText.text(heightString);
+
+      // Measure text dimensions (use bbox which accounts for transforms)
+      // Need to temporarily show the group to measure correctly if it was hidden
+      const initialOpacity = tooltipGroup.opacity();
+      if (initialOpacity === 0) tooltipGroup.opacity(1); // Temporarily show
+      const timeBBox = tooltipTimeText.bbox();
+      const heightBBox = tooltipHeightText.bbox();
+      if (initialOpacity === 0) tooltipGroup.opacity(0); // Hide again immediately
+
+      const textWidth = Math.max(timeBBox.width, heightBBox.width);
+      // Estimate height based on font size and line gap
+      const textHeight = (fontSize * 1.2) * 2 + (padding.y / 2); // Two lines of text
+
+      // Calculate background dimensions
+      const bgWidth = textWidth + 2 * padding.x;
+      const bgHeight = textHeight + 2 * padding.y;
+
+      // Calculate tooltip position (try to position above the marker)
+      let tooltipX = markerX - bgWidth / 2;
+      let tooltipY = markerY - bgHeight - offset;
+
+      // --- Boundary Checks ---
+      const svgRoot = this._svgDraw; // Get the root SVG element
+      const viewBox = svgRoot.viewbox();
+
+      // Check left boundary
+      if (tooltipX < viewBox.x) {
+          tooltipX = viewBox.x;
+      }
+      // Check right boundary
+      if (tooltipX + bgWidth > viewBox.x + viewBox.width) {
+          tooltipX = viewBox.x + viewBox.width - bgWidth;
+      }
+      // Check top boundary (if it goes above, flip below)
+      if (tooltipY < viewBox.y) {
+          tooltipY = markerY + offset; // Position below the marker
+      }
+      // Check bottom boundary (less likely if positioned above, but good practice)
+      if (tooltipY + bgHeight > viewBox.y + viewBox.height) {
+           tooltipY = viewBox.y + viewBox.height - bgHeight;
+      }
+
+
+      // Position background and text
+      tooltipBg.size(bgWidth, bgHeight).move(tooltipX, tooltipY);
+      tooltipTimeText.move(tooltipX + padding.x, tooltipY + padding.y);
+      tooltipHeightText.move(tooltipX + padding.x, tooltipY + padding.y + (fontSize * 1.2) + (padding.y / 2)); // Position second line
+
+      // Show tooltip
+      tooltipGroup.opacity(1);
+
+      // Ensure tooltip is scaled correctly immediately after showing
+      // Need to defer this slightly to allow DOM update after opacity change
+      window.requestAnimationFrame(() => {
+          this._updateElementScale();
+      });
+  }
+
+  _hideTooltip(tooltipGroup) {
+      if (tooltipGroup) {
+          tooltipGroup.opacity(0);
+      }
   }
 
 
@@ -1084,6 +1216,10 @@ class MareesFranceCard extends LitElement {
         gap: 4px;
       }
       .tab {
+        display: flex; /* Use flexbox for vertical alignment */
+        flex-direction: column; /* Stack day and date */
+        justify-content: center; /* Center content vertically */
+        align-items: center; /* Center content horizontally */
         text-align: center;
         padding: 6px 4px;
         border-radius: 6px;
@@ -1092,8 +1228,17 @@ class MareesFranceCard extends LitElement {
         font-weight: 500;
         cursor: pointer;
         user-select: none;
-        font-size: 14px;
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        line-height: 1.2; /* Adjust line height for stacked text */
+      }
+      .tab-day {
+        font-size: 14px; /* Keep original size */
+        font-weight: inherit; /* Inherit weight from .tab or .tab.active */
+      }
+      .tab-date {
+        font-size: 10px; /* Smaller font size for date */
+        color: var(--secondary-text-color); /* Use secondary color */
+        margin-top: 2px; /* Small space between day and date */
       }
       .tab:hover {
          filter: brightness(95%);
@@ -1102,6 +1247,10 @@ class MareesFranceCard extends LitElement {
         background: var(--tab-active-background);
         color: var(--tab-active-text-color);
         font-weight: bold;
+      }
+      .tab.active .tab-date {
+         color: var(--text-primary-color); /* Make date color match active text color */
+         opacity: 0.8; /* Slightly less prominent */
       }
 
       /* Styles for SVG graph container and loader */
@@ -1144,6 +1293,15 @@ class MareesFranceCard extends LitElement {
           display: block; /* Remove extra space below SVG */
           width: 100%;
           height: 100%;
+      }
+      /* Add cursor pointer to elements with tooltips */
+      .svg-graph-target svg .has-tooltip {
+          cursor: pointer;
+      }
+      /* Tooltip styles (within SVG) */
+      #marker-tooltip {
+          pointer-events: none; /* Tooltip should not capture mouse events */
+          transition: opacity 0.1s ease-in-out;
       }
     `;
   }
