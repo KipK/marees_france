@@ -420,7 +420,9 @@ class MareesFranceCard extends LitElement {
 
     return html`
       <ha-card>
-        <div class="card-header">${this.config.title || localizeCard('ui.card.marees_france.default_title', this.hass)}</div>
+        ${this.config.show_header !== false ? html`
+          <div class="card-header">${this.config.title || localizeCard('ui.card.marees_france.default_title', this.hass)}</div>
+        ` : ''}
         <div class="card-content">
           <!-- Next Tide Status Display -->
           ${nextTideInfo ? html`
@@ -904,12 +906,10 @@ class MareesFranceCard extends LitElement {
       .card-header {
           /* Standard HA card header style */
           padding: 16px 16px 8px 16px; /* Less bottom padding */
-          font-size: 1.2em; /* Slightly larger */
-          font-weight: 500;
           color: var(--primary-text-color);
       }
       .card-content {
-          padding: 0 16px 16px 16px; /* No top padding, standard sides/bottom */
+          padding: 16 16px 16px 16px; /* No top padding, standard sides/bottom */
       }
 
       /* Next Tide Status Display Styles */

@@ -1,0 +1,4 @@
+venv
+plans
+.pytest_cache
+.venv

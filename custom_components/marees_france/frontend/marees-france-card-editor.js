@@ -91,7 +91,14 @@ class MareesFranceCardEditor extends LitElement {
 
     // Define the schema dynamically here where hass is available
     const schema = [
-      // --- Replaced Entity Picker with Device Picker ---
+      // --- Moved Show Header to top ---
+      {
+        name: "show_header",
+        label: localizeCard('header', this.hass.language), // Use this.hass here
+        selector: { boolean: {} },
+        default: true, // Default value for the checkbox
+      },
+      // --- Device Picker ---
       {
         name: "device_id", // Changed name to device_id
         label: localizeCard('device_label', this.hass.language), // Added label
@@ -112,18 +119,6 @@ class MareesFranceCardEditor extends LitElement {
         name: "title",
         label: localizeCard('title', this.hass.language), // Use this.hass here
         selector: { text: {} },
-      },
-      {
-        name: "show_graph",
-        label: localizeCard('graph_label', this.hass.language), // Use the new translation
-        selector: { boolean: {} },
-        default: false, // Default to not showing the graph
-      },
-      {
-        name: "show_header",
-        label: localizeCard('header', this.hass.language), // Use this.hass here
-        selector: { boolean: {} },
-        default: true, // Default value for the checkbox
       },
     ];
 
