@@ -9,14 +9,14 @@ import logging
 from typing import Any
 
 # Third-party imports
-import aiohttp
 import pytz
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+# from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady # No longer fetching
+# from homeassistant.helpers.aiohttp_client import async_get_clientsession # No longer fetching
+from homeassistant.helpers.storage import Store # Import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -25,8 +25,9 @@ from .const import (
     CONF_SCAN_INTERVAL,
     DATE_FORMAT,
     DOMAIN,
-    HEADERS,
-    TIDESURL_TEMPLATE,
+    DEFAULT_SCAN_INTERVAL_HOURS, # Add missing import
+    # HEADERS, # No longer fetching
+    # TIDESURL_TEMPLATE, # No longer fetching
     TIDE_HIGH,
     TIDE_LOW,
     STATE_HIGH_TIDE,
@@ -37,19 +38,25 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Class to manage fetching Marées France data from SHOM API."""
+    """Class to manage fetching Marées France data from the cached store."""
 
     config_entry: ConfigEntry
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        tides_store: Store[dict[str, dict[str, Any]]] # Accept the store instance
+    ) -> None:
         """Initialize the coordinator."""
         self.hass = hass
         self.config_entry = entry
         self.harbor_id = entry.data[CONF_HARBOR_ID]
-        self.websession = async_get_clientsession(hass)
+        self.tides_store = tides_store # Store the passed store object
+        # self.websession = async_get_clientsession(hass) # No longer needed
 
         update_interval_hours = entry.options.get(
-            CONF_SCAN_INTERVAL, entry.data[CONF_SCAN_INTERVAL]
+            CONF_SCAN_INTERVAL, entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_HOURS) # Use get with default
         )
         update_interval = timedelta(hours=update_interval_hours)
 
@@ -61,67 +68,74 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from SHOM API."""
-        today = date.today().strftime(DATE_FORMAT)
-        url = TIDESURL_TEMPLATE.format(harbor_id=self.harbor_id, date=today)
-        _LOGGER.debug("Fetching tide data for %s from %s", self.harbor_id, url)
+        """Fetch tide data from the cached store."""
+        _LOGGER.debug("Marées France Coordinator: Reading tide data from cache for %s", self.harbor_id)
+
+        cache = await self.tides_store.async_load() or {}
+        harbor_cache = cache.get(self.harbor_id, {})
+
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        today_str = today.strftime(DATE_FORMAT)
+        yesterday_str = yesterday.strftime(DATE_FORMAT)
+
+        # Get data for yesterday and today from the harbor's cache
+        yesterday_data = harbor_cache.get(yesterday_str)
+        today_data = harbor_cache.get(today_str)
+
+        if not yesterday_data and not today_data:
+            _LOGGER.warning(
+                "Marées France Coordinator: No cached tide data found for %s for yesterday (%s) or today (%s). Prefetch might have failed.",
+                self.harbor_id, yesterday_str, today_str
+            )
+            raise UpdateFailed(f"Missing critical tide data in cache for {self.harbor_id}")
+
+        # Combine data for the parser - only include days that were found
+        combined_raw_data = {}
+        if yesterday_data:
+            combined_raw_data[yesterday_str] = yesterday_data
+        if today_data:
+            combined_raw_data[today_str] = today_data
+
+        _LOGGER.debug("Marées France Coordinator: Loaded cached data for keys: %s", list(combined_raw_data.keys()))
 
         try:
-            async with asyncio.timeout(
-                30
-            ):  # Increased timeout for potentially slow API
-                response = await self.websession.get(url, headers=HEADERS)
-
-                if response.status == 401:
-                    raise ConfigEntryAuthFailed("Authentication failed with SHOM API")
-                if response.status >= 400:
-                    _LOGGER.error(
-                        "Error fetching data from %s: %s %s",
-                        url,
-                        response.status,
-                        await response.text(),
-                    )
-                    raise UpdateFailed(f"Error fetching data: {response.status}")
-
-                data = await response.json()
-                _LOGGER.debug("Received data: %s", data)
-
-                # Fetch translations for the current language
-                translations = await async_get_translations(
-                    self.hass, self.hass.config.language, "entity", {DOMAIN}
-                )
-                # Extract specific state translations, providing fallbacks
-                translation_high = translations.get(
-                    f"component.{DOMAIN}.entity.sensor.tides.state.{STATE_HIGH_TIDE}",
-                    STATE_HIGH_TIDE.replace("_", " ").title(),  # Fallback: "High Tide"
-                )
-                translation_low = translations.get(
-                    f"component.{DOMAIN}.entity.sensor.tides.state.{STATE_LOW_TIDE}",
-                    STATE_LOW_TIDE.replace("_", " ").title(),  # Fallback: "Low Tide"
-                )
-
-                # Make the call async as _parse_tide_data is now async
-                return await self._parse_tide_data(data, translation_high, translation_low)
-
-        except asyncio.TimeoutError as err:
-            _LOGGER.warning("Timeout fetching data for %s", self.harbor_id)
-            raise UpdateFailed(f"Timeout communicating with API: {err}") from err
-        except aiohttp.ClientError as err:
-            _LOGGER.warning(
-                "Client error fetching data for %s: %s", self.harbor_id, err
+            # Fetch translations (same as before)
+            translations = await async_get_translations(
+                self.hass, self.hass.config.language, "entity", {DOMAIN}
             )
-            raise UpdateFailed(f"Error communicating with API: {err}") from err
+            translation_high = translations.get(
+                f"component.{DOMAIN}.entity.sensor.tides.state.{STATE_HIGH_TIDE}",
+                STATE_HIGH_TIDE.replace("_", " ").title(),
+            )
+            translation_low = translations.get(
+                f"component.{DOMAIN}.entity.sensor.tides.state.{STATE_LOW_TIDE}",
+                STATE_LOW_TIDE.replace("_", " ").title(),
+            )
+
+            # Parse the combined data from the cache
+            return await self._parse_tide_data(combined_raw_data, translation_high, translation_low)
+
         except Exception as err:
-            _LOGGER.exception("Unexpected error fetching data for %s", self.harbor_id)
-            raise UpdateFailed(f"Unexpected error: {err}") from err
+            # Catch potential errors during parsing or translation fetching
+            _LOGGER.exception("Marées France Coordinator: Unexpected error processing cached data for %s", self.harbor_id)
+            raise UpdateFailed(f"Error processing cached data: {err}") from err
 
     async def _parse_tide_data( # Make method async
         self,
-        raw_data: dict[str, list[list[str]]],
+        raw_data: dict[str, list[list[str]]], # Expects dict keyed by date string
         translation_high: str,
         translation_low: str,
     ) -> dict[str, Any]:
-        """Parse the raw tide data from the API into the desired format."""
+        """Parse the raw tide data (potentially multiple days) from the cache."""
+        if not raw_data:
+             _LOGGER.warning("Marées France Coordinator: No raw data provided to _parse_tide_data.")
+             # Return a default structure or raise error? Returning default seems safer for coordinator.
+             return {
+                 "data": {}, "current_tide": None, "next_tide": None,
+                 "previous_tide": None, "tide_status": None, "last_update": datetime.now(timezone.utc).isoformat()
+             }
+
         parsed_data: dict[str, dict[str, list[dict[str, str]]]] = {}
         all_tides_flat: list[
             dict[str, Any]
@@ -157,7 +171,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 except ValueError:
                     _LOGGER.warning(
-                        "Could not parse datetime: %s %s", day_str, time_str
+                        "Marées France Coordinator: Could not parse datetime: %s %s", day_str, time_str
                     )
                     continue
 
@@ -220,7 +234,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             elif current_tide_type == TIDE_HIGH:
                 tide_status = "falling" # If last tide was high, it's now falling
             else:
-                _LOGGER.warning("Unknown type for current_tide: %s", current_tide_type)
+                _LOGGER.warning("Marées France Coordinator: Unknown type for current_tide: %s", current_tide_type)
         else:
             # If there's no past tide (e.g., first data point), try to infer from next tide
             if next_tide:
@@ -230,14 +244,14 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 elif next_tide_type == TIDE_LOW:
                      tide_status = "falling" # Approaching low tide
             else:
-                _LOGGER.debug("Cannot determine tide status: No current or next tide data.")
-        
-        
+                _LOGGER.debug("Marées France Coordinator: Cannot determine tide status: No current or next tide data.")
+
+        # Correctly indented return statement
         return {
-            "data": parsed_data,
-            "current_tide": current_tide, # Note: current_tide is the last past tide
-            "next_tide": next_tide,
-            "previous_tide": previous_tide,
-            "tide_status": tide_status, # Added status
-            "last_update": now_utc.isoformat(),
-        }
+                "data": parsed_data,
+                "current_tide": current_tide, # Note: current_tide is the last past tide
+                "next_tide": next_tide,
+                "previous_tide": previous_tide,
+                "tide_status": tide_status, # Added status
+                "last_update": now_utc.isoformat(),
+            }

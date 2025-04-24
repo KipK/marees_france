@@ -1,14 +1,15 @@
 get_water_levels:
   name: Get Water Levels
-  description: Fetches detailed water level heights for a specific harbor and date from the SHOM API.
+  description: Fetches detailed water level heights for a specific harbor device and date. Data is primarily read from the cache; fetches from SHOM API only as a fallback if data is missing.
   fields:
-    harbor_name:
-      name: Harbor Name
-      description: The official name of the harbor (e.g., LE_PALAIS).
+    device_id: # Changed from harbor_name
+      name: Harbor Device
+      description: The Marées France harbor device to get water levels for.
       required: true
-      example: "LE_PALAIS"
+      # example: "LE_PALAIS" # Example not needed for device selector
       selector:
-        text:
+        device: # Changed from text
+          integration: marees_france # Filter by integration
     date:
       name: Date
       description: The date for which to fetch water levels (YYYY-MM-DD format).
@@ -17,12 +18,42 @@ get_water_levels:
       selector:
         date:
   response:
-    description: The raw water level data returned by the SHOM API, keyed by date.
+    description: The raw water level data returned, keyed by date.
     example: >
       {
         "2025-04-23": [
           ["00:00:00", 3.8],
           ["00:05:00", 3.83],
           ["00:10:00", 3.86]
+        ]
+      }
+
+get_tides_data:
+  name: Get Tides Data
+  description: Retrieves cached tide data (high/low tides, coefficients) for a specific harbor device.
+  fields:
+    device_id: # Changed from harbor_name
+      name: Harbor Device
+      description: The Marées France harbor device to get tide data for.
+      required: true
+      # example: "LE_PALAIS" # Example not needed for device selector
+      selector:
+        device: # Changed from text
+          integration: marees_france # Filter by integration
+  response:
+    description: The raw cached tide data for the harbor device, keyed by date.
+    example: >
+      {
+        "2025-04-23": [
+          ["tide.low", "04:54", "1.35", "85"],
+          ["tide.high", "10:59", "4.95", "89"],
+          ["tide.low", "17:15", "1.50", "85"],
+          ["tide.high", "23:20", "5.10", "89"]
+        ],
+        "2025-04-24": [
+          ["tide.low", "05:38", "1.25", "91"],
+          ["tide.high", "11:40", "5.10", "94"],
+          ["tide.low", "17:58", "1.40", "91"],
+          ["tide.high", "23:59", "5.20", "94"]
         ]
       }

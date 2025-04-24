@@ -3,8 +3,8 @@
     "config": {
         "step": {
             "user": {
-                "title": "Configurer le port Marées France",
-                "description": "Sélectionnez le port et la fréquence de mise à jour.",
+                "title": "Configurer le port",
+                "description": "Sélectionnez le port",
                 "data": {
                     "harbor_id": "Nom du port",
                     "scan_interval": "Intervalle de mise à jour (heures)"
@@ -52,15 +52,25 @@
     "services": {
       "get_water_levels": {
         "name": "Obtenir les hauteurs d'eau",
-        "description": "Récupère les hauteurs d'eau détaillées pour un port et une date spécifiques depuis l'API SHOM.",
+        "description": "Récupère les hauteurs d'eau détaillées pour un port et une date spécifiques.",
         "fields": {
-          "harbor_name": {
-            "name": "Nom du port",
-            "description": "Le nom officiel du port (ex: LE_PALAIS)."
+          "device_id": {
+            "name": "Port",
+            "description": "Le port dont on veut obtenir les hauteurs d'eau."
           },
           "date": {
             "name": "Date",
             "description": "La date pour laquelle récupérer les hauteurs d'eau (format AAAA-MM-JJ)."
+          }
+        }
+      },
+      "get_tides_data": {
+        "name": "Récupérer les données de marées",
+        "description": "Récupère les données de marées (pleines/basses mers, coefficients) mises en cache.",
+        "fields": {
+          "device_id": {
+            "name": "Port",
+            "description": "Le port dont on veut les données de marées."
           }
         }
       }
