@@ -916,7 +916,7 @@ class MareesFranceCard extends LitElement {
 
             // Draw Coefficient Text
             const coefValue = marker.coefficient; // Get the numeric value
-            const coefColor = coefValue > 100 ? 'var(--warning-color)' : primaryTextColor; // Conditional color
+            const coefColor = coefValue >= 100 ? 'var(--warning-color)' : primaryTextColor; // Conditional color
             const coefTextElement = coefGroup.text(coefText) // [MODIFIED] Add to group
                 // Use conditional text color for coefficient, anchor middle, dominant-baseline middle
                 .font({ fill: coefColor, size: coefFontSize, weight: 'bold', anchor: 'middle' })
