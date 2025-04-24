@@ -457,11 +457,19 @@ class MareesFranceCard extends LitElement {
                   }
                   // Coefficient is only shown for high tides (as per getNextTideStatus logic)
                   if (nextTideInfo.nextPeakCoefficient !== null) {
-                    // Use secondary text color for coefficient like height
-                    parts.push(`Coef. ${nextTideInfo.nextPeakCoefficient}`);
+                    const coef = nextTideInfo.nextPeakCoefficient;
+                    const coefClass = coef >= 100 ? 'warning-coef' : '';
+                    // Use secondary text color for coefficient like height, apply warning class if needed
+                    parts.push(html`<span class="${coefClass}">Coef. ${coef}</span>`);
                   }
                   // Join with separator only if both parts exist
-                  return parts.join(' - ');
+                  // Need to render the parts directly if one contains HTML
+                  if (parts.length === 2) {
+                    return html`${parts[0]} - ${parts[1]}`;
+                  } else if (parts.length === 1) {
+                    return parts[0];
+                  }
+                  return ''; // Return empty if no parts
                 })()}
               </div>
             </div>
@@ -907,9 +915,11 @@ class MareesFranceCard extends LitElement {
                 .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke constant
 
             // Draw Coefficient Text
+            const coefValue = marker.coefficient; // Get the numeric value
+            const coefColor = coefValue > 100 ? 'var(--warning-color)' : primaryTextColor; // Conditional color
             const coefTextElement = coefGroup.text(coefText) // [MODIFIED] Add to group
-                // Use primary text color for coefficient, anchor middle, dominant-baseline middle
-                .font({ fill: primaryTextColor, size: coefFontSize, weight: 'bold', anchor: 'middle' })
+                // Use conditional text color for coefficient, anchor middle, dominant-baseline middle
+                .font({ fill: coefColor, size: coefFontSize, weight: 'bold', anchor: 'middle' })
                 .attr('dominant-baseline', 'central') // Vertical centering attribute
                 // Set x and y attributes directly for precise positioning
                 .attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
@@ -1174,6 +1184,10 @@ class MareesFranceCard extends LitElement {
       .next-tide-details span {
          display: inline-block; /* Keep height and coef box inline */
          vertical-align: middle; /* Align items vertically */
+      }
+      .next-tide-details .warning-coef {
+         color: var(--warning-color);
+         font-weight: bold; /* Make it stand out more */
       }
       /* Separator is now handled directly in the HTML template */
 
