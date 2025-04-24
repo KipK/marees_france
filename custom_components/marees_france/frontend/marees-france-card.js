@@ -11,9 +11,12 @@ const translations = {
     ui: { card: { marees_france: {
       default_title: "France Tides",
       missing_configuration: "Missing configuration",
-      error_entity_required: "Missing entity, please configure the card first",
-      entity_not_found: "Entity not found: {entity}",
-      no_tide_data: "No tide data found in entity attributes.",
+      error_entity_required: "Missing entity, please configure the card first", // Kept for compatibility? Or remove? Let's keep for now, editor handles new config.
+      error_device_required: "Missing device, please configure the card first",
+      entity_not_found: "Entity not found: {entity}", // Keep for potential old configs?
+      device_not_found: "Device not found: {device_id}",
+      no_tide_data: "No tide data found for device.", // Updated message
+      no_water_level_data: "No water level data found for device and date.", // Added message
       waiting_next_tide: "Waiting for next tide",
       rising_until: "Rising until {time} ({duration})",
       falling_until: "Falling until {time} ({duration})",
@@ -34,9 +37,12 @@ const translations = {
     ui: { card: { marees_france: {
       default_title: "Marées France",
       missing_configuration: "Configuration manquante",
-      error_entity_required: "Entité manquante, veuillez d'abord configurer la carte",
-      entity_not_found: "Entité non trouvée : {entity}",
-      no_tide_data: "Aucune donnée de marée trouvée dans les attributs de l'entité.",
+      error_entity_required: "Entité manquante, veuillez d'abord configurer la carte", // Kept for compatibility? Or remove? Let's keep for now, editor handles new config.
+      error_device_required: "Appareil manquant, veuillez d'abord configurer la carte",
+      entity_not_found: "Entité non trouvée : {entity}", // Keep for potential old configs?
+      device_not_found: "Appareil non trouvé : {device_id}",
+      no_tide_data: "Aucune donnée de marée trouvée pour l'appareil.", // Updated message
+      no_water_level_data: "Aucune donnée de niveau d'eau trouvée pour l'appareil et la date.", // Added message
       waiting_next_tide: "En attente de la prochaine marée",
       rising_until: "Monte jusqu'à {time} ({duration})",
       falling_until: "Descend jusqu'à {time} ({duration})",
@@ -88,8 +94,12 @@ function getWeekdayShort(dayIndex, locale) {
 }
 
 // Returns data needed for the next tide peak display
-function getNextTideStatus(tideData, hass) {
-  if (!tideData || !hass) return null;
+// Returns data needed for the next tide peak display
+// Adapts to the new service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
+function getNextTideStatus(tideServiceData, hass) {
+  // Check if the main data object and the 'response' property exist
+  if (!tideServiceData || !tideServiceData.response || !hass) return null;
+  const tideData = tideServiceData.response; // Use the actual data within 'response'
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -97,27 +107,37 @@ function getNextTideStatus(tideData, hass) {
   const tomorrowStr = new Date(new Date(now).setDate(now.getDate() + 1)).toISOString().slice(0, 10);
   const dayAfterTomorrowStr = new Date(new Date(now).setDate(now.getDate() + 2)).toISOString().slice(0, 10);
 
-  const todayTides = tideData[todayStr] ? [
-      ...(tideData[todayStr].high_tides?.map(t => ({ ...t, type: 'high', date: todayStr })) || []),
-      ...(tideData[todayStr].low_tides?.map(t => ({ ...t, type: 'low', date: todayStr })) || [])
-  ] : [];
+  // Helper function to parse the new array format for a given date
+  const parseTidesForDate = (dateStr) => {
+    if (!tideData[dateStr] || !Array.isArray(tideData[dateStr])) return [];
+    return tideData[dateStr].map(tideArr => {
+      if (!Array.isArray(tideArr) || tideArr.length < 3) return null; // Need at least type, time, height
+      const typeStr = tideArr[0]; // "tide.high" or "tide.low"
+      const time = tideArr[1]; // "HH:MM"
+      const height = parseFloat(tideArr[2]); // "H.HH" -> number
+      const coefficient = tideArr.length > 3 && tideArr[3] !== "---" ? parseInt(tideArr[3], 10) : null; // "CC" or "---" -> number or null
+      const type = typeStr === 'tide.high' ? 'high' : (typeStr === 'tide.low' ? 'low' : null);
 
-  const tomorrowTides = tideData[tomorrowStr] ? [
-      ...(tideData[tomorrowStr].high_tides?.map(t => ({ ...t, type: 'high', date: tomorrowStr })) || []),
-      ...(tideData[tomorrowStr].low_tides?.map(t => ({ ...t, type: 'low', date: tomorrowStr })) || [])
-  ] : [];
+      if (!type || !time || isNaN(height)) return null; // Basic validation
 
-  const dayAfterTomorrowTides = tideData[dayAfterTomorrowStr] ? [
-      ...(tideData[dayAfterTomorrowStr].high_tides?.map(t => ({ ...t, type: 'high', date: dayAfterTomorrowStr })) || []),
-      ...(tideData[dayAfterTomorrowStr].low_tides?.map(t => ({ ...t, type: 'low', date: dayAfterTomorrowStr })) || [])
-  ] : [];
+      return {
+        type: type,
+        time: time,
+        height: height,
+        coefficient: coefficient,
+        date: dateStr, // Add date for constructing dateTime
+        dateTime: new Date(`${dateStr}T${time}:00`) // Construct Date object
+      };
+    }).filter(t => t !== null); // Remove invalid entries
+  };
 
+  // Parse tides for the relevant days
+  const todayTides = parseTidesForDate(todayStr);
+  const tomorrowTides = parseTidesForDate(tomorrowStr);
+  const dayAfterTomorrowTides = parseTidesForDate(dayAfterTomorrowStr);
 
+  // Combine and sort all valid tides
   const allRelevantTides = [...todayTides, ...tomorrowTides, ...dayAfterTomorrowTides]
-      .map(tide => ({
-          ...tide,
-          dateTime: new Date(`${tide.date}T${tide.time}:00`)
-      }))
       .sort((a, b) => a.dateTime - b.dateTime);
 
   let nextTide = null;
@@ -181,9 +201,11 @@ class MareesFranceCard extends LitElement {
       hass: {},
       config: {},
       _selectedDay: { state: true },
-      _waterLevels: { state: true }, // Added state property for water level data
-      _isLoading: { state: true }, // Added state property for loading status
-      _isInitialLoading: { state: true }, // Track initial load vs subsequent loads
+      _waterLevels: { state: true }, // State property for water level data (from get_water_levels)
+      _tideData: { state: true }, // State property for tide data (from get_tides_data)
+      _isLoadingWater: { state: true }, // Loading status for water levels
+      _isLoadingTides: { state: true }, // Loading status for tide data
+      _isInitialLoading: { state: true }, // Track initial load vs subsequent loads (maybe combine loaders?)
     };
   }
 
@@ -192,61 +214,84 @@ class MareesFranceCard extends LitElement {
     return document.createElement("marees-france-card-editor");
   }
 
-  static getStubConfig(hass, entities) {
-      const mareesEntities = entities.filter(eid => eid.startsWith("sensor.marees_france_"));
+  // Updated Stub Config for Device Picker
+  static getStubConfig() {
       return {
-          entity: mareesEntities[0] || "sensor.marees_france_port_name", // Default or first found
-          show_header: true, // Keep header option, but we won't use the title from config
+          device_id: "", // Use device_id now
+          show_header: true,
+          title: localizeCard('ui.card.marees_france.default_title', null) // Provide default title
       };
   }
 
   setConfig(config) {
-    if (!config.entity) {
-      throw new Error(localizeCard('ui.card.marees_france.error_entity_required', this.hass) || "Entity required");
+    // Check for device_id now
+    if (!config.device_id) {
+      throw new Error(localizeCard('ui.card.marees_france.error_device_required', this.hass) || "Device required");
     }
     this.config = config;
     const today = new Date();
     this._selectedDay = today.toISOString().slice(0, 10); // Default to today
     this._waterLevels = null; // Reset water levels on config change
-    this._isLoading = true; // Initialize loading state to true
+    this._tideData = null; // Reset tide data on config change
+    this._isLoadingWater = true; // Initialize loading state
+    this._isLoadingTides = true; // Initialize loading state
     this._isInitialLoading = true; // Set initial loading flag
-    // Fetch will be triggered by `updated`
+
+    // Fetch will be triggered by `updated` or explicitly call here if preferred
+    // this._fetchData(); // Example: Call a combined fetch function
   }
 
-  async _fetchWaterLevels() {
-    // Set loading true when fetch actually starts
-    this._isLoading = true;
-    this.requestUpdate(); // Show loader
+  // --- Combined Fetch Function (Optional but cleaner) ---
+  async _fetchData() {
+      if (!this.hass || !this.config || !this.config.device_id) {
+          console.warn("Marees Card: Fetch prerequisites not met (device_id).");
+          this._isLoadingWater = false;
+          this._isLoadingTides = false;
+          this._waterLevels = { error: "Configuration incomplete" };
+          this._tideData = { error: "Configuration incomplete" };
+          this.requestUpdate();
+          return;
+      }
+      // Reset states before fetching
+      this._isLoadingWater = true;
+      this._isLoadingTides = true;
+      this._waterLevels = null;
+      this._tideData = null;
+      this.requestUpdate(); // Show loaders
 
-    if (!this.hass || !this.config || !this.config.entity || !this._selectedDay) {
-      console.warn("Marees Card: Fetch prerequisites not met.", { hass: !!this.hass, config: !!this.config, entity: this.config?.entity, day: this._selectedDay });
-      this._waterLevels = null; // Keep null if prerequisites fail
-      this._isLoading = false; // Set loading false
+      // Fetch both concurrently
+      await Promise.all([
+          this._fetchWaterLevels(),
+          this._fetchTideData()
+      ]);
+
+      // No need to set loading false here, individual fetches handle it in finally blocks
+      // No need for final requestUpdate here, individual fetches handle it
+  }
+
+  // --- Fetch Water Level Data ---
+  async _fetchWaterLevels() {
+    // Set loading true ONLY if not already loading (prevent loops if called rapidly)
+    // if (this._isLoadingWater) return; // Maybe not needed if called carefully
+    this._isLoadingWater = true;
+    this.requestUpdate(); // Show loader if needed
+
+    // Check for device_id and selectedDay
+    if (!this.hass || !this.config || !this.config.device_id || !this._selectedDay) {
+      console.warn("Marees Card: Water Level Fetch prerequisites not met.", { hass: !!this.hass, device_id: this.config?.device_id, day: this._selectedDay });
+      this._waterLevels = { error: localizeCard('ui.card.marees_france.missing_configuration', this.hass) }; // Use localized message
+      this._isLoadingWater = false; // Set loading false
       this.requestUpdate(); // Update UI
       return;
     }
 
-    // No need for immediate requestUpdate here, initial render/update cycle will handle loader
-
-    // Derive harbor_name from entity_id (e.g., sensor.marees_france_le_palais -> LE_PALAIS)
-    const entityParts = this.config.entity.split('.');
-    let harborName = "unknown";
-    if (entityParts.length === 2 && entityParts[0] === 'sensor' && entityParts[1].startsWith('marees_france_')) {
-        // Convert to uppercase as API seems to expect it (based on example LE_PALAIS)
-        harborName = entityParts[1].substring('marees_france_'.length).toUpperCase();
-    } else {
-        console.warn(`Marees France Card: Could not derive harbor name from entity: ${this.config.entity}`);
-        this._waterLevels = { error: "Invalid entity for harbor name derivation" };
-        this.requestUpdate(); // Request update to show error
-        return;
-    }
     try {
-      // Using 6-argument callService based on user example
+      console.log(`Marees Card: Fetching water levels for device ${this.config.device_id} on ${this._selectedDay}`);
       const response = await this.hass.callService(
         'marees_france', // domain
         'get_water_levels', // service
         { // data
-          harbor_name: harborName,
+          device_id: this.config.device_id, // Use device_id
           date: this._selectedDay
         },
         undefined, // target (not needed)
@@ -254,50 +299,115 @@ class MareesFranceCard extends LitElement {
         true // return_response
       );
 
-      // Refinement: Check response structure before assigning
+      // Check response structure
       if (response && response.response && typeof response.response === 'object') {
           this._waterLevels = response;
+          console.log("Marees Card: Water levels received:", this._waterLevels);
       } else {
           console.error('Marees Card: Invalid data structure received from get_water_levels:', response);
           this._waterLevels = { error: "Invalid data structure from service" };
       }
-      this.requestUpdate(); // Explicitly request update after fetch attempt
     } catch (error) {
-      console.error('Marees Card: Error calling marees_france.get_water_levels service:', error); // Log error
+      console.error('Marees Card: Error calling marees_france.get_water_levels service:', error);
       this._waterLevels = { error: error.message || "Service call failed" };
-      // Let LitElement handle update via state change on error
-      // No need for explicit requestUpdate here, state change handles it
     } finally {
-        this._isLoading = false; // Set loading false after fetch completes or fails
-        this._isInitialLoading = false; // Turn off initial loading flag after first attempt
+        this._isLoadingWater = false; // Set loading false after fetch completes or fails
+        if (this._isInitialLoading && !this._isLoadingTides) { // Turn off initial flag only when both are done
+             this._isInitialLoading = false;
+        }
+        this.requestUpdate(); // Ensure UI updates after loading finishes
+    }
+  }
+
+  // --- Fetch Tide Data ---
+  async _fetchTideData() {
+    // if (this._isLoadingTides) return; // Maybe not needed
+    this._isLoadingTides = true;
+    this.requestUpdate(); // Show loader if needed
+
+    // Check for device_id
+    if (!this.hass || !this.config || !this.config.device_id) {
+      console.warn("Marees Card: Tide Data Fetch prerequisites not met.", { hass: !!this.hass, device_id: this.config?.device_id });
+      this._tideData = { error: localizeCard('ui.card.marees_france.missing_configuration', this.hass) };
+      this._isLoadingTides = false; // Set loading false
+      this.requestUpdate(); // Update UI
+      return;
+    }
+
+    try {
+      console.log(`Marees Card: Fetching tide data for device ${this.config.device_id}`);
+      const response = await this.hass.callService(
+        'marees_france', // domain
+        'get_tides_data', // service
+        { // data
+          device_id: this.config.device_id // Use device_id
+        },
+        undefined, // target (not needed)
+        false, // blocking (usually false for frontend calls)
+        true // return_response
+      );
+
+      // Check response structure
+      if (response && response.response && typeof response.response === 'object') {
+          this._tideData = response;
+           console.log("Marees Card: Tide data received:", this._tideData);
+      } else {
+          console.error('Marees Card: Invalid data structure received from get_tides_data:', response);
+          this._tideData = { error: "Invalid data structure from service" };
+      }
+    } catch (error) {
+      console.error('Marees Card: Error calling marees_france.get_tides_data service:', error);
+      this._tideData = { error: error.message || "Service call failed" };
+    } finally {
+        this._isLoadingTides = false; // Set loading false after fetch completes or fails
+         if (this._isInitialLoading && !this._isLoadingWater) { // Turn off initial flag only when both are done
+             this._isInitialLoading = false;
+        }
         this.requestUpdate(); // Ensure UI updates after loading finishes
     }
   }
 
 
   _handleTabClick(ev) {
-    this._selectedDay = ev.currentTarget.dataset.date;
-    // Don't set loading here, _fetchWaterLevels will handle it
-    this._fetchWaterLevels(); // Fetch data for the new day
+    const newDay = ev.currentTarget.dataset.date;
+    if (newDay !== this._selectedDay) {
+        this._selectedDay = newDay;
+        // Only need to fetch water levels, as tide data is for all days
+        this._fetchWaterLevels();
+    }
   }
 
   render() {
-    if (!this.hass || !this.config || !this.config.entity) {
-      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.error_entity_required', this.hass)}</div></ha-card>`;
+    // Check for device_id in config
+    if (!this.hass || !this.config || !this.config.device_id) {
+      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.error_device_required', this.hass)}</div></ha-card>`;
     }
 
-    const entityState = this.hass.states[this.config.entity];
-    if (!entityState) {
-      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.entity_not_found', this.hass, 'entity', this.config.entity)}</div></ha-card>`;
+    // Check if tide data fetch resulted in an error
+    if (this._tideData?.error) {
+        // Optionally show a more specific error if device wasn't found vs other service errors
+        const message = this._tideData.error.includes("not found")
+            ? localizeCard('ui.card.marees_france.device_not_found', this.hass, 'device_id', this.config.device_id)
+            : `${localizeCard('ui.card.marees_france.no_tide_data', this.hass)} Error: ${this._tideData.error}`;
+        return html`<ha-card><div class="warning">${message}</div></ha-card>`;
     }
 
-    const tideData = entityState.attributes.data;
-    if (!tideData) {
-      return html`<ha-card><div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div></ha-card>`;
+    // Check if tide data is loaded and valid before proceeding
+    if (!this._tideData || !this._tideData.response) {
+        // Show loading or initial message if still loading tides
+        return html`
+            <ha-card>
+                <div class="card-header">${this.config.title || localizeCard('ui.card.marees_france.default_title', this.hass)}</div>
+                <div class="card-content">
+                    ${this._isLoadingTides ? html`<div class="loader">Loading tide data...</div>` : html`<div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div>`}
+                </div>
+            </ha-card>
+        `;
     }
 
-    // Use the refined function to get status for the header display
-    const nextTideInfo = getNextTideStatus(tideData, this.hass);
+    // --- Tide data is available, proceed ---
+    const tideDataForStatus = this._tideData; // Pass the whole object including 'response'
+    const nextTideInfo = getNextTideStatus(tideDataForStatus, this.hass);
     const locale = this.hass.language || 'en';
 
     const today = new Date();
@@ -358,12 +468,12 @@ class MareesFranceCard extends LitElement {
 
           <!-- SVG Graph Container -->
           <div class="svg-graph-container">
-            ${this._isLoading ? html`
+            ${(this._isLoadingWater || this._isLoadingTides) ? html`
               <ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>
             ` : ''}
             <!-- Target for svg.js -->
             <div id="marees-graph-target" class="svg-graph-target">
-               <!-- SVG will be drawn here by svg.js -->
+               <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
             </div>
           </div>
 
@@ -393,21 +503,31 @@ class MareesFranceCard extends LitElement {
         }
     }
 
-    // Trigger initial data fetch when hass becomes available and data hasn't been fetched yet
-    if (changedProperties.has('hass') && this.hass && this._waterLevels === null) {
-        // Removed !this._isLoading check - we want to fetch if hass is ready and data is null, regardless of initial loading state
-        console.log("Marees Card: Hass available and no data yet, triggering initial fetch.");
-        this._fetchWaterLevels();
-        needsGraphRedraw = true; // Ensure graph updates after fetch starts
+    // Trigger initial data fetch when hass becomes available and config is set,
+    // but only if data hasn't been fetched yet (check both tide and water levels)
+    if (changedProperties.has('hass') && this.hass && this.config?.device_id && this._waterLevels === null && this._tideData === null) {
+        console.log("Marees Card: Hass available, config ready, and no data yet. Triggering initial fetches.");
+        // Use the combined fetch function if implemented, otherwise call individually
+        this._fetchData(); // Assumes _fetchData exists
+        // this._fetchWaterLevels();
+        // this._fetchTideData();
+        needsGraphRedraw = true; // Graph will redraw once loading finishes
     }
 
-    // Check if other relevant properties changed
-    if (changedProperties.has('config') || changedProperties.has('_selectedDay') || changedProperties.has('_waterLevels') || changedProperties.has('_isLoading')) {
+    // If config changes, trigger a full refetch
+    if (changedProperties.has('config')) {
+        console.log("Marees Card: Config changed, triggering data refetch.");
+        this._fetchData(); // Assumes _fetchData exists
         needsGraphRedraw = true;
     }
 
-    // Redraw graph if needed, SVG is ready, AND loading is finished
-    if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoading) {
+    // Check if selected day changed (only need water levels) or if data/loading states changed
+    if (changedProperties.has('_selectedDay') || changedProperties.has('_waterLevels') || changedProperties.has('_tideData') || changedProperties.has('_isLoadingWater') || changedProperties.has('_isLoadingTides')) {
+        needsGraphRedraw = true;
+    }
+
+    // Redraw graph if needed, SVG is ready, AND NEITHER data source is loading
+    if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoadingWater && !this._isLoadingTides) {
         this._drawGraphWithSvgJs();
     }
   }
@@ -428,27 +548,39 @@ class MareesFranceCard extends LitElement {
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
 
-    // --- 1. Check for Errors or Missing Data (after loading is false) ---
-    // Check if the main response object exists, has an error, or lacks the 'response' property
-    if (!this._waterLevels || this._waterLevels.error || !this._waterLevels.response) {
-      // Draw error message in SVG container (canvas already cleared)
-      const errorMessage = this._waterLevels?.error
-          ? `Error: ${this._waterLevels.error}`
-          : localizeCard('ui.card.marees_france.no_data_available', this.hass);
-      this._svgDraw.text(errorMessage)
-          .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
-          .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
-      return;
+    // --- 1. Check for Errors or Missing Data (after loading is false for BOTH) ---
+
+    // Check Tide Data first (needed for markers)
+    if (!this._tideData || this._tideData.error || !this._tideData.response) {
+        const errorMessage = this._tideData?.error
+            ? `Tide Error: ${this._tideData.error}`
+            : localizeCard('ui.card.marees_france.no_tide_data', this.hass);
+        this._svgDraw.text(errorMessage)
+            .move(viewBoxWidth / 2, viewBoxHeight / 2)
+            .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+        return;
     }
+    const tideResponse = this._tideData.response; // Store for use
 
-    // Access the actual tide data array within the 'response' object using the selected day
-    const levelsData = this._waterLevels.response[this._selectedDay];
+    // Check Water Level Data (needed for curve)
+    if (!this._waterLevels || this._waterLevels.error || !this._waterLevels.response) {
+        const errorMessage = this._waterLevels?.error
+            ? `Water Level Error: ${this._waterLevels.error}`
+            : localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
+        this._svgDraw.text(errorMessage)
+            .move(viewBoxWidth / 2, viewBoxHeight / 2)
+            .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+        return;
+    }
+    const waterLevelResponse = this._waterLevels.response; // Store for use
 
-    // --- 2. Check for Data for the Selected Day ---
+    // Access the actual water level data array for the selected day
+    const levelsData = waterLevelResponse[this._selectedDay];
+
+    // --- 2. Check for Water Level Data for the Selected Day ---
     if (!Array.isArray(levelsData) || levelsData.length === 0) {
-        // Draw 'no data' message (canvas already cleared)
-        this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass))
-            .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
+        this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // Keep using this key, context implies water level here
+            .move(viewBoxWidth / 2, viewBoxHeight / 2)
             .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
         return;
     }
@@ -516,24 +648,38 @@ class MareesFranceCard extends LitElement {
         const label = hour === 24 ? '00:00' : `${String(hour).padStart(2, '0')}:00`;
         xTicks.push({ x: x, label: label });
     }
-    // --- Tide Markers Data ---
-    const entityState = this.hass.states[this.config.entity]; // Need entityState here
-    const tideEvents = [];
-    if (entityState && entityState.attributes.data && entityState.attributes.data[this._selectedDay]) {
-        const dayData = entityState.attributes.data[this._selectedDay];
-        (dayData.high_tides || []).forEach(t => tideEvents.push({ ...t, type: 'high' }));
-        (dayData.low_tides || []).forEach(t => tideEvents.push({ ...t, type: 'low' }));
+    // --- Tide Markers Data (using _tideData) ---
+    const tideEventsForDay = tideResponse[this._selectedDay]; // Use data fetched earlier
+    const tideMarkers = [];
+    if (Array.isArray(tideEventsForDay)) {
+        tideEventsForDay.forEach(tideArr => {
+            // Parse the array format [typeStr, timeStr, heightStr, coeffStr]
+            if (!Array.isArray(tideArr) || tideArr.length < 3) return;
+            const typeStr = tideArr[0];
+            const time = tideArr[1];
+            const height = parseFloat(tideArr[2]);
+            const coefficient = tideArr.length > 3 && tideArr[3] !== "---" ? parseInt(tideArr[3], 10) : null;
+            const isHigh = typeStr === 'tide.high';
+            const isLow = typeStr === 'tide.low';
+
+            if ((!isHigh && !isLow) || !time || isNaN(height)) return; // Validate
+
+            const [hours, minutes] = time.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            const x = timeToX(totalMinutes);
+            const y = heightToY(height);
+
+            tideMarkers.push({
+                x: x,
+                y: y,
+                time: time,
+                height: height,
+                coefficient: isHigh ? coefficient : null, // Coeff only for high tides
+                isHigh: isHigh
+            });
+        });
     }
-    const tideMarkers = tideEvents.map(event => {
-        const [hours, minutes] = event.time.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes;
-        const height = parseFloat(event.height);
-        if (isNaN(height)) return null; // Skip if height is invalid
-        const x = timeToX(totalMinutes);
-        const y = heightToY(height);
-        const isHigh = event.type === 'high';
-        return { x: x, y: y, time: event.time, height: height, coefficient: isHigh ? event.coefficient : null, isHigh: isHigh };
-    }).filter(m => m !== null); // Filter out invalid markers
+    // No need to filter nulls here as we build the array directly
 
      // --- Current Time Marker Data ---
     const now = new Date();

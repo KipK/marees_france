@@ -8,12 +8,14 @@ const translations = {
   en: {
     title: "Title (Optional)",
     graph_label: "Display tide graph",
-    header: "Display header "
+    header: "Display header ",
+    device_label: "Harbor Device" // Added label for device picker
   },
   fr: {
     title: "Titre (Optionnel)",
     header: "Afficher l'en-tête",
-    graph_label: "Afficher le graphique des marées" // No comma here, removed empty lines below
+    graph_label: "Afficher le graphique des marées", // No comma here, removed empty lines below
+    device_label: "Appareil Port" // Added label for device picker
   }
 };
 
@@ -89,16 +91,23 @@ class MareesFranceCardEditor extends LitElement {
 
     // Define the schema dynamically here where hass is available
     const schema = [
+      // --- Replaced Entity Picker with Device Picker ---
       {
-        name: "entity",
+        name: "device_id", // Changed name to device_id
+        label: localizeCard('device_label', this.hass.language), // Added label
         required: true,
         selector: {
-          entity: {
-            domain: "sensor", // Filter for sensor entities
-            integration: "marees_france",
-          },
+          device: { // Use device selector
+            integration: "marees_france", // Filter by integration
+            // entity_domain: "sensor" // Optional: Further filter devices providing sensors? Might not be necessary.
+            include_entities: false // We only need the device ID
+          }
         },
+        context: { // Add context for better filtering if needed (optional)
+             integration: 'marees_france'
+        }
       },
+      // --- End Device Picker ---
       {
         name: "title",
         label: localizeCard('title', this.hass.language), // Use this.hass here
