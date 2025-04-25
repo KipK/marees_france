@@ -891,7 +891,7 @@ class MareesFranceCard extends LitElement {
     const coefLineToPeakGap = 3; // Small gap between dotted line end and peak dot
     const tooltipPadding = { x: 6, y: 4 };
     const tooltipRadius = 4;
-    const tooltipOffset = 10; // Offset from the dot
+    // const tooltipOffset = 10; // Offset from the dot - Now handled conditionally in _showHtmlTooltip
 
     // Draw Base Elements First (Fill, Curve, Axis Labels)
     draw.path(fillPathData).fill({ color: curveColor, opacity: 0.4 }).stroke('none');
@@ -1140,7 +1140,9 @@ class MareesFranceCard extends LitElement {
       tooltip.style.display = 'none'; // Hide again before final positioning
       tooltip.style.visibility = 'visible';
 
-      const offsetAbove = 25; // Increased offset significantly
+      // Determine offset based on event type (touch vs mouse)
+      const isTouchEvent = evt.type.startsWith('touch');
+      const offsetAbove = isTouchEvent ? 45 : 10; // 45px for touch, 10px for mouse
 
       // Calculate desired position
       let left = targetCenterX - tooltipWidth / 2;
