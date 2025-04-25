@@ -1090,11 +1090,25 @@ class MareesFranceCard extends LitElement {
           // For simplicity, let's use the event page coordinates directly for positioning during drag.
            const svgPoint = this._getSVGCoordinates(evt); // Get SVG coords from event
            if (!svgPoint) return;
+
+           // --- FIX: Extract clientX/clientY correctly for touch/mouse events ---
+           let clientX, clientY;
+           if (evt.touches && evt.touches.length > 0) {
+               clientX = evt.touches[0].clientX;
+               clientY = evt.touches[0].clientY;
+           } else if (evt.clientX !== undefined && evt.clientY !== undefined) {
+               clientX = evt.clientX;
+               clientY = evt.clientY;
+           } else {
+               return; // Cannot determine event coordinates
+           }
+           // --- End FIX ---
+
            // Approximate target rect based on SVG point and dot radius (needs refinement)
            const dotRadiusPx = 5 * (cardRect.width / 500); // Estimate pixel radius based on scale
            targetRect = {
-               left: evt.clientX - dotRadiusPx,
-               top: evt.clientY - dotRadiusPx,
+               left: clientX - dotRadiusPx, // Use extracted clientX
+               top: clientY - dotRadiusPx,  // Use extracted clientY
                width: dotRadiusPx * 2,
                height: dotRadiusPx * 2
            };
