@@ -57,3 +57,39 @@ get_tides_data:
           ["tide.high", "23:59", "5.20", "94"]
         ]
       }
+get_coefficients_data:
+  name: Get Coefficients Data
+  description: Retrieves cached tide coefficient data for a specific harbor device. Allows filtering by start date and number of days. If no filters are provided, returns all cached data (up to 365 days from today).
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to get coefficient data for.
+      required: true
+      selector:
+        device:
+          integration: marees_france
+    date:
+      name: Start Date (Optional)
+      description: The starting date for which to fetch coefficients (YYYY-MM-DD format). If omitted, defaults to today when 'days' is specified, or returns all data if 'days' is also omitted.
+      required: false
+      example: "2025-04-25"
+      selector:
+        date:
+    days:
+      name: Number of Days (Optional)
+      description: The number of days (including the start date) to retrieve coefficients for. If omitted, returns data only for the specified 'date' (if provided), or all cached data if 'date' is also omitted.
+      required: false
+      example: 7
+      selector:
+        number:
+          min: 1
+          max: 365 # Max cache duration
+          mode: box
+  response:
+    description: The raw cached coefficient data for the harbor device, keyed by date. Each date maps to a list of coefficient strings for that day.
+    example: >
+      {
+        "2025-04-25": ["107", "102"],
+        "2025-04-26": ["95"],
+        "2025-04-27": ["87", "78"]
+      }

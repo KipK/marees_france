@@ -74,5 +74,24 @@
           }
         }
       }
+,
+      "get_coefficients_data": {
+        "name": "Obtenir les Données de Coefficients",
+        "description": "Récupère les données de coefficients de marée mises en cache pour un port spécifique. Permet de filtrer par date de début et nombre de jours.",
+        "fields": {
+          "device_id": {
+            "name": "Port",
+            "description": "Le port Marées France dont on veut obtenir les données de coefficients."
+          },
+          "date": {
+            "name": "Date de début (Optionnel)",
+            "description": "La date de début pour laquelle récupérer les coefficients (format AAAA-MM-JJ)."
+          },
+          "days": {
+            "name": "Nombre de jours (Optionnel)",
+            "description": "Le nombre de jours (incluant la date de début) pour lesquels récupérer les coefficients."
+          }
+        }
+      }
     }
 }

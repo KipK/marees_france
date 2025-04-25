@@ -62,5 +62,23 @@
             }
         }
     },
+"get_coefficients_data": {
+        "name": "Get Coefficients Data",
+        "description": "Retrieves cached tide coefficient data for a specific harbor device. Allows filtering by start date and number of days.",
+        "fields": {
+            "device_id": {
+                "name": "Harbor Device",
+                "description": "The Marées France harbor device to get coefficient data for."
+            },
+            "date": {
+                "name": "Start Date (Optional)",
+                "description": "The starting date for which to fetch coefficients (YYYY-MM-DD format)."
+            },
+            "days": {
+                "name": "Number of Days (Optional)",
+                "description": "The number of days (including the start date) to retrieve coefficients for."
+            }
+        }
+    },
     "title": "Mar\u00e9es France (SHOM)"
 }

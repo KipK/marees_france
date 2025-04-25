@@ -27,12 +27,14 @@ from .const import (
     PLATFORMS,
     SERVICE_GET_WATER_LEVELS,
     SERVICE_GET_TIDES_DATA, # Add new service name
+    SERVICE_GET_COEFFICIENTS_DATA, # Add new service name
     CONF_HARBOR_ID,
     ATTR_HARBOR_NAME,
     ATTR_DATE,
     DATE_FORMAT, # Add DATE_FORMAT
     TIDESURL_TEMPLATE, # Add TIDESURL_TEMPLATE
     WATERLEVELS_URL_TEMPLATE,
+    COEFF_URL_TEMPLATE, # Add coefficient URL template
     HEADERS, # Ensure HEADERS is imported
 )
 from .coordinator import MareesFranceUpdateCoordinator
@@ -48,6 +50,8 @@ WATERLEVELS_STORAGE_KEY = f"{DOMAIN}_water_levels_cache"
 WATERLEVELS_STORAGE_VERSION = 1
 TIDES_STORAGE_KEY = f"{DOMAIN}_tides_cache" # New key for tides
 TIDES_STORAGE_VERSION = 1 # New version for tides
+COEFF_STORAGE_KEY = f"{DOMAIN}_coefficients_cache" # New key for coefficients
+COEFF_STORAGE_VERSION = 1 # New version for coefficients
 
 # Service Schemas
 SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
@@ -56,6 +60,11 @@ SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
 })
 SERVICE_GET_TIDES_DATA_SCHEMA = vol.Schema({ # Schema for new service
     vol.Required("device_id"): cv.string, # Changed from ATTR_HARBOR_NAME
+})
+SERVICE_GET_COEFFICIENTS_DATA_SCHEMA = vol.Schema({ # Schema for new service
+    vol.Required("device_id"): cv.string,
+    vol.Optional(ATTR_DATE): vol.Match(r"^\d{4}-\d{2}-\d{2}$"), # Optional date YYYY-MM-DD
+    vol.Optional("days"): cv.positive_int, # Optional number of days
 })
 
 
@@ -417,6 +426,254 @@ async def async_handle_get_tides_data(call: ServiceCall) -> ServiceResponse:
     return harbor_data
 
 
+# --- Coefficient Helpers (New Section) ---
+
+async def _async_fetch_and_store_coefficients(
+    hass: HomeAssistant,
+    store: Store,
+    cache: dict[str, dict[str, Any]],
+    harbor_id: str,
+    start_date: date,
+    days: int,
+) -> bool:
+    """Fetch coefficient data, parse, store daily, and save."""
+    start_date_str = start_date.strftime(DATE_FORMAT)
+    url = COEFF_URL_TEMPLATE.format(harbor_name=harbor_id, date=start_date_str, days=days)
+    session = async_get_clientsession(hass)
+    _LOGGER.debug("Marées France: Fetching %d days of coefficient data for %s starting %s from %s", days, harbor_id, start_date_str, url)
+
+    try:
+        async with asyncio.timeout(60): # Longer timeout for potentially large fetch (365 days)
+            response = await session.get(url, headers=HEADERS)
+            response.raise_for_status()
+            # API returns a list of lists of lists: [[[day1_c1, day1_c2]], [[day2_c1]], ...]
+            fetched_data_list = await response.json()
+            _LOGGER.debug("Marées France: Received coefficient data for %s starting %s (%d days)", harbor_id, start_date_str, days)
+
+            # Update cache with fetched data, day by day
+            cache.setdefault(harbor_id, {}) # Ensure harbor key exists
+            current_date = start_date
+            if isinstance(fetched_data_list, list):
+                processed_days_count = 0
+                # Iterate through each month's list
+                for monthly_coeffs_list in fetched_data_list:
+                    if isinstance(monthly_coeffs_list, list):
+                        # Iterate through each day's list within the month
+                        for daily_coeffs in monthly_coeffs_list:
+                            # Check if we have processed the requested number of days
+                            if processed_days_count >= days:
+                                break # Stop processing if we have enough days
+
+                            day_str = (start_date + timedelta(days=processed_days_count)).strftime(DATE_FORMAT)
+                            # Ensure daily_coeffs is a list containing coefficient strings (potentially nested in single-element lists)
+                            # Example: ["107", "102"] or [["107"], ["102"]]
+                            parsed_coeffs = []
+                            if isinstance(daily_coeffs, list):
+                                for coeff_item in daily_coeffs:
+                                    if isinstance(coeff_item, str):
+                                        parsed_coeffs.append(coeff_item)
+                                    elif isinstance(coeff_item, list) and len(coeff_item) == 1 and isinstance(coeff_item[0], str):
+                                        # Handle the case like [["107"], ["102"]]
+                                        parsed_coeffs.append(coeff_item[0])
+                                    else:
+                                         _LOGGER.warning("Marées France: Unexpected item format within daily coefficients for %s on %s: %s. Skipping item.", harbor_id, day_str, coeff_item)
+
+                                if parsed_coeffs: # Only store if we successfully parsed coefficients for the day
+                                    cache[harbor_id][day_str] = parsed_coeffs
+                                    _LOGGER.debug("Marées France: Updated coefficient cache for %s on %s: %s", harbor_id, day_str, parsed_coeffs)
+                                else:
+                                     _LOGGER.warning("Marées France: No valid coefficients found for %s on %s: %s. Skipping day.", harbor_id, day_str, daily_coeffs)
+                            else:
+                                _LOGGER.warning("Marées France: Unexpected format for daily coefficients container for %s on %s: %s. Skipping day.", harbor_id, day_str, daily_coeffs)
+
+                            processed_days_count += 1 # Increment day counter *after* processing a day's entry
+
+                    if processed_days_count >= days:
+                        break # Stop processing months if we have enough days
+
+                # After processing all months (or breaking early)
+                if processed_days_count == days:
+                    await store.async_save(cache)
+                    _LOGGER.debug("Marées France: Saved updated coefficients cache for %s after processing %d days.", harbor_id, processed_days_count)
+                    return True # Indicate success
+                else:
+                    _LOGGER.error("Marées France: Processed %d days of coefficient data, but expected %d for %s starting %s. API data might be incomplete or parsing failed.", processed_days_count, days, harbor_id, start_date_str)
+                    # Save whatever was processed successfully before returning failure
+                    if processed_days_count > 0:
+                         await store.async_save(cache)
+                         _LOGGER.debug("Marées France: Saved partially updated coefficients cache for %s (%d days processed).", harbor_id, processed_days_count)
+                    return False # Indicate failure (didn't get the expected number of days)
+
+            else:
+                 _LOGGER.error("Marées France: Unexpected response format from coefficient API (outer structure not a list) for %s starting %s: %s", harbor_id, start_date_str, fetched_data_list)
+
+
+    except asyncio.TimeoutError:
+        _LOGGER.error("Marées France: Timeout fetching coefficient data for %s starting %s (%d days)", harbor_id, start_date_str, days)
+    except aiohttp.ClientResponseError as err:
+        _LOGGER.error("Marées France: HTTP error fetching coefficient data for %s starting %s (%d days): %s %s", harbor_id, start_date_str, days, err.status, err.message)
+    except aiohttp.ClientError as err:
+        _LOGGER.error("Marées France: Client error fetching coefficient data for %s starting %s (%d days): %s", harbor_id, start_date_str, days, err)
+    except Exception:
+        _LOGGER.exception("Marées France: Unexpected error fetching coefficient data for %s starting %s (%d days)", harbor_id, start_date_str, days)
+
+    return False # Indicate failure
+
+
+async def async_check_and_prefetch_coefficients(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    store: Store[dict[str, dict[str, Any]]]
+) -> None:
+    """Check coefficient cache (today to today+364), prefetch missing, and prune old."""
+    harbor_id = entry.data[CONF_HARBOR_ID]
+    _LOGGER.info("Marées France: Starting coefficient data prefetch check for harbor: %s", harbor_id)
+    cache = await store.async_load() or {}
+    today = date.today()
+    needs_save = False
+    fetch_start_date = None
+    fetch_days = 0
+
+    # --- Pruning ---
+    if harbor_id in cache:
+        dates_to_prune = list(cache[harbor_id].keys())
+        pruned_count = 0
+        for d_str in dates_to_prune:
+            try:
+                d_date = date.fromisoformat(d_str)
+                if d_date < today:
+                    del cache[harbor_id][d_str]
+                    needs_save = True
+                    pruned_count += 1
+            except ValueError: # Handle potential invalid date strings in cache
+                 del cache[harbor_id][d_str]
+                 needs_save = True
+                 pruned_count += 1
+                 _LOGGER.warning("Marées France: Removed coefficient cache entry with invalid date key: %s for %s", d_str, harbor_id)
+        if pruned_count > 0:
+             _LOGGER.info("Marées France: Pruned %d old coefficient data entries for %s.", pruned_count, harbor_id)
+        # Remove harbor entry if empty after pruning
+        if not cache[harbor_id]:
+            del cache[harbor_id]
+            needs_save = True # Ensure save if harbor entry removed
+
+    # --- Check and Fetch ---
+    harbor_cache = cache.get(harbor_id, {})
+    first_missing_date = None
+    last_required_date = today + timedelta(days=364)
+
+    # Check from today up to 365 days ahead
+    for i in range(365):
+        check_date = today + timedelta(days=i)
+        check_date_str = check_date.strftime(DATE_FORMAT)
+        if check_date_str not in harbor_cache:
+            if first_missing_date is None:
+                first_missing_date = check_date
+            # Keep checking until the end of the 365-day window to find the full range to fetch
+        elif first_missing_date is not None:
+            # We found data *after* finding a missing date. This shouldn't happen with contiguous fetching.
+            # Log a warning and fetch from the first missing date anyway.
+             _LOGGER.warning("Marées France: Found cached coefficient data for %s after missing date %s. Inconsistency detected.", check_date_str, first_missing_date.strftime(DATE_FORMAT))
+             # Continue checking to ensure we fetch up to the last required date if needed
+
+    if first_missing_date is not None:
+        fetch_start_date = first_missing_date
+        # Calculate days needed: from first missing date up to the last required date
+        fetch_days = (last_required_date - fetch_start_date).days + 1
+        _LOGGER.info("Marées France: Missing coefficient data for %s starting %s. Need to fetch %d days.", harbor_id, fetch_start_date.strftime(DATE_FORMAT), fetch_days)
+
+        fetch_successful = await _async_fetch_and_store_coefficients(hass, store, cache, harbor_id, fetch_start_date, fetch_days)
+        if fetch_successful:
+            _LOGGER.info("Marées France: Successfully prefetched %d days of coefficient data for %s starting %s.", fetch_days, harbor_id, fetch_start_date.strftime(DATE_FORMAT))
+            # Cache was saved by the helper
+            needs_save = False # Reset needs_save as fetch helper saved it
+        else:
+            _LOGGER.error("Marées France: Failed to prefetch coefficient data for %s.", harbor_id)
+            # Don't save if fetch failed, keep potentially pruned state from before fetch attempt
+            if needs_save:
+                 await store.async_save(cache)
+                 _LOGGER.debug("Marées France: Saved pruned coefficients cache for %s after failed fetch.", harbor_id)
+            return # Exit prefetch check
+    else:
+         _LOGGER.info("Marées France: Coefficient data cache is up to date for %s (today to today+364).", harbor_id)
+
+    # Save if only pruning occurred
+    if needs_save:
+        await store.async_save(cache)
+        _LOGGER.debug("Marées France: Saved pruned coefficients cache for %s", harbor_id)
+
+    _LOGGER.info("Marées France: Finished coefficient data prefetch check for harbor: %s", harbor_id)
+
+
+# --- Service Handler for Coefficients (New) ---
+
+async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceResponse:
+    """Handle the service call to get cached coefficient data for a device."""
+    device_id = call.data["device_id"]
+    req_date_str = call.data.get(ATTR_DATE)
+    req_days = call.data.get("days")
+    hass = call.hass
+
+    # Resolve harbor_id
+    dev_reg = dr.async_get(hass)
+    device_entry = dev_reg.async_get(device_id)
+    if not device_entry or not device_entry.config_entries:
+        raise HomeAssistantError(f"Device {device_id} not found or not linked to Marées France.")
+    config_entry_id = next(iter(device_entry.config_entries))
+    config_entry = hass.config_entries.async_get_entry(config_entry_id)
+    if not config_entry or config_entry.domain != DOMAIN:
+         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+    harbor_id = config_entry.data[CONF_HARBOR_ID]
+
+    _LOGGER.debug("Service call get_coefficients_data for device %s (harbor: %s), date: %s, days: %s",
+                  device_id, harbor_id, req_date_str, req_days)
+
+    # Load cache
+    coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY)
+    cache = await coeff_store.async_load() or {}
+    harbor_cache = cache.get(harbor_id, {})
+
+    if not harbor_cache:
+         _LOGGER.warning("Marées France: No cached coefficient data found for harbor '%s' (device: %s).", harbor_id, device_id)
+         return {} # Return empty dict
+
+    # Determine date range and filter data
+    results = {}
+    today = date.today()
+
+    if req_date_str:
+        try:
+            start_date = date.fromisoformat(req_date_str)
+        except ValueError:
+            raise HomeAssistantError(f"Invalid date format: {req_date_str}. Use YYYY-MM-DD.")
+        if req_days:
+            # Date and days provided
+            end_date = start_date + timedelta(days=req_days - 1)
+        else:
+            # Only date provided
+            end_date = start_date
+    elif req_days:
+        # Only days provided, start from today
+        start_date = today
+        end_date = start_date + timedelta(days=req_days - 1)
+    else:
+        # Neither provided, return all cached data (keys are dates)
+        _LOGGER.debug("Marées France: Returning all cached coefficient data for harbor '%s'.", harbor_id)
+        return harbor_cache # Return the full harbor cache directly
+
+    # Filter data for the calculated range
+    current_date = start_date
+    while current_date <= end_date:
+        current_date_str = current_date.strftime(DATE_FORMAT)
+        if current_date_str in harbor_cache:
+            results[current_date_str] = harbor_cache[current_date_str]
+        current_date += timedelta(days=1)
+
+    _LOGGER.debug("Marées France: Returning coefficient data for harbor '%s' from %s to %s.",
+                  harbor_id, start_date.strftime(DATE_FORMAT), end_date.strftime(DATE_FORMAT))
+    return results
+
+
 # --- Component Setup ---
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -437,14 +694,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # --- Store Setup ---
     water_level_store = Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
     tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY) # Tides store
+    coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY) # Add Coeff store
 
     # --- Coordinator Setup (Now uses Tides Store) ---
     # Pass the tides_store to the coordinator
     coordinator = MareesFranceUpdateCoordinator(hass, entry, tides_store)
-    # Initial refresh will now use the cache, potentially populated by prefetch below
-    # Run prefetch checks *before* first coordinator refresh to ensure data is likely there
+
+    # --- Prefetching (Run before first refresh) ---
     await async_check_and_prefetch_water_levels(hass, entry, water_level_store)
     await async_check_and_prefetch_tides(hass, entry, tides_store)
+    await async_check_and_prefetch_coefficients(hass, entry, coeff_store) # Add Coeff prefetch
+
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
@@ -470,6 +730,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=SERVICE_GET_TIDES_DATA_SCHEMA, supports_response=SupportsResponse.ONLY,
         )
         _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_TIDES_DATA)
+
+    # Coefficients Data Service (New)
+    if not hass.services.has_service(DOMAIN, SERVICE_GET_COEFFICIENTS_DATA):
+        hass.services.async_register(
+            DOMAIN, SERVICE_GET_COEFFICIENTS_DATA, async_handle_get_coefficients_data,
+            schema=SERVICE_GET_COEFFICIENTS_DATA_SCHEMA, supports_response=SupportsResponse.ONLY,
+        )
+        _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_COEFFICIENTS_DATA)
+
 
     # --- Prefetch Scheduling ---
     listeners = [] # Store listeners to remove on unload
@@ -498,6 +767,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Marées France: Scheduled daily tides prefetch check at %02d:%02d", rand_t_hour, rand_t_min)
     listeners.append(async_track_time_change(
         hass, _daily_tides_prefetch_job, hour=rand_t_hour, minute=rand_t_min, second=0
+    ))
+
+    # Coefficients Prefetch (Daily - New)
+    async def _daily_coefficients_prefetch_job(*_):
+        _LOGGER.debug("Marées France: Running daily coefficients prefetch job.")
+        await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
+    rand_c_hour = random.randint(1, 5)
+    rand_c_min = random.randint(0, 59)
+    # Ensure different time from others
+    while (rand_c_hour == rand_wl_hour and rand_c_min == rand_wl_min) or \
+          (rand_c_hour == rand_t_hour and rand_c_min == rand_t_min):
+         rand_c_min = random.randint(0, 59) # Reroll minute first
+         if rand_c_min == rand_wl_min and rand_c_hour == rand_wl_hour: continue # Avoid infinite loop if all slots taken in the hour
+         if rand_c_min == rand_t_min and rand_c_hour == rand_t_hour: continue
+    _LOGGER.info("Marées France: Scheduled daily coefficients prefetch check at %02d:%02d", rand_c_hour, rand_c_min)
+    listeners.append(async_track_time_change(
+        hass, _daily_coefficients_prefetch_job, hour=rand_c_hour, minute=rand_c_min, second=0
     ))
 
     # Add unload handler for all listeners
