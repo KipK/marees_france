@@ -17,6 +17,7 @@ const translations = {
       device_not_found: "Device not found: {device_id}",
       no_tide_data: "No tide data found for device.", // Updated message
       no_water_level_data: "No water level data found for device and date.", // Added message
+      no_coefficient_data: "No coefficient data found for device.", // [NEW]
       waiting_next_tide: "Waiting for next tide",
       rising_until: "Rising until {time} ({duration})", // Keep for potential other uses
       falling_until: "Falling until {time} ({duration})", // Keep for potential other uses
@@ -29,10 +30,17 @@ const translations = {
       height: "Height",
       coefficient: "Coefficient",
       no_data_for_day: "No tide data for this day.",
+      no_data_for_month: "No coefficient data for this month.", // [NEW]
       high_tide: "High",
       low_tide: "Low",
       tide_at_time: "{status} at {time}",
-      chart_js_missing: "Error: Chart.js library not loaded. Please add it as a frontend resource in Home Assistant."
+      chart_js_missing: "Error: Chart.js library not loaded. Please add it as a frontend resource in Home Assistant.",
+      open_calendar: "Open coefficient calendar", // [NEW]
+      coefficient_calendar_title: "Tide Coefficients", // [NEW]
+      previous_month: "Previous month", // [NEW]
+      next_month: "Next month", // [NEW]
+      calendar_date: "Date", // [NEW]
+      calendar_coeffs: "Coefficients", // [NEW]
     }}}
   },
   fr: {
@@ -45,6 +53,7 @@ const translations = {
       device_not_found: "Appareil non trouvé : {device_id}",
       no_tide_data: "Aucune donnée de marée trouvée pour l'appareil.", // Updated message
       no_water_level_data: "Aucune donnée de niveau d'eau trouvée pour l'appareil et la date.", // Added message
+      no_coefficient_data: "Aucune donnée de coefficient trouvée pour l'appareil.", // [NEW]
       waiting_next_tide: "En attente de la prochaine marée",
       rising_until: "Monte jusqu'à {time} ({duration})", // Keep for potential other uses
       falling_until: "Descend jusqu'à {time} ({duration})", // Keep for potential other uses
@@ -57,10 +66,17 @@ const translations = {
       height: "Hauteur",
       coefficient: "Coefficient",
       no_data_for_day: "Aucune donnée de marée pour ce jour.",
+      no_data_for_month: "Aucune donnée de coefficient pour ce mois.", // [NEW]
       high_tide: "Haute",
       low_tide: "Basse",
       tide_at_time: "{status} à {time}",
-      chart_js_missing: "Erreur : Librairie Chart.js non chargée. Veuillez l'ajouter comme ressource frontend dans Home Assistant."
+      chart_js_missing: "Erreur : Librairie Chart.js non chargée. Veuillez l'ajouter comme ressource frontend dans Home Assistant.",
+      open_calendar: "Ouvrir le calendrier des coefficients", // [NEW]
+      coefficient_calendar_title: "Coefficients de Marée", // [NEW]
+      previous_month: "Mois précédent", // [NEW]
+      next_month: "Mois suivant", // [NEW]
+      calendar_date: "Date", // [NEW]
+      calendar_coeffs: "Coefficients", // [NEW]
     }}}
   }
 };
@@ -231,11 +247,15 @@ class MareesFranceCard extends LitElement {
       _selectedDay: { state: true },
       _waterLevels: { state: true }, // State property for water level data (from get_water_levels)
       _tideData: { state: true }, // State property for tide data (from get_tides_data)
+      _coefficientsData: { state: true }, // State property for coefficient data (from get_coefficients_data) [NEW]
       _isLoadingWater: { state: true }, // Loading status for water levels
       _isLoadingTides: { state: true }, // Loading status for tide data
+      _isLoadingCoefficients: { state: true }, // Loading status for coefficient data [NEW]
       _isInitialLoading: { state: true }, // Track initial load vs subsequent loads (maybe combine loaders?)
       _isDraggingDot: { state: true, type: Boolean }, // NEW: Added type for Lit
       _draggedPosition: { state: true, attribute: false }, // NEW: Added attribute: false for Lit
+      _isCalendarDialogOpen: { state: true, type: Boolean }, // Dialog open state [NEW]
+      _calendarSelectedMonth: { state: true }, // Date object for the calendar month [NEW]
       // _originalDotPosition doesn't need to be reactive
     };
   }
@@ -264,9 +284,13 @@ class MareesFranceCard extends LitElement {
     this._selectedDay = today.toISOString().slice(0, 10); // Default to today
     this._waterLevels = null; // Reset water levels on config change
     this._tideData = null; // Reset tide data on config change
+    this._coefficientsData = null; // Reset coefficient data on config change [NEW]
     this._isLoadingWater = true; // Initialize loading state
     this._isLoadingTides = true; // Initialize loading state
+    this._isLoadingCoefficients = true; // Initialize loading state [NEW]
     this._isInitialLoading = true; // Set initial loading flag
+    this._isCalendarDialogOpen = false; // Ensure dialog is closed on config change [NEW]
+    this._calendarSelectedMonth = new Date(); // Default to current month [NEW]
 
     // Fetch will be triggered by `updated` or explicitly call here if preferred
     // this._fetchData(); // Example: Call a combined fetch function
@@ -293,22 +317,27 @@ class MareesFranceCard extends LitElement {
           console.warn("Marees Card: Fetch prerequisites not met (device_id).");
           this._isLoadingWater = false;
           this._isLoadingTides = false;
+          this._isLoadingCoefficients = false; // [NEW]
           this._waterLevels = { error: "Configuration incomplete" };
           this._tideData = { error: "Configuration incomplete" };
+          this._coefficientsData = { error: "Configuration incomplete" }; // [NEW]
           this.requestUpdate();
           return;
       }
       // Reset states before fetching
       this._isLoadingWater = true;
       this._isLoadingTides = true;
+      this._isLoadingCoefficients = true; // [NEW]
       this._waterLevels = null;
       this._tideData = null;
+      this._coefficientsData = null; // [NEW]
       this.requestUpdate(); // Show loaders
 
-      // Fetch both concurrently
+      // Fetch all concurrently
       await Promise.all([
           this._fetchWaterLevels(),
-          this._fetchTideData()
+          this._fetchTideData(),
+          this._fetchCoefficientsData() // [NEW]
       ]);
 
       // No need to set loading false here, individual fetches handle it in finally blocks
@@ -358,7 +387,7 @@ class MareesFranceCard extends LitElement {
       this._waterLevels = { error: error.message || "Service call failed" };
     } finally {
         this._isLoadingWater = false; // Set loading false after fetch completes or fails
-        if (this._isInitialLoading && !this._isLoadingTides) { // Turn off initial flag only when both are done
+        if (this._isInitialLoading && !this._isLoadingTides && !this._isLoadingCoefficients) { // Turn off initial flag only when all are done
              this._isInitialLoading = false;
         }
         this.requestUpdate(); // Ensure UI updates after loading finishes
@@ -406,10 +435,64 @@ class MareesFranceCard extends LitElement {
       this._tideData = { error: error.message || "Service call failed" };
     } finally {
         this._isLoadingTides = false; // Set loading false after fetch completes or fails
-         if (this._isInitialLoading && !this._isLoadingWater) { // Turn off initial flag only when both are done
+         if (this._isInitialLoading && !this._isLoadingWater && !this._isLoadingCoefficients) { // Turn off initial flag only when all are done
              this._isInitialLoading = false;
         }
         this.requestUpdate(); // Ensure UI updates after loading finishes
+    }
+  }
+
+  // --- Fetch Coefficient Data --- [NEW]
+  async _fetchCoefficientsData() {
+    this._isLoadingCoefficients = true;
+    this.requestUpdate();
+
+    if (!this.hass || !this.config || !this.config.device_id) {
+      console.warn("Marees Card: Coefficient Data Fetch prerequisites not met.", { hass: !!this.hass, device_id: this.config?.device_id });
+      this._coefficientsData = { error: localizeCard('ui.card.marees_france.missing_configuration', this.hass) };
+      this._isLoadingCoefficients = false;
+      this.requestUpdate();
+      return;
+    }
+
+    try {
+      console.log(`Marees Card: Fetching coefficient data for device ${this.config.device_id}`);
+      const response = await this.hass.callService(
+        'marees_france', // domain
+        'get_coefficients_data', // service
+        { // data
+          device_id: this.config.device_id, // Use device_id
+          // date: "YYYY-MM-DD", // Optional: backend defaults to today if omitted
+          days: 365 // Fetch all data
+        },
+        undefined, // target
+        false, // blocking
+        true // return_response
+      );
+
+      // Check response structure (should be an object with dates as keys)
+      if (response && typeof response === 'object' && Object.keys(response).length > 0) {
+          // The response IS the data, not nested under 'response' like others
+          this._coefficientsData = response;
+          console.log("Marees Card: Coefficient data received:", this._coefficientsData);
+      } else if (response && typeof response === 'object' && Object.keys(response).length === 0) {
+          console.warn('Marees Card: Received empty object from get_coefficients_data:', response);
+          this._coefficientsData = { error: localizeCard('ui.card.marees_france.no_coefficient_data', this.hass) }; // Use localized message
+      }
+      else {
+          console.error('Marees Card: Invalid data structure received from get_coefficients_data:', response);
+          this._coefficientsData = { error: "Invalid data structure from service" };
+      }
+    } catch (error) {
+      console.error('Marees Card: Error calling marees_france.get_coefficients_data service:', error);
+      this._coefficientsData = { error: error.message || "Service call failed" };
+    } finally {
+        this._isLoadingCoefficients = false;
+        // Update initial loading flag check
+        if (this._isInitialLoading && !this._isLoadingWater && !this._isLoadingTides) {
+             this._isInitialLoading = false;
+        }
+        this.requestUpdate();
     }
   }
 
@@ -473,18 +556,19 @@ class MareesFranceCard extends LitElement {
           <!-- Next Tide Status Display -->
           ${nextTideInfo ? html`
             <div class="next-tide-status">
-              <div class="next-tide-icon-time">
-                  <ha-icon .icon=${nextTideInfo.currentTrendIcon}></ha-icon>
-                  <div class="next-tide-text-container">
-                      <span class="next-tide-trend-text">
-                          ${localizeCard(nextTideInfo.currentTrendIcon === 'mdi:wave-arrow-up' ? 'ui.card.marees_france.rising_prefix' : 'ui.card.marees_france.falling_prefix', this.hass)}
-                      </span>
-                      <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
-                  </div>
-              </div>
-              <div class="next-tide-details">
-                ${(() => {
-                  let parts = [];
+              <div class="next-tide-main">
+                <div class="next-tide-icon-time">
+                    <ha-icon .icon=${nextTideInfo.currentTrendIcon}></ha-icon>
+                    <div class="next-tide-text-container">
+                        <span class="next-tide-trend-text">
+                            ${localizeCard(nextTideInfo.currentTrendIcon === 'mdi:wave-arrow-up' ? 'ui.card.marees_france.rising_prefix' : 'ui.card.marees_france.falling_prefix', this.hass)}
+                        </span>
+                        <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
+                    </div>
+                </div>
+                <div class="next-tide-details">
+                  ${(() => {
+                    let parts = [];
                   // Ensure height is a number before adding
                   if (nextTideInfo.nextPeakHeight !== null && !isNaN(parseFloat(nextTideInfo.nextPeakHeight))) {
                     parts.push(`${parseFloat(nextTideInfo.nextPeakHeight).toFixed(1)} m`);
@@ -494,7 +578,7 @@ class MareesFranceCard extends LitElement {
                     const coef = nextTideInfo.displayCoefficient;
                     const coefClass = coef >= 100 ? 'warning-coef' : '';
                     // Use secondary text color for coefficient like height, apply warning class if needed
-                    parts.push(html`<span class="${coefClass}">Coef. ${coef}</span>`);
+                    parts.push(html`<span class="${coefClass}" >Coef. ${coef}</span>`); 
                   }
                   // Join with separator only if both parts exist
                   // Need to render the parts directly if one contains HTML
@@ -504,8 +588,15 @@ class MareesFranceCard extends LitElement {
                     return parts[0];
                   }
                   return ''; // Return empty if no parts
-                })()}
+                  })()}
+                </div>
               </div>
+              <ha-icon
+                class="calendar-icon"
+                icon="mdi:calendar-month"
+                @click="${this._openCalendarDialog}"
+                title="${localizeCard('ui.card.marees_france.open_calendar', this.hass)}"
+              ></ha-icon>
             </div>
           ` : html`<div class="warning">${localizeCard('ui.card.marees_france.waiting_next_tide', this.hass)}</div>`}
 
@@ -544,7 +635,141 @@ class MareesFranceCard extends LitElement {
           <div id="marees-html-tooltip" class="chart-tooltip"></div>
         </div>
       </ha-card>
+
+      <!-- Coefficient Calendar Dialog [NEW] -->
+      ${this._isCalendarDialogOpen ? html`
+        <ha-dialog
+          open
+          @closed="${this._closeCalendarDialog}"
+          heading="${localizeCard('ui.card.marees_france.coefficient_calendar_title', this.hass)}"
+        >
+          <div slot="content">
+            ${this._renderCalendarDialogContent()}
+          </div>
+          <mwc-button
+            slot="primaryAction"
+            @click="${this._closeCalendarDialog}"
+          >
+            ${this.hass.localize('ui.common.close')}
+          </mwc-button>
+        </ha-dialog>
+      ` : ''}
     `;
+  }
+
+  // --- Dialog Handlers [NEW] ---
+  _openCalendarDialog() {
+    // Fetch coefficient data if it hasn't been fetched yet or resulted in an error
+    if (!this._coefficientsData || this._coefficientsData.error) {
+        this._fetchCoefficientsData(); // Fetch on demand if needed
+    }
+    this._isCalendarDialogOpen = true;
+    this._calendarSelectedMonth = new Date(); // Reset to current month on open
+  }
+
+  _closeCalendarDialog() {
+    this._isCalendarDialogOpen = false;
+  }
+
+  // --- Dialog Content Renderer [NEW] ---
+  _renderCalendarDialogContent() {
+    const locale = this.hass.language || 'en';
+
+    // Handle loading state
+    if (this._isLoadingCoefficients) {
+      return html`<div class="dialog-loader">Loading coefficient data...</div>`;
+    }
+
+    // Handle error state
+    if (!this._coefficientsData || this._coefficientsData.error) {
+      const errorMsg = this._coefficientsData?.error || localizeCard('ui.card.marees_france.no_coefficient_data', this.hass);
+      return html`<div class="dialog-warning">${errorMsg}</div>`;
+    }
+
+    // Data is available, proceed with rendering
+    const currentMonth = this._calendarSelectedMonth.getMonth();
+    const currentYear = this._calendarSelectedMonth.getFullYear();
+    const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`; // YYYY-MM
+
+    // Filter data for the selected month
+    const monthData = Object.entries(this._coefficientsData)
+      .filter(([dateStr]) => dateStr.startsWith(monthStr))
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB)) // Sort by date
+      .map(([dateStr, coeffs]) => {
+        const date = new Date(dateStr);
+        const dayNum = date.getDate();
+        const dayName = date.toLocaleDateString(locale, { weekday: 'long' }); // Full day name
+        return {
+          dateLabel: `${dayNum} ${dayName}`,
+          coeffs: coeffs // Array of coefficient strings
+        };
+      });
+
+    // Determine if previous/next months have data
+    const firstDataDate = new Date(Object.keys(this._coefficientsData).sort()[0]);
+    const lastDataDate = new Date(Object.keys(this._coefficientsData).sort().pop());
+
+    const prevMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+
+    const hasPrevData = prevMonthDate >= firstDataDate;
+    const hasNextData = nextMonthDate <= lastDataDate;
+
+    return html`
+      <div class="calendar-dialog-content">
+        <div class="calendar-header">
+          <ha-icon-button
+            icon="mdi:chevron-left"
+            @click="${() => this._changeCalendarMonth(-1)}"
+            .disabled=${!hasPrevData}
+            title="${localizeCard('ui.card.marees_france.previous_month', this.hass)}"
+          ></ha-icon-button>
+          <span class="calendar-month-year">
+            ${this._calendarSelectedMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
+          </span>
+          <ha-icon-button
+            icon="mdi:chevron-right"
+            @click="${() => this._changeCalendarMonth(1)}"
+            .disabled=${!hasNextData}
+            title="${localizeCard('ui.card.marees_france.next_month', this.hass)}"
+          ></ha-icon-button>
+        </div>
+        ${monthData.length > 0 ? html`
+          <table class="calendar-table">
+            <thead>
+              <tr>
+                <th>${localizeCard('ui.card.marees_france.calendar_date', this.hass)}</th>
+                <th>${localizeCard('ui.card.marees_france.calendar_coeffs', this.hass)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthData.map(day => html`
+                <tr>
+                  <td>${day.dateLabel}</td>
+                  <td>
+                    ${day.coeffs.map(coeff => {
+                      const coefNum = parseInt(coeff, 10);
+                      const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 50 ? 'low-coef' : ''); // Add class for low coefs too
+                      return html`<span class="coeff-value ${coefClass}">${coeff}</span>`;
+                    }).reduce((acc, curr) => [acc, ' / ', curr])}
+                  </td>
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        ` : html`
+          <div class="no-data-month">${localizeCard('ui.card.marees_france.no_data_for_month', this.hass)}</div>
+        `}
+      </div>
+    `;
+  }
+
+  // --- Change Calendar Month Handler [NEW] ---
+  _changeCalendarMonth(monthOffset) {
+    const newMonth = new Date(this._calendarSelectedMonth);
+    newMonth.setMonth(newMonth.getMonth() + monthOffset);
+    newMonth.setDate(1); // Go to the first day of the new month
+    this._calendarSelectedMonth = newMonth;
   }
 
 
@@ -588,12 +813,12 @@ class MareesFranceCard extends LitElement {
     }
 
     // Check if selected day changed (only need water levels) or if data/loading states changed
-    if (changedProperties.has('_selectedDay') || changedProperties.has('_waterLevels') || changedProperties.has('_tideData') || changedProperties.has('_isLoadingWater') || changedProperties.has('_isLoadingTides')) {
+    if (changedProperties.has('_selectedDay') || changedProperties.has('_waterLevels') || changedProperties.has('_tideData') || changedProperties.has('_isLoadingWater') || changedProperties.has('_isLoadingTides') || changedProperties.has('_isLoadingCoefficients')) { // Added coefficients loading check
         needsGraphRedraw = true;
     }
 
-    // Redraw graph if needed, SVG is ready, AND NEITHER data source is loading
-    if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoadingWater && !this._isLoadingTides) {
+    // Redraw graph if needed, SVG is ready, AND NO data source is loading
+    if (needsGraphRedraw && this._svgDraw && this._svgContainer && !this._isLoadingWater && !this._isLoadingTides && !this._isLoadingCoefficients) { // Added coefficients loading check
         this._drawGraphWithSvgJs();
         // Trigger scale update after drawing is complete using requestAnimationFrame
         // This ensures the DOM is updated and bounding boxes are available.
@@ -1426,13 +1651,20 @@ class MareesFranceCard extends LitElement {
       /* Next Tide Status Display Styles */
       .next-tide-status {
         display: flex;
-        flex-direction: column; /* Stack icon/time and details */
-        align-items: flex-start; /* Align items to the left */
-        gap: 4px; /* Smaller gap between lines */
+        justify-content: space-between; /* Push icon to the right */
+        align-items: center; /* Vertically align main info and icon */
+        gap: 16px; /* Gap between main info and icon */
         padding-bottom: 16px; /* Space before tabs */
         padding-left: 16px; /* Add left padding to match card content */
         padding-right: 16px; /* Add right padding */
         padding-top: 16px; /* Add top padding */
+      }
+      .next-tide-main {
+        display: flex;
+        flex-direction: column; /* Stack icon/time and details */
+        align-items: flex-start; /* Align items to the left */
+        gap: 4px; /* Smaller gap between lines */
+        flex-grow: 1; /* Allow main section to take available space */
       }
       .next-tide-icon-time {
         display: flex;
@@ -1468,7 +1700,7 @@ class MareesFranceCard extends LitElement {
         display: flex; /* Keep details on one line if possible */
         flex-wrap: wrap; /* Allow wrapping */
         gap: 8px; /* Space between height and coef */
-        padding-left: calc(2.2em + 8px); /* Indent details to align below time (icon width + gap) */
+        padding-left: calc(2.2em + 11px); /* Indent details to align below time (icon width + gap) */
         font-size: 1.0em; /* Slightly smaller details */
         color: var(--tide-detail-color);
         line-height: 1.3; /* Adjust line height */
@@ -1483,6 +1715,15 @@ class MareesFranceCard extends LitElement {
       }
       /* Separator is now handled directly in the HTML template */
 
+      .calendar-icon {
+        color: var(--secondary-text-color); /* Use a less prominent color */
+        --mdc-icon-button-size: 30px; /* Slightly smaller icon button - Removed for testing */
+        transition: color 0.2s ease-in-out;
+        cursor: pointer; /* Pointer cursor for interactivity */
+      }
+      .calendar-icon:hover {
+        color: var(--primary-color); /* Highlight on hover */
+      }
 
       .tabs {
         display: grid;
@@ -1606,6 +1847,84 @@ class MareesFranceCard extends LitElement {
       }
       .chart-tooltip strong {
         font-weight: bold;
+        font-weight: bold;
+      }
+
+      /* Dialog Styles [NEW] */
+      ha-dialog {
+        /* Allow content to scroll */
+        --dialog-content-padding: 0;
+        --dialog-z-index: 5; /* Ensure dialog is above other elements */
+      }
+      .calendar-dialog-content {
+         padding: 20px 24px; /* Standard dialog padding */
+         max-height: 60vh; /* Limit height and allow scrolling */
+         overflow-y: auto;
+      }
+      .dialog-loader, .dialog-warning, .no-data-month {
+        text-align: center;
+        padding: 20px;
+        color: var(--secondary-text-color);
+      }
+      .dialog-warning {
+        color: var(--error-color);
+      }
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 0 8px; /* Padding around header */
+      }
+      .calendar-month-year {
+        font-size: 1.2em;
+        font-weight: 500;
+        text-align: center;
+        flex-grow: 1;
+      }
+      .calendar-header ha-icon-button {
+        color: var(--primary-text-color);
+      }
+      .calendar-header ha-icon-button[disabled] {
+        color: var(--disabled-text-color);
+      }
+      .calendar-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      .calendar-table th, .calendar-table td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--divider-color);
+      }
+      .calendar-table th {
+        font-weight: bold;
+        color: var(--primary-text-color);
+        background-color: var(--secondary-background-color);
+      }
+      .calendar-table td:first-child { /* Date column */
+        white-space: nowrap;
+        color: var(--secondary-text-color);
+        width: 40%; /* Give date more space */
+      }
+       .calendar-table td:last-child { /* Coeff column */
+        text-align: right;
+        width: 60%;
+      }
+      .coeff-value {
+        display: inline-block;
+        margin: 0 2px;
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+      .coeff-value.warning-coef {
+        color: var(--warning-color);
+        font-weight: bold;
+      }
+      .coeff-value.low-coef {
+        color: var(--info-color); /* Or another color for low coefficients */
+        opacity: 0.8;
       }
     `;
   }
