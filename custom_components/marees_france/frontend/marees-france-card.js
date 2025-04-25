@@ -470,16 +470,16 @@ class MareesFranceCard extends LitElement {
         true // return_response
       );
 
-      // Check response structure (should be an object with dates as keys)
-      if (response && typeof response === 'object' && Object.keys(response).length > 0) {
-          // The response IS the data, not nested under 'response' like others
+      // Check response structure (should be nested under 'response')
+      if (response && response.response && typeof response.response === 'object' && Object.keys(response.response).length > 0) {
+          // Store the whole response object like other fetches
           this._coefficientsData = response;
           console.log("Marees Card: Coefficient data received:", this._coefficientsData);
-      } else if (response && typeof response === 'object' && Object.keys(response).length === 0) {
-          console.warn('Marees Card: Received empty object from get_coefficients_data:', response);
-          this._coefficientsData = { error: localizeCard('ui.card.marees_france.no_coefficient_data', this.hass) }; // Use localized message
-      }
-      else {
+      } else if (response && response.response && typeof response.response === 'object' && Object.keys(response.response).length === 0) {
+          console.warn('Marees Card: Received empty coefficient data object from get_coefficients_data:', response);
+          // Store the whole response but add an error marker if needed, or just the error
+          this._coefficientsData = { ...response, error: localizeCard('ui.card.marees_france.no_coefficient_data', this.hass) };
+      } else {
           console.error('Marees Card: Invalid data structure received from get_coefficients_data:', response);
           this._coefficientsData = { error: "Invalid data structure from service" };
       }
@@ -637,23 +637,22 @@ class MareesFranceCard extends LitElement {
       </ha-card>
 
       <!-- Coefficient Calendar Dialog [NEW] -->
-      ${this._isCalendarDialogOpen ? html`
-        <ha-dialog
-          open
-          @closed="${this._closeCalendarDialog}"
-          heading="${localizeCard('ui.card.marees_france.coefficient_calendar_title', this.hass)}"
+      <!-- Coefficient Calendar Dialog [NEW] - Always rendered, visibility controlled by 'open' -->
+      <ha-dialog
+        ?open=${this._isCalendarDialogOpen}
+        @closed="${this._closeCalendarDialog}"
+        heading="${localizeCard('ui.card.marees_france.coefficient_calendar_title', this.hass)}"
+      >
+        <div class="dialog-content">
+          ${this._renderCalendarDialogContent()}
+        </div>
+        <mwc-button
+          slot="primaryAction"
+          @click="${this._closeCalendarDialog}"
         >
-          <div slot="content">
-            ${this._renderCalendarDialogContent()}
-          </div>
-          <mwc-button
-            slot="primaryAction"
-            @click="${this._closeCalendarDialog}"
-          >
-            ${this.hass.localize('ui.common.close')}
-          </mwc-button>
-        </ha-dialog>
-      ` : ''}
+          ${this.hass.localize('ui.common.close')}
+        </mwc-button>
+      </ha-dialog>
     `;
   }
 
@@ -677,53 +676,101 @@ class MareesFranceCard extends LitElement {
 
     // Handle loading state
     if (this._isLoadingCoefficients) {
+      // console.log("Marees Card Dialog: Rendering Loader"); // DEBUG REMOVED
       return html`<div class="dialog-loader">Loading coefficient data...</div>`;
     }
 
-    // Handle error state
-    if (!this._coefficientsData || this._coefficientsData.error) {
+    // Handle error state (Check for error property OR missing response)
+    if (!this._coefficientsData || this._coefficientsData.error || !this._coefficientsData.response) {
       const errorMsg = this._coefficientsData?.error || localizeCard('ui.card.marees_france.no_coefficient_data', this.hass);
+      // console.log("Marees Card Dialog: Rendering Error:", errorMsg, this._coefficientsData); // DEBUG REMOVED
       return html`<div class="dialog-warning">${errorMsg}</div>`;
     }
 
     // Data is available, proceed with rendering
+    const actualCoeffData = this._coefficientsData.response; // Access data within response
     const currentMonth = this._calendarSelectedMonth.getMonth();
     const currentYear = this._calendarSelectedMonth.getFullYear();
     const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`; // YYYY-MM
+    // console.log("Marees Card Dialog: Rendering Month:", monthStr, "Data available:", !!actualCoeffData); // DEBUG REMOVED
 
-    // Filter data for the selected month
-    const monthData = Object.entries(this._coefficientsData)
-      .filter(([dateStr]) => dateStr.startsWith(monthStr))
-      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB)) // Sort by date
-      .map(([dateStr, coeffs]) => {
-        const date = new Date(dateStr);
-        const dayNum = date.getDate();
-        const dayName = date.toLocaleDateString(locale, { weekday: 'long' }); // Full day name
-        return {
-          dateLabel: `${dayNum} ${dayName}`,
-          coeffs: coeffs // Array of coefficient strings
-        };
-      });
+    let monthData = [];
+    try {
+      // Filter data for the selected month from actualCoeffData
+      monthData = Object.entries(actualCoeffData)
+        .filter(([dateStr]) => dateStr.startsWith(monthStr))
+        .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB)) // Sort by date
+        .map(([dateStr, coeffs]) => {
+          const date = new Date(dateStr);
+          const dayNum = date.getDate();
+          // Use try-catch specifically for toLocaleDateString as a fallback
+          let dayName = '';
+          try {
+            dayName = date.toLocaleDateString(locale, { weekday: 'long' }); // Full day name
+          } catch (e) {
+            console.error(`Marees Card Dialog: Error formatting date ${dateStr} for locale ${locale}:`, e);
+            dayName = dateStr; // Fallback to just showing the date string if formatting fails
+          }
+          return {
+            dateLabel: `${dayNum} ${dayName}`,
+            coeffs: coeffs // Array of coefficient strings
+          };
+        });
+      // console.log("Marees Card Dialog: Filtered monthData:", monthData); // DEBUG REMOVED
+    } catch (error) {
+        console.error("Marees Card Dialog: Error processing coefficient data for month:", monthStr, error);
+        return html`<div class="dialog-warning">Error processing calendar data.</div>`;
+    }
 
-    // Determine if previous/next months have data
-    const firstDataDate = new Date(Object.keys(this._coefficientsData).sort()[0]);
-    const lastDataDate = new Date(Object.keys(this._coefficientsData).sort().pop());
 
-    const prevMonthDate = new Date(currentYear, currentMonth - 1, 1);
-    const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+    // Determine if previous/next months have data based on actualCoeffData
+    const availableDates = Object.keys(actualCoeffData).sort();
+    if (availableDates.length === 0) {
+        // Handle case where response exists but is empty (should be caught by error check above, but belt-and-suspenders)
+        return html`<div class="no-data-month">${localizeCard('ui.card.marees_france.no_data_for_month', this.hass)}</div>`;
+    }
+    // const firstDataDate = new Date(availableDates[0]); // Keep for reference if needed elsewhere - Removed as unused
+    // const lastDataDate = new Date(availableDates[availableDates.length - 1]); // Keep for reference - Removed as unused
 
-    const hasPrevData = prevMonthDate >= firstDataDate;
-    const hasNextData = nextMonthDate <= lastDataDate;
+    const prevMonthDateObj = new Date(currentYear, currentMonth - 1, 1);
+    const nextMonthDateObj = new Date(currentYear, currentMonth + 1, 1);
+
+    // --- Refined Check for Prev/Next Data ---
+    // Check if *any* date in the dataset falls within the previous/next month's year/month.
+    const prevMonthYear = prevMonthDateObj.getFullYear();
+    const prevMonthMonth = prevMonthDateObj.getMonth();
+    const nextMonthYear = nextMonthDateObj.getFullYear();
+    const nextMonthMonth = nextMonthDateObj.getMonth();
+
+    let hasPrevData = false;
+    let hasNextData = false;
+    try {
+        hasPrevData = availableDates.some(dateStr => {
+            const d = new Date(dateStr);
+            return d.getFullYear() === prevMonthYear && d.getMonth() === prevMonthMonth;
+        });
+        hasNextData = availableDates.some(dateStr => {
+            const d = new Date(dateStr);
+            return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonthMonth;
+        });
+    } catch (error) {
+        console.error("Marees Card Dialog: Error checking prev/next month data:", error);
+        // Default to false if checking fails
+    }
+    // console.log("Marees Card Dialog: Prev/Next Check:", { current: `${currentYear}-${currentMonth}`, prev: `${prevMonthYear}-${prevMonthMonth}`, next: `${nextMonthYear}-${nextMonthMonth}`, hasPrevData, hasNextData }); // DEBUG REMOVED
+
+    // console.log(`Marees Card Dialog: Rendering final template. monthData length: ${monthData.length}`); // DEBUG - REMOVING
 
     return html`
       <div class="calendar-dialog-content">
         <div class="calendar-header">
           <ha-icon-button
-            icon="mdi:chevron-left"
             @click="${() => this._changeCalendarMonth(-1)}"
             .disabled=${!hasPrevData}
             title="${localizeCard('ui.card.marees_france.previous_month', this.hass)}"
-          ></ha-icon-button>
+          >
+          <ha-icon icon="mdi:chevron-left"></ha-icon>
+        </ha-icon-button>
           <span class="calendar-month-year">
             ${this._calendarSelectedMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
           </span>
@@ -732,7 +779,9 @@ class MareesFranceCard extends LitElement {
             @click="${() => this._changeCalendarMonth(1)}"
             .disabled=${!hasNextData}
             title="${localizeCard('ui.card.marees_france.next_month', this.hass)}"
-          ></ha-icon-button>
+          >
+          <ha-icon icon="mdi:chevron-right"></ha-icon>
+        </ha-icon-button>
         </div>
         ${monthData.length > 0 ? html`
           <table class="calendar-table">
@@ -747,11 +796,12 @@ class MareesFranceCard extends LitElement {
                 <tr>
                   <td>${day.dateLabel}</td>
                   <td>
-                    ${day.coeffs.map(coeff => {
+                    ${day.coeffs.map((coeff, index) => { // Inner map for coefficients, add index
                       const coefNum = parseInt(coeff, 10);
                       const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 50 ? 'low-coef' : ''); // Add class for low coefs too
-                      return html`<span class="coeff-value ${coefClass}">${coeff}</span>`;
-                    }).reduce((acc, curr) => [acc, ' / ', curr])}
+                      // Conditionally add separator before the span (except for the first one)
+                      return html`${index > 0 ? ' / ' : ''}<span class="coeff-value ${coefClass}">${coeff}</span>`;
+                    })}
                   </td>
                 </tr>
               `)}
