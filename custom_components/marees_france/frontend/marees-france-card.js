@@ -187,7 +187,7 @@ function getNextTideStatus(tideServiceData, hass) {
 
   // Return data matching the plan's requirements
   return {
-      currentTrendIcon: isRising ? 'mdi:arrow-up' : 'mdi:arrow-down',
+      currentTrendIcon: isRising ? 'mdi:wave-arrow-up' : 'mdi:wave-arrow-down',
       nextPeakTime: nextTide.time,
       nextPeakHeight: nextTide.height, // Keep as number for potential calculations
       nextPeakCoefficient: nextTide.type === 'high' ? nextTide.coefficient : null, // Only show coeff if next tide is high
@@ -458,7 +458,7 @@ class MareesFranceCard extends LitElement {
                   <ha-icon .icon=${nextTideInfo.currentTrendIcon}></ha-icon>
                   <div class="next-tide-text-container">
                       <span class="next-tide-trend-text">
-                          ${localizeCard(nextTideInfo.currentTrendIcon === 'mdi:arrow-up' ? 'ui.card.marees_france.rising_prefix' : 'ui.card.marees_france.falling_prefix', this.hass)}
+                          ${localizeCard(nextTideInfo.currentTrendIcon === 'mdi:wave-arrow-up' ? 'ui.card.marees_france.rising_prefix' : 'ui.card.marees_france.falling_prefix', this.hass)}
                       </span>
                       <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
                   </div>
@@ -1432,14 +1432,14 @@ class MareesFranceCard extends LitElement {
       }
       .next-tide-icon-time {
         display: flex;
-        align-items: flex-start; /* Align icon with top of text block */
+        align-items: center; /* Vertically center icon and text block */
         align-content: center;
         gap: 8px;
       }
       .next-tide-icon-time ha-icon {
         color: var(--tide-icon-color);
-        --mdc-icon-size: 3em; /* Adjusted size */
-         margin-top: 0.3rem; /* Align better with text */
+        --mdc-icon-size: 2.4em; /* Adjusted size */
+         /* margin-top removed for vertical centering */
          padding: 0;
       }
       .next-tide-text-container {
