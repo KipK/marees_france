@@ -18,8 +18,10 @@ const translations = {
       no_tide_data: "No tide data found for device.", // Updated message
       no_water_level_data: "No water level data found for device and date.", // Added message
       waiting_next_tide: "Waiting for next tide",
-      rising_until: "Rising until {time} ({duration})",
-      falling_until: "Falling until {time} ({duration})",
+      rising_until: "Rising until {time} ({duration})", // Keep for potential other uses
+      falling_until: "Falling until {time} ({duration})", // Keep for potential other uses
+      rising_prefix: "Rising until",
+      falling_prefix: "Falling until",
       high_tide_short: "High",
       low_tide_short: "Low",
       next_tide_at: "Next tide ({type}) at {time}",
@@ -44,8 +46,10 @@ const translations = {
       no_tide_data: "Aucune donnée de marée trouvée pour l'appareil.", // Updated message
       no_water_level_data: "Aucune donnée de niveau d'eau trouvée pour l'appareil et la date.", // Added message
       waiting_next_tide: "En attente de la prochaine marée",
-      rising_until: "Monte jusqu'à {time} ({duration})",
-      falling_until: "Descend jusqu'à {time} ({duration})",
+      rising_until: "Monte jusqu'à {time} ({duration})", // Keep for potential other uses
+      falling_until: "Descend jusqu'à {time} ({duration})", // Keep for potential other uses
+      rising_prefix: "Monte jusqu'à",
+      falling_prefix: "Descend jusqu'à",
       high_tide_short: "Haute",
       low_tide_short: "Basse",
       next_tide_at: "Prochaine marée ({type}) à {time}",
@@ -446,7 +450,12 @@ class MareesFranceCard extends LitElement {
             <div class="next-tide-status">
               <div class="next-tide-icon-time">
                   <ha-icon .icon=${nextTideInfo.currentTrendIcon}></ha-icon>
-                  <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
+                  <div class="next-tide-text-container">
+                      <span class="next-tide-trend-text">
+                          ${localizeCard(nextTideInfo.currentTrendIcon === 'mdi:arrow-up' ? 'ui.card.marees_france.rising_prefix' : 'ui.card.marees_france.falling_prefix', this.hass)}
+                      </span>
+                      <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
+                  </div>
               </div>
               <div class="next-tide-details">
                 ${(() => {
@@ -846,7 +855,7 @@ class MareesFranceCard extends LitElement {
     const secondaryTextColor = 'var(--secondary-text-color, grey)';
     const curveColor = 'var(--primary-color, blue)';
     const bgColor = 'var(--ha-card-background, white)';
-    const markerDotColor = '#FFEB3B'; // Yellow for current time marker dot
+    const markerDotColor = 'var(--current_tide_color)'; // Yellow for current time marker dot
     const arrowAndTextColor = 'var(--primary-text-color, white)'; // White for arrows and text as per image request
     const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)'; // Coefficient box background (using a lighter fallback)
     const coefBoxBorderColor = 'var(--ha-card-border-color, var(--divider-color, grey))'; // Coefficient box border
@@ -998,7 +1007,7 @@ class MareesFranceCard extends LitElement {
 
     // --- Draw Current Time Marker (Yellow Dot - Should NOT scale) ---
     if (currentTimeMarker) {
-        const dotRadius = 4 * 1.2; // Increased size by 1.2x
+        const dotRadius = 5; 
         const dotGroup = draw.group(); // [NEW] Group the dot and its stroke
         dotGroup.attr('id', 'current-time-marker'); // Add ID for tooltip handling
         dotGroup.addClass('has-tooltip'); // Add class for cursor style
@@ -1008,14 +1017,7 @@ class MareesFranceCard extends LitElement {
             .center(currentTimeMarker.x, currentTimeMarker.y) // Use original calculated Y
             .fill(markerDotColor);
 
-        // Draw the border separately for non-scaling stroke
-        dotGroup.circle(dotRadius * 2)
-             .center(currentTimeMarker.x, currentTimeMarker.y)
-             .fill('none') // No fill for the border circle
-             .stroke({ color: bgColor, width: 1 }) // Add small background stroke for visibility
-             .attr('vector-effect', 'non-scaling-stroke'); // [NEW] Keep stroke constant
-
-        this._elementsToKeepSize.push(dotGroup); // [NEW] Add dot group to scale list
+        this._elementsToKeepSize.push(dotGroup); // Add dot group to scale list
 
         // Store data needed for tooltip
         const currentTimeStr = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
@@ -1030,9 +1032,6 @@ class MareesFranceCard extends LitElement {
         // dotGroup.node.addEventListener('touchend', (e) => { e.preventDefault(); this._hideHtmlTooltip(); });
 
     }
-
-    // --- Final check: Ensure all error/message texts added to _elementsToKeepSize ---
-    // (Already handled in the error checking sections above)
 
   }
 
@@ -1119,7 +1118,8 @@ class MareesFranceCard extends LitElement {
     return css`
       :host {
         /* Card specific vars using HA vars */
-        --tide-icon-color: var(--primary-text-color);
+        --current_tide_color: #FDD835;
+        --tide-icon-color: var(--current_tide_color);
         --tide-time-color: var(--primary-text-color);
         --tide-detail-color: var(--secondary-text-color);
         /* Tab colors */
@@ -1159,18 +1159,31 @@ class MareesFranceCard extends LitElement {
       }
       .next-tide-icon-time {
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Align icon with top of text block */
         gap: 8px;
       }
       .next-tide-icon-time ha-icon {
-        font-size: 2.2em; /* Slightly smaller icon */
         color: var(--tide-icon-color);
+        --mdc-icon-size: 4rem; /* Keep icon size */
+        /* margin-top: 0.3rem;  */
+      }
+      .next-tide-text-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1; /* Tighten line height for the container */
+      }
+      .next-tide-trend-text {
+        font-size: 1.5rem; /* Smaller text for prefix */
+        font-weight: 400;
+        color: var(--tide-time-color); /* Same color as time */
+        padding-bottom: 2px; /* Small space between text and time */
       }
       .next-tide-time {
-        font-size: 2.0em; /* Slightly smaller time */
-        font-weight: 400; /* Normal weight */
+        font-size: 2.5rem; /* Keep time font size */
+        font-weight: 400;
         color: var(--tide-time-color);
-        line-height: 1; /* Adjust line height */
+        line-height: 1; /* Keep tight line height */
       }
       .next-tide-details {
         display: flex; /* Keep details on one line if possible */
