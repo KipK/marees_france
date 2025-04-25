@@ -844,22 +844,22 @@ class MareesFranceCard extends LitElement {
         }
     }
 
-    // Trigger initial data fetch when hass becomes available and config is set,
-    // but only if data hasn't been fetched yet (check both tide and water levels)
-    if (changedProperties.has('hass') && this.hass && this.config?.device_id && this._waterLevels === null && this._tideData === null) {
-        console.log("Marees Card: Hass available, config ready, and no data yet. Triggering initial fetches.");
-        // Use the combined fetch function if implemented, otherwise call individually
-        this._fetchData(); // Assumes _fetchData exists
-        // this._fetchWaterLevels();
-        // this._fetchTideData();
-        needsGraphRedraw = true; // Graph will redraw once loading finishes
-    }
+    let configChanged = changedProperties.has('config'); // Check if config changed in this update cycle
 
-    // If config changes, trigger a full refetch
-    if (changedProperties.has('config')) {
+    // If config changes, trigger a full refetch.
+    // This is the primary trigger for data loading/reloading based on config.
+    if (configChanged) {
         console.log("Marees Card: Config changed, triggering data refetch.");
-        this._fetchData(); // Assumes _fetchData exists
-        needsGraphRedraw = true;
+        this._fetchData(); // Fetch data based on new config
+        needsGraphRedraw = true; // Graph will redraw after fetch
+    }
+    // Trigger initial data fetch ONLY if hass becomes available, config is set,
+    // data is null (meaning not fetched yet), AND config did NOT change in this same update cycle
+    // (to avoid double fetch when both hass and config arrive close together).
+    else if (changedProperties.has('hass') && this.hass && this.config?.device_id && this._waterLevels === null && this._tideData === null) {
+        console.log("Marees Card: Hass available, config ready, and no data yet. Triggering initial fetch.");
+        this._fetchData(); // Initial fetch
+        needsGraphRedraw = true; // Graph will redraw after fetch
     }
 
     // Check if selected day changed (only need water levels) or if data/loading states changed
