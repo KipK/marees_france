@@ -742,7 +742,7 @@ class MareesFranceCard extends LitElement {
 
     // 3. Next month's padding days
     const totalCells = startingDay + daysInMonth;
-    const remainingCells = (7 - (totalCells % 7)) % 7; // How many cells needed to fill the last row
+    const remainingCells = 42 - totalCells; // How many cells needed to fill the last row
     for (let i = 1; i <= remainingCells; i++) {
         calendarDays.push({ day: i, isPadding: true, isCurrentMonth: false });
     }
@@ -803,12 +803,12 @@ class MareesFranceCard extends LitElement {
           <!-- Calendar Day Cells -->
           ${calendarDays.map(dayInfo => html`
             <div class="calendar-day ${dayInfo.isPadding ? 'padding' : ''} ${dayInfo.isCurrentMonth ? 'current-month' : ''}">
-              <div class="day-number">${dayInfo.day}</div>
+              <div class="day-number">${dayInfo.isCurrentMonth?dayInfo.day:''}</div>
               ${dayInfo.isCurrentMonth && dayInfo.coeffs && dayInfo.coeffs.length > 0 ? html`
                 <div class="day-coeffs">
                   ${dayInfo.coeffs.map(coeff => {
                     const coefNum = parseInt(coeff, 10);
-                    const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 50 ? 'low-coef' : '');
+                    const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 40 ? 'low-coef' : '');
                     return html`<span class="coeff-value ${coefClass}">${coeff}</span>`;
                   })}
                 </div>
@@ -1916,9 +1916,9 @@ class MareesFranceCard extends LitElement {
         --dialog-z-index: 5; /* Ensure dialog is above other elements */
       }
       .calendar-dialog-content {
-         padding: 10px 12px 20px 12px; /* Adjusted padding */
+         padding: 10px 12px 10px 12px; /* Adjusted padding */
          max-height: 70vh; /* Limit height and allow scrolling */
-         overflow-y: auto;
+         overflow-y: hidden;
       }
       .dialog-loader, .dialog-warning, .no-data-month {
         text-align: center;
@@ -1942,23 +1942,36 @@ class MareesFranceCard extends LitElement {
         flex-grow: 1;
         color: var(--primary-text-color);
       }
-      .calendar-header ha-icon-button {
+       .calendar-header ha-icon-button {
         color: var(--primary-text-color);
-      }
-      .calendar-header ha-icon-button[disabled] {
+       }
+       .calendar-header ha-icon-button[disabled] {
         color: var(--disabled-text-color);
+      }
+      .calendar-header ha-icon-button ha-icon { /* hack to fix icon misalignment */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .calendar-header ha-icon-button ha-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
       /* NEW Calendar Grid Styles */
       .calendar-grid {
+          padding: 0 16px; /* Add left/right padding to match card content */
           display: grid;
           grid-template-columns: repeat(7, 1fr);
           gap: 2px; /* Small gap between cells */
           margin-top: 8px;
-          border: 1px solid var(--divider-color, #e0e0e0); /* Optional border around grid */
+          border: 1px solid var(--card-background-color, #e0e0e0); /* Optional border around grid */
           border-radius: 4px;
           overflow: hidden; /* Clip corners */
-          background-color: var(--divider-color, #e0e0e0); /* Background for gaps */
+          background-color: var(--card-background-color, #e0e0e0); /* Background for gaps */
       }
 
       .calendar-weekday {
@@ -1973,7 +1986,7 @@ class MareesFranceCard extends LitElement {
 
       .calendar-day {
           background-color: var(--card-background-color, white); /* Cell background */
-          padding: 4px;
+          padding: 1px;
           min-height: 60px; /* Minimum height for cells */
           display: flex;
           flex-direction: column;
@@ -1984,29 +1997,27 @@ class MareesFranceCard extends LitElement {
       }
 
       .calendar-day.padding {
-          background-color: var(--secondary-background-color, #f9f9f9); /* Different background for padding days */
           opacity: 0.6;
-      }
-      .calendar-day.padding .day-number {
-          color: var(--disabled-text-color, #bdbdbd); /* Dimmer number for padding days */
       }
 
       .day-number {
           font-size: 0.9em;
           font-weight: 500;
-          color: var(--primary-text-color);
+          color: var(--secondary-text-color);
           margin-bottom: 4px; /* Space between number and coeffs */
           text-align: center;
           width: 100%; /* Take full width for centering */
+          background-color: var(--divider-color);
       }
 
       .day-coeffs {
           display: flex;
           flex-wrap: wrap; /* Allow coeffs to wrap */
+          flex-direction: column; /* Align coeffs in a row */
           justify-content: center; /* Center coeffs horizontally */
           align-items: center; /* Center coeffs vertically */
           gap: 3px; /* Gap between coeffs */
-          width: 100%;
+          width: 3ch;
       }
 
       .coeff-value {
@@ -2016,23 +2027,27 @@ class MareesFranceCard extends LitElement {
           padding: 1px 4px; /* Small padding */
           border-radius: 3px;
           line-height: 1.2;
-          background-color: var(--divider-color); /* Default background */
-          color: var(--secondary-text-color); /* Default text color */
+          /* background-color: var(--divider-color); Default background */
+          color: var(--primary-text-color); /* Default text color */
       }
 
       .coeff-value.warning-coef {
-          background-color: var(--warning-color);
-          color: var(--text-primary-color); /* Text color on warning background */
+          color: var(--warning-color); /* Text color on warning background */
           font-weight: bold;
       }
       .coeff-value.low-coef {
-          background-color: var(--info-color); /* Use info color for low */
-          color: var(--text-primary-color); /* Text color on info background */
-          opacity: 0.9;
+          color: var(--info-color); /* Text color on info background */
+          opacity: 0.8;
       }
 
       /* Remove old table styles if they exist */
       .calendar-table { display: none; }
+@media (max-width: 600px) {
+        .calendar-grid {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
     `;
   }
 } // End of class
