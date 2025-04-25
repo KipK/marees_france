@@ -159,9 +159,9 @@ class MareesFranceSensor(
         tide_status = self.coordinator.data.get("tide_status")
 
         if tide_status == "rising":
-            return "mdi:arrow-expand-upp" # Reverted to MDI icon
+            return "mdi:wave-arrow-up" # Reverted to MDI icon
         if tide_status == "falling":
-            return "mdi:arrow-expand-down" # Reverted to MDI icon
+            return "mdi:wave-arrow-down" # Reverted to MDI icon
 
         # Fallback if status is unknown or data is missing
         _LOGGER.debug("Tide status not available or unknown (%s), using default mdi:waves icon", tide_status)

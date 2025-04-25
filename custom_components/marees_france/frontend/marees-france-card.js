@@ -201,7 +201,10 @@ class MareesFranceCard extends LitElement {
   _svgContainer = null; // Reference to the SVG container div
   _elementsToKeepSize = []; // Store groups/elements that should not scale [NEW]
   _resizeObserver = null;    // Store the ResizeObserver instance [NEW]
- 
+  _isDraggingDot = false; // NEW: Track drag state
+  _originalDotPosition = null; // NEW: Store original {x, y, timeStr, heightStr}
+  _draggedPosition = null; // NEW: Store dragged {timeStr, heightStr} during drag
+
   static get properties() {
     return {
       hass: {},
@@ -212,6 +215,9 @@ class MareesFranceCard extends LitElement {
       _isLoadingWater: { state: true }, // Loading status for water levels
       _isLoadingTides: { state: true }, // Loading status for tide data
       _isInitialLoading: { state: true }, // Track initial load vs subsequent loads (maybe combine loaders?)
+      _isDraggingDot: { state: true, type: Boolean }, // NEW: Added type for Lit
+      _draggedPosition: { state: true, attribute: false }, // NEW: Added attribute: false for Lit
+      // _originalDotPosition doesn't need to be reactive
     };
   }
 
@@ -670,7 +676,11 @@ class MareesFranceCard extends LitElement {
     // Clear the canvas AND the list of elements to scale
     this._svgDraw.clear();
     this._elementsToKeepSize = []; // [NEW & RENAMED] Clear array at the start of redraw
- 
+    // Reset drag state on redraw
+    this._isDraggingDot = false;
+    this._originalDotPosition = null;
+    this._draggedPosition = null;
+
     // Define viewBox dimensions here for use in error/no data positioning
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
@@ -715,16 +725,15 @@ class MareesFranceCard extends LitElement {
         return;
     }
 
-    // --- SVG Dimensions and Margins (Using already defined viewBoxWidth/Height) ---
-    // Adjust margins for text/arrows: more top/bottom space needed
-    const margin = { top: 55, right: 15, bottom: 35, left: 15 }; // Adjusted margins
-    const graphWidth = viewBoxWidth - margin.left - margin.right;
-    const graphHeight = viewBoxHeight - margin.top - margin.bottom; // Recalculated
+    // --- SVG Dimensions and Margins (Store as class properties) ---
+    this._graphMargin = { top: 55, right: 15, bottom: 35, left: 15 }; // Adjusted margins
+    this._graphWidth = viewBoxWidth - this._graphMargin.left - this._graphMargin.right;
+    this._graphHeight = viewBoxHeight - this._graphMargin.top - this._graphMargin.bottom; // Recalculated
 
-    // --- Process Data ---
+    // --- Process Data (Store as class property) ---
     let minHeight = Infinity;
     let maxHeight = -Infinity;
-    const points = levelsData.map(item => {
+    this._pointsData = levelsData.map(item => { // Store processed points
         const timeStr = item[0];
         const heightNum = parseFloat(item[1]);
         if (isNaN(heightNum)) return null;
@@ -735,116 +744,101 @@ class MareesFranceCard extends LitElement {
         return { totalMinutes, heightNum };
     }).filter(p => p !== null);
 
-    // --- 3. Check if enough points to draw ---
-    if (points.length < 2) {
+    // --- 3. Check if enough points to draw & Store Boundaries ---
+    if (this._pointsData.length < 2) {
          // Draw 'not enough data' message (canvas already cleared)
          const notEnoughDataText = this._svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)) // [MODIFIED] Store reference
              .move(viewBoxWidth / 2, viewBoxHeight / 2) // Center roughly
              .font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
          this._elementsToKeepSize.push(notEnoughDataText); // [NEW] Add message to scale list
+        this._curveMinMinutes = null; // Reset boundaries if not enough data
+        this._curveMaxMinutes = null;
         return;
-    }
+   } else {
+       // Store the actual time boundaries of the curve data
+       this._curveMinMinutes = this._pointsData[0].totalMinutes;
+       this._curveMaxMinutes = this._pointsData[this._pointsData.length - 1].totalMinutes;
+   }
 
-    // Adjust Y domain slightly for padding
-    const yPadding = (maxHeight - minHeight) * 0.1 || 0.5; // Add 10% padding or 0.5m
-    const yDomainMin = Math.max(0, minHeight - yPadding); // Ensure min is not negative
-    const yDomainMax = maxHeight + yPadding;
-    const yRange = Math.max(1, yDomainMax - yDomainMin); // Avoid division by zero
+   // Adjust Y domain slightly for padding (Store as class properties)
+   const yPadding = (maxHeight - minHeight) * 0.1 || 0.5; // Add 10% padding or 0.5m
+   this._yDomainMin = Math.max(0, minHeight - yPadding); // Ensure min is not negative
+   const yDomainMax = maxHeight + yPadding;
+   this._yRange = Math.max(1, yDomainMax - this._yDomainMin); // Avoid division by zero
 
-    // --- Coordinate Mapping Functions ---
-    const timeToX = (totalMinutes) => margin.left + (totalMinutes / (24 * 60)) * graphWidth;
-    // Y is inverted in SVG (0 is top)
-    const heightToY = (h) => margin.top + graphHeight - ((h - yDomainMin) / yRange) * graphHeight;
+   // --- Coordinate Mapping Functions are now class methods ---
 
-    // --- Generate SVG Path Data Strings ---
-    const pathData = points.map((p, index) => {
-        const x = timeToX(p.totalMinutes);
-        const y = heightToY(p.heightNum);
-        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    }).join(' ');
+   // --- Generate SVG Path Data Strings ---
+   const pathData = this._pointsData.map((p, index) => {
+       const x = this._timeToX(p.totalMinutes); // Use class method
+       const y = this._heightToY(p.heightNum); // Use class method
+       return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+   }).join(' ');
 
-    const xAxisY = margin.top + graphHeight; // Y position of the X-axis line/labels
-    const firstPointX = timeToX(points[0].totalMinutes);
-    const lastPointX = timeToX(points[points.length - 1].totalMinutes);
-    // Fill path goes from first point X on axis, along curve, to last point X on axis, then closes
-    const fillPathData = `M ${firstPointX.toFixed(2)} ${xAxisY} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${xAxisY} Z`;
+   const xAxisY = this._graphMargin.top + this._graphHeight; // Use class properties
+   const firstPointX = this._timeToX(this._pointsData[0].totalMinutes); // Use class method
+   const lastPointX = this._timeToX(this._pointsData[this._pointsData.length - 1].totalMinutes); // Use class method
+   // Fill path goes from first point X on axis, along curve, to last point X on axis, then closes
+   const fillPathData = `M ${firstPointX.toFixed(2)} ${xAxisY} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${xAxisY} Z`;
 
-    // --- Calculate Ticks and Markers Data ---
-     // --- X-Axis Ticks and Labels ---
-    const xTicks = [];
-    const xLabelStep = 480; // Label every 8 hours (0, 8, 16, 24)
-    for (let totalMinutes = 0; totalMinutes <= 24 * 60; totalMinutes += xLabelStep) {
-        const x = timeToX(totalMinutes === 1440 ? 1439.9 : totalMinutes); // Map 24:00 correctly
-        const hour = Math.floor(totalMinutes / 60);
-        const label = hour === 24 ? '00:00' : `${String(hour).padStart(2, '0')}:00`;
-        xTicks.push({ x: x, label: label });
-    }
-    // --- Tide Markers Data (using _tideData) ---
-    const tideEventsForDay = tideResponse[this._selectedDay]; // Use data fetched earlier
-    const tideMarkers = [];
-    if (Array.isArray(tideEventsForDay)) {
-        tideEventsForDay.forEach(tideArr => {
-            // Parse the array format [typeStr, timeStr, heightStr, coeffStr]
-            if (!Array.isArray(tideArr) || tideArr.length < 3) return;
-            const typeStr = tideArr[0];
-            const time = tideArr[1];
-            const height = parseFloat(tideArr[2]);
-            const coefficient = tideArr.length > 3 && tideArr[3] !== "---" ? parseInt(tideArr[3], 10) : null;
-            const isHigh = typeStr === 'tide.high';
-            const isLow = typeStr === 'tide.low';
+   // --- Calculate Ticks and Markers Data ---
+    // --- X-Axis Ticks and Labels ---
+   const xTicks = [];
+   const xLabelStep = 480; // Label every 8 hours (0, 8, 16, 24)
+   for (let totalMinutes = 0; totalMinutes <= 24 * 60; totalMinutes += xLabelStep) {
+       const x = this._timeToX(totalMinutes === 1440 ? 1439.9 : totalMinutes); // Use class method
+       const hour = Math.floor(totalMinutes / 60);
+       const label = hour === 24 ? '00:00' : `${String(hour).padStart(2, '0')}:00`;
+       xTicks.push({ x: x, label: label });
+   }
+   // --- Tide Markers Data (using _tideData) ---
+   const tideEventsForDay = tideResponse[this._selectedDay]; // Use data fetched earlier
+   const tideMarkers = [];
+   if (Array.isArray(tideEventsForDay)) {
+       tideEventsForDay.forEach(tideArr => {
+           // Parse the array format [typeStr, timeStr, heightStr, coeffStr]
+           if (!Array.isArray(tideArr) || tideArr.length < 3) return;
+           const typeStr = tideArr[0];
+           const time = tideArr[1];
+           const height = parseFloat(tideArr[2]);
+           const coefficient = tideArr.length > 3 && tideArr[3] !== "---" ? parseInt(tideArr[3], 10) : null;
+           const isHigh = typeStr === 'tide.high';
+           const isLow = typeStr === 'tide.low';
 
-            if ((!isHigh && !isLow) || !time || isNaN(height)) return; // Validate
+           if ((!isHigh && !isLow) || !time || isNaN(height)) return; // Validate
 
-            const [hours, minutes] = time.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes;
-            const x = timeToX(totalMinutes);
-            const y = heightToY(height);
+           const [hours, minutes] = time.split(':').map(Number);
+           const totalMinutes = hours * 60 + minutes;
+           const x = this._timeToX(totalMinutes); // Use class method
+           const y = this._heightToY(height); // Use class method
 
-            tideMarkers.push({
-                x: x,
-                y: y,
-                time: time,
-                height: height,
-                coefficient: isHigh ? coefficient : null, // Coeff only for high tides
-                isHigh: isHigh
-            });
-        });
-    }
-    // No need to filter nulls here as we build the array directly
+           tideMarkers.push({
+               x: x,
+               y: y,
+               time: time,
+               height: height,
+               coefficient: isHigh ? coefficient : null, // Coeff only for high tides
+               isHigh: isHigh
+           });
+       });
+   }
+   // No need to filter nulls here as we build the array directly
 
-     // --- Current Time Marker Data ---
-    const now = new Date();
-    // Only show current time marker if the selected day is today
-    let currentTimeMarker = null;
-    let currentTotalMinutes = null; // Store total minutes for tooltip data
-    if (this._selectedDay === now.toISOString().slice(0, 10)) {
-        currentTotalMinutes = now.getHours() * 60 + now.getMinutes(); // Assign here
-        if (currentTotalMinutes >= 0 && currentTotalMinutes < 24 * 60 && points.length >= 2) {
-            // Interpolation logic
-            let prevPoint = null;
-            let nextPoint = null;
-            for (let i = 0; i < points.length; i++) {
-                if (points[i].totalMinutes <= currentTotalMinutes) prevPoint = points[i];
-                if (points[i].totalMinutes > currentTotalMinutes) { nextPoint = points[i]; break; }
-            }
-            let currentHeight = null;
-            if (prevPoint && nextPoint) {
-                const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
-                if (timeDiff > 0) {
-                    const timeProgress = (currentTotalMinutes - prevPoint.totalMinutes) / timeDiff;
-                    currentHeight = prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
-                } else { currentHeight = prevPoint.heightNum; }
-            } else if (prevPoint) { currentHeight = prevPoint.heightNum; }
-            else if (nextPoint) { currentHeight = nextPoint.heightNum; }
+    // --- Current Time Marker Data ---
+   const now = new Date();
+   // Only show current time marker if the selected day is today
+   let currentTimeMarker = null;
+   let currentTotalMinutes = null; // Store total minutes for tooltip data
+   if (this._selectedDay === now.toISOString().slice(0, 10)) {
+       currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+       const currentHeight = this._interpolateHeight(currentTotalMinutes); // Use class method
 
-            if (currentHeight !== null) {
-                const currentX = timeToX(currentTotalMinutes);
-                const currentY = heightToY(currentHeight);
-                // Store position and interpolated height for the dot and tooltip
-                currentTimeMarker = { x: currentX, y: currentY, height: currentHeight, totalMinutes: currentTotalMinutes };
-            }
-        }
-    }
+       if (currentHeight !== null) {
+           const currentX = this._timeToX(currentTotalMinutes); // Use class method
+           const currentY = this._heightToY(currentHeight); // Use class method
+           currentTimeMarker = { x: currentX, y: currentY, height: currentHeight, totalMinutes: currentTotalMinutes };
+       }
+   }
 
 
     // --- Drawing the Actual Graph --- (canvas already cleared)
@@ -1009,48 +1003,90 @@ class MareesFranceCard extends LitElement {
     if (currentTimeMarker) {
         const dotRadius = 5; 
         const dotGroup = draw.group(); // [NEW] Group the dot and its stroke
-        dotGroup.attr('id', 'current-time-marker'); // Add ID for tooltip handling
-        dotGroup.addClass('has-tooltip'); // Add class for cursor style
+        dotGroup.attr('id', 'current-time-marker');
+        dotGroup.addClass('has-tooltip');
+        dotGroup.addClass('draggable-dot'); // NEW: Add class for potential styling/selection
 
         // Draw the fill
-        dotGroup.circle(dotRadius * 2) // diameter
-            .center(currentTimeMarker.x, currentTimeMarker.y) // Use original calculated Y
-            .fill(markerDotColor);
+        const dotCircle = dotGroup.circle(dotRadius * 2) // Store reference to circle
+            .center(currentTimeMarker.x, currentTimeMarker.y)
+            .fill('var(--current_tide_color)') // Use CSS variable directly
+            .attr('cursor', 'grab'); // Add grab cursor
 
-        this._elementsToKeepSize.push(dotGroup); // Add dot group to scale list
+        // this._elementsToKeepSize.push(dotGroup); // REMOVED: Let the dot scale with the SVG to maintain relative position to the curve
 
-        // Store data needed for tooltip
+        // Store data needed for original tooltip and reverting position
         const currentTimeStr = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
         const currentHeightStr = currentTimeMarker.height !== null ? currentTimeMarker.height.toFixed(2) : 'N/A';
 
         // --- Add Event Listeners for HTML Tooltip ---
-        // Use .node to attach standard DOM events to the underlying SVG element
-        dotGroup.node.addEventListener('mouseover', (e) => this._showHtmlTooltip(e, currentTimeStr, currentHeightStr));
-        dotGroup.node.addEventListener('mouseout', () => this._hideHtmlTooltip());
-        // Optional: Add touch events if needed, mapping to mouse events
-        // dotGroup.node.addEventListener('touchstart', (e) => { e.preventDefault(); this._showHtmlTooltip(e, currentTimeStr, currentHeightStr); }, { passive: false });
-        // dotGroup.node.addEventListener('touchend', (e) => { e.preventDefault(); this._hideHtmlTooltip(); });
+        // NEW: Store original position and data
+        this._originalDotPosition = {
+            x: currentTimeMarker.x,
+            y: currentTimeMarker.y,
+            timeStr: currentTimeStr,
+            heightStr: currentHeightStr
+        };
+
+        // --- Add Event Listeners for HTML Tooltip & Dragging ---
+        dotGroup.node.addEventListener('mouseover', (e) => {
+            // Only show hover tooltip if NOT dragging
+            if (!this._isDraggingDot) {
+                this._showHtmlTooltip(e, this._originalDotPosition.timeStr, this._originalDotPosition.heightStr);
+            }
+        });
+        dotGroup.node.addEventListener('mouseout', () => {
+            // Hide tooltip if NOT dragging (drag move will handle tooltip otherwise)
+             if (!this._isDraggingDot) {
+                this._hideHtmlTooltip();
+             }
+        });
+
+        // NEW: Add Drag Listeners (Remove helper function args)
+        dotGroup.node.addEventListener('mousedown', (e) => this._handleDragStart(e, dotGroup, dotCircle));
+        dotGroup.node.addEventListener('touchstart', (e) => this._handleDragStart(e, dotGroup, dotCircle), { passive: false }); // Need passive false to prevent scroll
 
     }
+  } // End of _drawGraphWithSvgJs
 
-  }
-
-  // --- HTML Tooltip Helper Functions ---
-  _showHtmlTooltip(evt, time, height) {
+  // --- Tooltip Helpers (Modified slightly) ---
+  _showHtmlTooltip(evt, time, height, isDragging = false) { // Add isDragging flag
       const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
       if (!tooltip) return;
 
       // Format the content
       tooltip.innerHTML = `<strong>${time}</strong><br>${height} m`;
 
-      // --- Position the tooltip centered above the target element ---
-      const targetElement = evt.currentTarget; // The SVG group (<g>) that triggered the event
+      // Positioning logic (remains mostly the same, might need adjustment based on event source if dragging)
+      const targetElement = evt.currentTarget || evt.target; // Handle different event targets
       if (!targetElement) return;
 
-      const cardRect = this.getBoundingClientRect(); // Card's position relative to viewport
-      const targetRect = targetElement.getBoundingClientRect(); // Target's position relative to viewport
+      const cardRect = this.getBoundingClientRect();
+      // Use the stored dot position if dragging, otherwise use event target bounds
+      let targetRect;
+      if (isDragging && this._draggedPosition) {
+          // Need to estimate rect based on _draggedPosition's SVG coords
+          // This is tricky without the actual element. Let's try using the event coords for now.
+          // We might need to pass the SVG element reference during drag updates.
+          // For simplicity, let's use the event page coordinates directly for positioning during drag.
+           const svgPoint = this._getSVGCoordinates(evt); // Get SVG coords from event
+           if (!svgPoint) return;
+           // Approximate target rect based on SVG point and dot radius (needs refinement)
+           const dotRadiusPx = 5 * (cardRect.width / 500); // Estimate pixel radius based on scale
+           targetRect = {
+               left: evt.clientX - dotRadiusPx,
+               top: evt.clientY - dotRadiusPx,
+               width: dotRadiusPx * 2,
+               height: dotRadiusPx * 2
+           };
 
-      // Calculate target's center X and top Y relative to the card's top-left corner
+      } else if (targetElement.getBoundingClientRect) {
+           targetRect = targetElement.getBoundingClientRect();
+      } else {
+          return; // Cannot get bounds
+      }
+
+
       const targetCenterX = targetRect.left + targetRect.width / 2 - cardRect.left;
       const targetTopY = targetRect.top - cardRect.top;
 
@@ -1062,13 +1098,13 @@ class MareesFranceCard extends LitElement {
       tooltip.style.display = 'none'; // Hide again before final positioning
       tooltip.style.visibility = 'visible';
 
-      const offsetAbove = 5; // Pixels above the target element
+      const offsetAbove = 10; // Increased offset
 
       // Calculate desired position
       let left = targetCenterX - tooltipWidth / 2;
       let top = targetTopY - tooltipHeight - offsetAbove;
 
-      // --- Basic Boundary Check (relative to card) ---
+      // Boundary checks (remain the same)
       const safetyMargin = 2; // Small margin
 
       // Check left boundary
@@ -1084,33 +1120,267 @@ class MareesFranceCard extends LitElement {
           // Option 1: Clamp to top
           // top = safetyMargin;
           // Option 2: Position below the dot
-          top = targetTopY + targetRect.height + offsetAbove;
-          // Re-check bottom boundary if positioned below
+          top = targetTopY + targetRect.height + offsetAbove; // Position below
           if (top + tooltipHeight > cardRect.height - safetyMargin) {
-              top = cardRect.height - tooltipHeight - safetyMargin; // Clamp to bottom
+              top = cardRect.height - tooltipHeight - safetyMargin;
           }
       }
-      // Check bottom boundary (less likely if positioned above initially)
-      // if (top + tooltipHeight > cardRect.height - safetyMargin) {
-      //     top = cardRect.height - tooltipHeight - safetyMargin;
-      // }
 
-      // Apply final position and display
-      tooltip.style.left = `${left}px`;
-      tooltip.style.top = `${top}px`;
-      tooltip.style.display = 'block';
+     // Apply final position and display
+     tooltip.style.left = `${left}px`;
+     tooltip.style.top = `${top}px`;
+     tooltip.style.display = 'block';
+     tooltip.style.opacity = '1'; // Ensure visible
+ }
+
+ _hideHtmlTooltip() {
+     const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
+     if (tooltip) {
+         tooltip.style.opacity = '0'; // Fade out
+         // Use transitionend or setTimeout to set display: none after fade
+         setTimeout(() => {
+             if (tooltip.style.opacity === '0') { // Check if still hidden
+                tooltip.style.display = 'none';
+             }
+         }, 150); // Match CSS transition duration if any
+     }
+ }
+
+ // --- NEW: Drag Handlers (Remove helper function args) ---
+
+ _handleDragStart(e, dotGroup, dotCircle) {
+     if (e.button === 2) return; // Ignore right-clicks
+     e.preventDefault(); // Prevent text selection/default drag
+
+     this._isDraggingDot = true;
+     this.requestUpdate('_isDraggingDot'); // Update state
+
+     // Change color and cursor
+     dotCircle.fill('var(--info-color, var(--primary-color))'); // Use info-color with fallback
+     dotCircle.attr('cursor', 'grabbing');
+
+     // Hide hover tooltip immediately if it was shown
+     this._hideHtmlTooltip();
+
+     // Bind move/end listeners to window to capture events outside the element
+     // Pass only necessary elements, helpers are now class methods
+     this._boundHandleDragMove = (ev) => this._handleDragMove(ev, dotGroup, dotCircle);
+     this._boundHandleDragEnd = (ev) => this._handleDragEnd(ev, dotGroup, dotCircle);
+
+     if (e.type === 'touchstart') {
+         window.addEventListener('touchmove', this._boundHandleDragMove, { passive: false });
+         window.addEventListener('touchend', this._boundHandleDragEnd, { once: true });
+         window.addEventListener('touchcancel', this._boundHandleDragEnd, { once: true });
+     } else {
+         window.addEventListener('mousemove', this._boundHandleDragMove);
+         window.addEventListener('mouseup', this._boundHandleDragEnd, { once: true });
+     }
+ }
+
+  _handleDragMove(e, dotGroup, dotCircle) { // Remove helper function args
+     if (!this._isDraggingDot) return;
+     e.preventDefault(); // Prevent scrolling on touch devices
+
+     const svgPoint = this._getSVGCoordinates(e);
+     if (!svgPoint || this._curveMinMinutes === null || this._curveMaxMinutes === null) return; // Exit if boundaries aren't set
+
+     // Calculate the min/max X coordinates based on the actual curve data times
+     const minX = this._timeToX(this._curveMinMinutes); // Use class method
+     const maxX = this._timeToX(this._curveMaxMinutes); // Use class method
+
+     // Clamp the pointer's X coordinate to the curve's boundaries
+     const clampedX = Math.max(minX, Math.min(maxX, svgPoint.x));
+
+     // Convert clamped X back to total minutes
+     const draggedTotalMinutes = this._xToTotalMinutes(clampedX); // Use class method
+
+     // Interpolate height based on the clamped dragged time
+     const draggedHeight = this._interpolateHeight(draggedTotalMinutes); // Use class method
+
+     if (draggedHeight !== null) {
+         // Calculate the precise Y on the curve
+         const draggedY = this._heightToY(draggedHeight); // Use class method
+
+         // Move the dot visually using the clamped X and calculated Y
+         dotCircle.center(clampedX, draggedY);
+
+         // Format time and height for tooltip using the clamped time
+         const hours = Math.floor(draggedTotalMinutes / 60);
+         const minutes = Math.floor(draggedTotalMinutes % 60);
+         const draggedTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+         const draggedHeightStr = draggedHeight.toFixed(2);
+
+         // Store dragged position data
+         this._draggedPosition = { timeStr: draggedTimeStr, heightStr: draggedHeightStr };
+         this.requestUpdate('_draggedPosition'); // Update state
+
+         // Update and show tooltip with dragged data
+         // Pass the event 'e' for positioning, and isDragging = true
+         this._showHtmlTooltip(e, draggedTimeStr, draggedHeightStr, true);
+     }
   }
 
-  _hideHtmlTooltip() {
-      const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
-      if (tooltip) {
-          tooltip.style.display = 'none';
+ _handleDragEnd(e, dotGroup, dotCircle) {
+     if (!this._isDraggingDot) return;
+
+     this._isDraggingDot = false;
+     this.requestUpdate('_isDraggingDot'); // Update state
+
+     // Revert color and cursor
+     dotCircle.fill('var(--current_tide_color)');
+     dotCircle.attr('cursor', 'grab');
+
+     // Move dot back to original position
+     if (this._originalDotPosition) {
+         dotCircle.center(this._originalDotPosition.x, this._originalDotPosition.y);
+     }
+
+     // Hide tooltip
+     this._hideHtmlTooltip();
+
+     // Clean up state
+     this._draggedPosition = null;
+     this.requestUpdate('_draggedPosition');
+
+     // Remove window listeners
+     if (this._boundHandleDragMove) {
+         window.removeEventListener('mousemove', this._boundHandleDragMove);
+         window.removeEventListener('touchmove', this._boundHandleDragMove);
+     }
+     if (this._boundHandleDragEnd) {
+         // Mouseup listener was added with { once: true }, might not need removal
+         // Touchend/cancel listeners were added with { once: true }, might not need removal
+         // It's safer to remove them explicitly if they weren't {once: true}
+         window.removeEventListener('mouseup', this._boundHandleDragEnd);
+         window.removeEventListener('touchend', this._boundHandleDragEnd);
+         window.removeEventListener('touchcancel', this._boundHandleDragEnd);
+     }
+     this._boundHandleDragMove = null;
+     this._boundHandleDragEnd = null;
+ }
+
+ // --- NEW: Coordinate Conversion Helper ---
+ _getSVGCoordinates(evt) {
+     if (!this._svgDraw || !this._svgContainer) return null;
+
+     const svg = this._svgContainer.querySelector('svg');
+     if (!svg) return null;
+
+     // Create an SVGPoint for transformations
+     const pt = svg.createSVGPoint();
+
+     // Get the screen coordinates from the event
+     if (evt.touches && evt.touches.length > 0) {
+         pt.x = evt.touches[0].clientX;
+         pt.y = evt.touches[0].clientY;
+     } else if (evt.clientX !== undefined && evt.clientY !== undefined) {
+         pt.x = evt.clientX;
+         pt.y = evt.clientY;
+     } else {
+         return null; // No coordinates found
+     }
+
+     // Transform the screen coordinates to SVG coordinates
+     try {
+         const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+         return { x: svgPoint.x, y: svgPoint.y };
+     } catch (e) {
+         console.error("Error transforming screen coordinates to SVG:", e);
+         return null;
+     }
+ }
+
+  // --- NEW: Coordinate/Interpolation Helper Methods ---
+
+  _timeToX(totalMinutes) {
+      if (!this._graphMargin || this._graphWidth === null) return 0; // Guard
+      // Clamp totalMinutes to the allowed range (0 to 24*60) if needed, though clamping X is preferred
+      // const clampedMinutes = Math.max(0, Math.min(1440, totalMinutes));
+      return this._graphMargin.left + (totalMinutes / (24 * 60)) * this._graphWidth;
+  }
+
+  _heightToY(h) {
+      if (!this._graphMargin || this._graphHeight === null || this._yDomainMin === null || !this._yRange) return 0; // Guard
+      // Ensure height is within domain if necessary, though clamping X handles this indirectly
+      // const clampedH = Math.max(this._yDomainMin, Math.min(this._yDomainMin + this._yRange, h));
+      return this._graphMargin.top + this._graphHeight - ((h - this._yDomainMin) / this._yRange) * this._graphHeight;
+  }
+
+  _xToTotalMinutes(x) {
+      if (!this._graphMargin || this._graphWidth === null || this._graphWidth <= 0) return 0; // Guard
+      const clampedX = Math.max(this._graphMargin.left, Math.min(this._graphMargin.left + this._graphWidth, x));
+      return ((clampedX - this._graphMargin.left) / this._graphWidth) * (24 * 60);
+  }
+
+  _interpolateHeight(targetTotalMinutes) {
+      if (this._pointsData.length < 2) return null; // Guard
+      let prevPoint = null;
+      let nextPoint = null;
+      // Find the two points surrounding the target time
+      for (let i = 0; i < this._pointsData.length; i++) {
+          if (this._pointsData[i].totalMinutes <= targetTotalMinutes) prevPoint = this._pointsData[i];
+          if (this._pointsData[i].totalMinutes > targetTotalMinutes) { nextPoint = this._pointsData[i]; break; }
       }
-  }
+      // Handle edge cases (before first point or after last point)
+      if (!prevPoint && nextPoint) return nextPoint.heightNum;
+      if (prevPoint && !nextPoint) return prevPoint.heightNum;
+      if (!prevPoint && !nextPoint) return null;
 
-  getCardSize() {
-    // Base size: header(1) + next_tide_status(1) + tabs(1) + graph(~4) = 7
-    let size = 7; // Keep size, graph height increase is internal to SVG
+      // Interpolate
+      const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
+      if (timeDiff <= 0) return prevPoint.heightNum;
+
+      const timeProgress = (targetTotalMinutes - prevPoint.totalMinutes) / timeDiff;
+      return prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
+  }
+ 
+   // --- NEW: Coordinate/Interpolation Helper Methods ---
+ 
+   _timeToX(totalMinutes) {
+       if (!this._graphMargin || this._graphWidth === null) return 0; // Guard
+       // Clamp totalMinutes to the allowed range (0 to 24*60) if needed, though clamping X is preferred
+       // const clampedMinutes = Math.max(0, Math.min(1440, totalMinutes));
+       return this._graphMargin.left + (totalMinutes / (24 * 60)) * this._graphWidth;
+   }
+ 
+   _heightToY(h) {
+       if (!this._graphMargin || this._graphHeight === null || this._yDomainMin === null || !this._yRange) return 0; // Guard
+       // Ensure height is within domain if necessary, though clamping X handles this indirectly
+       // const clampedH = Math.max(this._yDomainMin, Math.min(this._yDomainMin + this._yRange, h));
+       return this._graphMargin.top + this._graphHeight - ((h - this._yDomainMin) / this._yRange) * this._graphHeight;
+   }
+ 
+   _xToTotalMinutes(x) {
+       if (!this._graphMargin || this._graphWidth === null || this._graphWidth <= 0) return 0; // Guard
+       const clampedX = Math.max(this._graphMargin.left, Math.min(this._graphMargin.left + this._graphWidth, x));
+       return ((clampedX - this._graphMargin.left) / this._graphWidth) * (24 * 60);
+   }
+ 
+   _interpolateHeight(targetTotalMinutes) {
+       if (!this._pointsData || this._pointsData.length < 2) return null; // Guard, check _pointsData exists
+       let prevPoint = null;
+       let nextPoint = null;
+       // Find the two points surrounding the target time
+       for (let i = 0; i < this._pointsData.length; i++) {
+           if (this._pointsData[i].totalMinutes <= targetTotalMinutes) prevPoint = this._pointsData[i];
+           if (this._pointsData[i].totalMinutes > targetTotalMinutes) { nextPoint = this._pointsData[i]; break; }
+       }
+       // Handle edge cases (before first point or after last point)
+       if (!prevPoint && nextPoint) return nextPoint.heightNum;
+       if (prevPoint && !nextPoint) return prevPoint.heightNum;
+       if (!prevPoint && !nextPoint) return null;
+ 
+       // Interpolate
+       const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
+       if (timeDiff <= 0) return prevPoint.heightNum;
+ 
+       const timeProgress = (targetTotalMinutes - prevPoint.totalMinutes) / timeDiff;
+       return prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
+   }
+ 
+   getCardSize() {
+     // Base size: header(1) + next_tide_status(1) + tabs(1) + graph(~4) = 7
+     let size = 7; // Keep size, graph height increase is internal to SVG
     return size;
   }
 
@@ -1146,7 +1416,7 @@ class MareesFranceCard extends LitElement {
           color: var(--primary-text-color);
       }
       .card-content {
-          padding: 16 16px 16px 16px; /* No top padding, standard sides/bottom */
+          padding: 0 16px 16px 16px; /* No top padding, standard sides/bottom */
       }
 
       /* Next Tide Status Display Styles */
@@ -1156,16 +1426,21 @@ class MareesFranceCard extends LitElement {
         align-items: flex-start; /* Align items to the left */
         gap: 4px; /* Smaller gap between lines */
         padding-bottom: 16px; /* Space before tabs */
+        padding-left: 16px; /* Add left padding to match card content */
+        padding-right: 16px; /* Add right padding */
+        padding-top: 16px; /* Add top padding */
       }
       .next-tide-icon-time {
         display: flex;
         align-items: flex-start; /* Align icon with top of text block */
+        align-content: center;
         gap: 8px;
       }
       .next-tide-icon-time ha-icon {
         color: var(--tide-icon-color);
-        --mdc-icon-size: 4rem; /* Keep icon size */
-        /* margin-top: 0.3rem;  */
+        --mdc-icon-size: 3em; /* Adjusted size */
+         margin-top: 0.3rem; /* Align better with text */
+         padding: 0;
       }
       .next-tide-text-container {
         display: flex;
@@ -1174,13 +1449,13 @@ class MareesFranceCard extends LitElement {
         line-height: 1; /* Tighten line height for the container */
       }
       .next-tide-trend-text {
-        font-size: 1.5rem; /* Smaller text for prefix */
+        font-size: 1.0em; /* Smaller text for prefix */
         font-weight: 400;
         color: var(--tide-time-color); /* Same color as time */
         padding-bottom: 2px; /* Small space between text and time */
       }
       .next-tide-time {
-        font-size: 2.5rem; /* Keep time font size */
+        font-size: 1.5em; /* Adjusted time font size */
         font-weight: 400;
         color: var(--tide-time-color);
         line-height: 1; /* Keep tight line height */
@@ -1210,6 +1485,8 @@ class MareesFranceCard extends LitElement {
         grid-template-columns: repeat(7, 1fr);
         margin-bottom: 16px;
         gap: 4px;
+        padding-left: 16px; /* Add left padding */
+        padding-right: 16px; /* Add right padding */
       }
       .tab {
         display: flex; /* Use flexbox for vertical alignment */
@@ -1265,6 +1542,8 @@ class MareesFranceCard extends LitElement {
         height: auto; /* Let aspect-ratio control height */
         max-height: 220px; /* Optional max height increased */
         margin-top: 10px; /* Space above graph */
+        padding-left: 16px; /* Add left padding */
+        padding-right: 16px; /* Add right padding */
       }
       .svg-graph-container .loading-icon {
         position: absolute; /* Position over the graph area */
@@ -1294,7 +1573,11 @@ class MareesFranceCard extends LitElement {
       .svg-graph-target svg .has-tooltip {
           cursor: pointer;
       }
-      /* Tooltip styles (within SVG) */
+      /* NEW: Style for draggable dot */
+      .svg-graph-target svg .draggable-dot {
+          /* Add specific styles if needed, e.g., hover effects */
+      }
+      /* Tooltip styles (within SVG) - Not used for HTML tooltip */
       #marker-tooltip {
           pointer-events: none; /* Tooltip should not capture mouse events */
           transition: opacity 0.1s ease-in-out;
@@ -1314,13 +1597,15 @@ class MareesFranceCard extends LitElement {
         z-index: 100; /* Ensure it's above the SVG */
         pointer-events: none; /* Tooltip should not interfere with mouse */
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: opacity 0.1s ease-in-out; /* Add transition for fade */
+        opacity: 0; /* Start hidden */
       }
       .chart-tooltip strong {
         font-weight: bold;
       }
     `;
   }
-}
+} // End of class
 
 customElements.define("marees-france-card", MareesFranceCard);
 
