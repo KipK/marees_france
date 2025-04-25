@@ -106,12 +106,29 @@ function localizeCard(key, hass, ...args) {
   return translated;
 }
 
+// Helper function to get localized weekday abbreviation (3 letters)
+function getWeekdayShort3Letters(dayIndex, locale) {
+    // Create a date object for a known week starting on Sunday (e.g., Jan 1, 2023 was a Sunday)
+    // Adjust index to match JavaScript's Date (0=Sun, 1=Mon, ...)
+    // We want 0=Mon, 1=Tue, ... 6=Sun for display order matching the screenshot (L, M, M, J, V, S, D)
+    // Let's adjust the date calculation to get the desired starting day.
+    // Sunday = 0, Monday = 1, ..., Saturday = 6
+    // If locale starts week on Sunday (e.g., en-US), dayIndex 0 should map to Sunday.
+    // If locale starts week on Monday (e.g., fr-FR), dayIndex 0 should map to Monday.
 
-// Helper function to get localized weekday abbreviation
-function getWeekdayShort(dayIndex, locale) {
-    const date = new Date(2023, 0, 1 + dayIndex); // Use a known Sunday (Jan 1, 2023)
-    return date.toLocaleDateString(locale, { weekday: 'short' });
+    // Let's create dates starting from a known Monday (Jan 2, 2023)
+    const date = new Date(2023, 0, 2 + dayIndex); // 2=Mon, 3=Tue, ... 8=Sun
+    let abbr = date.toLocaleDateString(locale, { weekday: 'short' });
+    // Ensure it's 3 letters, some locales might give 2 (e.g., Japanese)
+    if (abbr.length > 3) {
+        abbr = abbr.substring(0, 3);
+    }
+    // Optional: Uppercase the first letter if needed by design
+    // abbr = abbr.charAt(0).toUpperCase() + abbr.slice(1);
+    return abbr;
 }
+
+
 
 // Returns data needed for the next tide peak display
 // Returns data needed for the next tide peak display
@@ -670,96 +687,91 @@ class MareesFranceCard extends LitElement {
     this._isCalendarDialogOpen = false;
   }
 
-  // --- Dialog Content Renderer [NEW] ---
+  // --- Dialog Content Renderer [MODIFIED FOR GRID CALENDAR] ---
   _renderCalendarDialogContent() {
     const locale = this.hass.language || 'en';
 
     // Handle loading state
     if (this._isLoadingCoefficients) {
-      // console.log("Marees Card Dialog: Rendering Loader"); // DEBUG REMOVED
       return html`<div class="dialog-loader">Loading coefficient data...</div>`;
     }
 
-    // Handle error state (Check for error property OR missing response)
+    // Handle error state
     if (!this._coefficientsData || this._coefficientsData.error || !this._coefficientsData.response) {
       const errorMsg = this._coefficientsData?.error || localizeCard('ui.card.marees_france.no_coefficient_data', this.hass);
-      // console.log("Marees Card Dialog: Rendering Error:", errorMsg, this._coefficientsData); // DEBUG REMOVED
       return html`<div class="dialog-warning">${errorMsg}</div>`;
     }
 
-    // Data is available, proceed with rendering
-    const actualCoeffData = this._coefficientsData.response; // Access data within response
-    const currentMonth = this._calendarSelectedMonth.getMonth();
-    const currentYear = this._calendarSelectedMonth.getFullYear();
+    // Data is available
+    const actualCoeffData = this._coefficientsData.response;
+    const currentMonthDate = this._calendarSelectedMonth; // Use the state variable
+    const currentYear = currentMonthDate.getFullYear();
+    const currentMonth = currentMonthDate.getMonth(); // 0-indexed
+
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Determine starting day of the week (0=Sun, 1=Mon, ... 6=Sat)
+    const startingDayRaw = firstDayOfMonth.getDay();
+    // Adjust based on locale? Let's assume Monday is the start (like screenshot L, M, M...)
+    // Convert Sunday (0) to 7, then subtract 1 to make Monday=0, ..., Sunday=6
+    const startingDay = startingDayRaw === 0 ? 6 : startingDayRaw - 1;
+
     const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`; // YYYY-MM
-    // console.log("Marees Card Dialog: Rendering Month:", monthStr, "Data available:", !!actualCoeffData); // DEBUG REMOVED
 
-    let monthData = [];
-    try {
-      // Filter data for the selected month from actualCoeffData
-      monthData = Object.entries(actualCoeffData)
-        .filter(([dateStr]) => dateStr.startsWith(monthStr))
-        .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB)) // Sort by date
-        .map(([dateStr, coeffs]) => {
-          const date = new Date(dateStr);
-          const dayNum = date.getDate();
-          // Use try-catch specifically for toLocaleDateString as a fallback
-          let dayName = '';
-          try {
-            dayName = date.toLocaleDateString(locale, { weekday: 'long' }); // Full day name
-          } catch (e) {
-            console.error(`Marees Card Dialog: Error formatting date ${dateStr} for locale ${locale}:`, e);
-            dayName = dateStr; // Fallback to just showing the date string if formatting fails
-          }
-          return {
-            dateLabel: `${dayNum} ${dayName}`,
-            coeffs: coeffs // Array of coefficient strings
-          };
-        });
-      // console.log("Marees Card Dialog: Filtered monthData:", monthData); // DEBUG REMOVED
-    } catch (error) {
-        console.error("Marees Card Dialog: Error processing coefficient data for month:", monthStr, error);
-        return html`<div class="dialog-warning">Error processing calendar data.</div>`;
+    // --- Generate Weekday Headers ---
+    // Assuming week starts on Monday for display
+    const weekdays = Array.from({ length: 7 }, (_, i) => getWeekdayShort3Letters(i, locale));
+
+    // --- Generate Calendar Days ---
+    const calendarDays = [];
+
+    // 1. Previous month's padding days
+    const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+    for (let i = 0; i < startingDay; i++) {
+        const day = daysInPrevMonth - startingDay + 1 + i;
+        calendarDays.push({ day: day, isPadding: true, isCurrentMonth: false });
     }
 
+    // 2. Current month's days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
+        const coeffs = actualCoeffData[dateStr] || []; // Get coeffs for this day
+        calendarDays.push({ day: day, isPadding: false, isCurrentMonth: true, coeffs: coeffs, dateStr: dateStr });
+    }
 
-    // Determine if previous/next months have data based on actualCoeffData
+    // 3. Next month's padding days
+    const totalCells = startingDay + daysInMonth;
+    const remainingCells = (7 - (totalCells % 7)) % 7; // How many cells needed to fill the last row
+    for (let i = 1; i <= remainingCells; i++) {
+        calendarDays.push({ day: i, isPadding: true, isCurrentMonth: false });
+    }
+
+    // --- Check if Prev/Next Months have data (using existing logic) ---
     const availableDates = Object.keys(actualCoeffData).sort();
-    if (availableDates.length === 0) {
-        // Handle case where response exists but is empty (should be caught by error check above, but belt-and-suspenders)
-        return html`<div class="no-data-month">${localizeCard('ui.card.marees_france.no_data_for_month', this.hass)}</div>`;
-    }
-    // const firstDataDate = new Date(availableDates[0]); // Keep for reference if needed elsewhere - Removed as unused
-    // const lastDataDate = new Date(availableDates[availableDates.length - 1]); // Keep for reference - Removed as unused
-
-    const prevMonthDateObj = new Date(currentYear, currentMonth - 1, 1);
-    const nextMonthDateObj = new Date(currentYear, currentMonth + 1, 1);
-
-    // --- Refined Check for Prev/Next Data ---
-    // Check if *any* date in the dataset falls within the previous/next month's year/month.
-    const prevMonthYear = prevMonthDateObj.getFullYear();
-    const prevMonthMonth = prevMonthDateObj.getMonth();
-    const nextMonthYear = nextMonthDateObj.getFullYear();
-    const nextMonthMonth = nextMonthDateObj.getMonth();
-
     let hasPrevData = false;
     let hasNextData = false;
-    try {
-        hasPrevData = availableDates.some(dateStr => {
-            const d = new Date(dateStr);
-            return d.getFullYear() === prevMonthYear && d.getMonth() === prevMonthMonth;
-        });
-        hasNextData = availableDates.some(dateStr => {
-            const d = new Date(dateStr);
-            return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonthMonth;
-        });
-    } catch (error) {
-        console.error("Marees Card Dialog: Error checking prev/next month data:", error);
-        // Default to false if checking fails
-    }
-    // console.log("Marees Card Dialog: Prev/Next Check:", { current: `${currentYear}-${currentMonth}`, prev: `${prevMonthYear}-${prevMonthMonth}`, next: `${nextMonthYear}-${nextMonthMonth}`, hasPrevData, hasNextData }); // DEBUG REMOVED
+    if (availableDates.length > 0) {
+        const prevMonthDateObj = new Date(currentYear, currentMonth - 1, 1);
+        const nextMonthDateObj = new Date(currentYear, currentMonth + 1, 1);
+        const prevMonthYear = prevMonthDateObj.getFullYear();
+        const prevMonthMonth = prevMonthDateObj.getMonth();
+        const nextMonthYear = nextMonthDateObj.getFullYear();
+        const nextMonthMonth = nextMonthDateObj.getMonth();
 
-    // console.log(`Marees Card Dialog: Rendering final template. monthData length: ${monthData.length}`); // DEBUG - REMOVING
+        try {
+            hasPrevData = availableDates.some(dateStr => {
+                const d = new Date(dateStr);
+                return d.getFullYear() === prevMonthYear && d.getMonth() === prevMonthMonth;
+            });
+            hasNextData = availableDates.some(dateStr => {
+                const d = new Date(dateStr);
+                return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonthMonth;
+            });
+        } catch (error) {
+            console.error("Marees Card Dialog: Error checking prev/next month data:", error);
+        }
+    }
 
     return html`
       <div class="calendar-dialog-content">
@@ -769,10 +781,10 @@ class MareesFranceCard extends LitElement {
             .disabled=${!hasPrevData}
             title="${localizeCard('ui.card.marees_france.previous_month', this.hass)}"
           >
-          <ha-icon icon="mdi:chevron-left"></ha-icon>
-        </ha-icon-button>
+            <ha-icon icon="mdi:chevron-left"></ha-icon>
+          </ha-icon-button>
           <span class="calendar-month-year">
-            ${this._calendarSelectedMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
+            ${currentMonthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
           </span>
           <ha-icon-button
             icon="mdi:chevron-right"
@@ -780,36 +792,33 @@ class MareesFranceCard extends LitElement {
             .disabled=${!hasNextData}
             title="${localizeCard('ui.card.marees_france.next_month', this.hass)}"
           >
-          <ha-icon icon="mdi:chevron-right"></ha-icon>
-        </ha-icon-button>
+            <ha-icon icon="mdi:chevron-right"></ha-icon>
+          </ha-icon-button>
         </div>
-        ${monthData.length > 0 ? html`
-          <table class="calendar-table">
-            <thead>
-              <tr>
-                <th>${localizeCard('ui.card.marees_france.calendar_date', this.hass)}</th>
-                <th>${localizeCard('ui.card.marees_france.calendar_coeffs', this.hass)}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${monthData.map(day => html`
-                <tr>
-                  <td>${day.dateLabel}</td>
-                  <td>
-                    ${day.coeffs.map((coeff, index) => { // Inner map for coefficients, add index
-                      const coefNum = parseInt(coeff, 10);
-                      const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 50 ? 'low-coef' : ''); // Add class for low coefs too
-                      // Conditionally add separator before the span (except for the first one)
-                      return html`${index > 0 ? ' / ' : ''}<span class="coeff-value ${coefClass}">${coeff}</span>`;
-                    })}
-                  </td>
-                </tr>
-              `)}
-            </tbody>
-          </table>
-        ` : html`
-          <div class="no-data-month">${localizeCard('ui.card.marees_france.no_data_for_month', this.hass)}</div>
-        `}
+
+        <div class="calendar-grid">
+          <!-- Weekday Headers -->
+          ${weekdays.map(day => html`<div class="calendar-weekday">${day}</div>`)}
+
+          <!-- Calendar Day Cells -->
+          ${calendarDays.map(dayInfo => html`
+            <div class="calendar-day ${dayInfo.isPadding ? 'padding' : ''} ${dayInfo.isCurrentMonth ? 'current-month' : ''}">
+              <div class="day-number">${dayInfo.day}</div>
+              ${dayInfo.isCurrentMonth && dayInfo.coeffs && dayInfo.coeffs.length > 0 ? html`
+                <div class="day-coeffs">
+                  ${dayInfo.coeffs.map(coeff => {
+                    const coefNum = parseInt(coeff, 10);
+                    const coefClass = coefNum >= 100 ? 'warning-coef' : (coefNum < 50 ? 'low-coef' : '');
+                    return html`<span class="coeff-value ${coefClass}">${coeff}</span>`;
+                  })}
+                </div>
+              ` : ''}
+            </div>
+          `)}
+        </div>
+        ${calendarDays.filter(d => d.isCurrentMonth && d.coeffs?.length > 0).length === 0 && !this._isLoadingCoefficients ? html`
+            <div class="no-data-month">${localizeCard('ui.card.marees_france.no_data_for_month', this.hass)}</div>
+            ` : ''}
       </div>
     `;
   }
@@ -1900,15 +1909,15 @@ class MareesFranceCard extends LitElement {
         font-weight: bold;
       }
 
-      /* Dialog Styles [NEW] */
+      /* Dialog Styles [MODIFIED FOR GRID] */
       ha-dialog {
         /* Allow content to scroll */
         --dialog-content-padding: 0;
         --dialog-z-index: 5; /* Ensure dialog is above other elements */
       }
       .calendar-dialog-content {
-         padding: 20px 24px; /* Standard dialog padding */
-         max-height: 60vh; /* Limit height and allow scrolling */
+         padding: 10px 12px 20px 12px; /* Adjusted padding */
+         max-height: 70vh; /* Limit height and allow scrolling */
          overflow-y: auto;
       }
       .dialog-loader, .dialog-warning, .no-data-month {
@@ -1923,14 +1932,15 @@ class MareesFranceCard extends LitElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
-        padding: 0 8px; /* Padding around header */
+        margin-bottom: 10px; /* Reduced margin */
+        padding: 0 4px; /* Reduced padding */
       }
       .calendar-month-year {
-        font-size: 1.2em;
+        font-size: 1.1em; /* Slightly smaller */
         font-weight: 500;
         text-align: center;
         flex-grow: 1;
+        color: var(--primary-text-color);
       }
       .calendar-header ha-icon-button {
         color: var(--primary-text-color);
@@ -1938,44 +1948,91 @@ class MareesFranceCard extends LitElement {
       .calendar-header ha-icon-button[disabled] {
         color: var(--disabled-text-color);
       }
-      .calendar-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 8px;
+
+      /* NEW Calendar Grid Styles */
+      .calendar-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 2px; /* Small gap between cells */
+          margin-top: 8px;
+          border: 1px solid var(--divider-color, #e0e0e0); /* Optional border around grid */
+          border-radius: 4px;
+          overflow: hidden; /* Clip corners */
+          background-color: var(--divider-color, #e0e0e0); /* Background for gaps */
       }
-      .calendar-table th, .calendar-table td {
-        padding: 8px 12px;
-        text-align: left;
-        border-bottom: 1px solid var(--divider-color);
+
+      .calendar-weekday {
+          text-align: center;
+          padding: 6px 2px; /* Adjust padding */
+          font-weight: bold;
+          font-size: 0.8em; /* Smaller weekday font */
+          color: var(--secondary-text-color);
+          background-color: var(--secondary-background-color, #f5f5f5); /* Header background */
+          text-transform: uppercase; /* Match screenshot */
       }
-      .calendar-table th {
-        font-weight: bold;
-        color: var(--primary-text-color);
-        background-color: var(--secondary-background-color);
+
+      .calendar-day {
+          background-color: var(--card-background-color, white); /* Cell background */
+          padding: 4px;
+          min-height: 60px; /* Minimum height for cells */
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start; /* Align content to top */
+          align-items: center; /* Center horizontally */
+          position: relative; /* For positioning day number */
+          border: none; /* Remove individual borders if grid gap is used */
       }
-      .calendar-table td:first-child { /* Date column */
-        white-space: nowrap;
-        color: var(--secondary-text-color);
-        width: 40%; /* Give date more space */
+
+      .calendar-day.padding {
+          background-color: var(--secondary-background-color, #f9f9f9); /* Different background for padding days */
+          opacity: 0.6;
       }
-       .calendar-table td:last-child { /* Coeff column */
-        text-align: right;
-        width: 60%;
+      .calendar-day.padding .day-number {
+          color: var(--disabled-text-color, #bdbdbd); /* Dimmer number for padding days */
       }
+
+      .day-number {
+          font-size: 0.9em;
+          font-weight: 500;
+          color: var(--primary-text-color);
+          margin-bottom: 4px; /* Space between number and coeffs */
+          text-align: center;
+          width: 100%; /* Take full width for centering */
+      }
+
+      .day-coeffs {
+          display: flex;
+          flex-wrap: wrap; /* Allow coeffs to wrap */
+          justify-content: center; /* Center coeffs horizontally */
+          align-items: center; /* Center coeffs vertically */
+          gap: 3px; /* Gap between coeffs */
+          width: 100%;
+      }
+
       .coeff-value {
-        display: inline-block;
-        margin: 0 2px;
-        font-weight: 500;
-        color: var(--primary-text-color);
+          display: inline-block;
+          font-size: 0.85em; /* Smaller coefficient font */
+          font-weight: 500;
+          padding: 1px 4px; /* Small padding */
+          border-radius: 3px;
+          line-height: 1.2;
+          background-color: var(--divider-color); /* Default background */
+          color: var(--secondary-text-color); /* Default text color */
       }
+
       .coeff-value.warning-coef {
-        color: var(--warning-color);
-        font-weight: bold;
+          background-color: var(--warning-color);
+          color: var(--text-primary-color); /* Text color on warning background */
+          font-weight: bold;
       }
       .coeff-value.low-coef {
-        color: var(--info-color); /* Or another color for low coefficients */
-        opacity: 0.8;
+          background-color: var(--info-color); /* Use info color for low */
+          color: var(--text-primary-color); /* Text color on info background */
+          opacity: 0.9;
       }
+
+      /* Remove old table styles if they exist */
+      .calendar-table { display: none; }
     `;
   }
 } // End of class
