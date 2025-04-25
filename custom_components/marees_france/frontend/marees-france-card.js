@@ -185,12 +185,31 @@ function getNextTideStatus(tideServiceData, hass) {
   // If next is low, we must be falling towards it. If next is high, we must be rising towards it.
   const isRising = previousTide ? previousTide.type === 'low' : nextTide.type === 'high';
 
+  // Determine the coefficient to display
+  let displayCoefficient = null;
+  if (isRising) {
+    // Find the next high tide after now
+    const nextHighTide = allRelevantTides.find(tide => tide.dateTime > now && tide.type === 'high');
+    if (nextHighTide) {
+      displayCoefficient = nextHighTide.coefficient;
+    }
+  } else {
+    // Find the last high tide at or before now (should be previousTide if it was high)
+    const previousHighTide = allRelevantTides.slice().reverse().find(tide => tide.dateTime <= now && tide.type === 'high');
+     if (previousHighTide) {
+        displayCoefficient = previousHighTide.coefficient;
+     } else if (previousTide && previousTide.type === 'high') {
+        // Fallback just in case the reverse find fails but previousTide was high
+        displayCoefficient = previousTide.coefficient;
+     }
+  }
+
   // Return data matching the plan's requirements
   return {
       currentTrendIcon: isRising ? 'mdi:wave-arrow-up' : 'mdi:wave-arrow-down',
       nextPeakTime: nextTide.time,
       nextPeakHeight: nextTide.height, // Keep as number for potential calculations
-      nextPeakCoefficient: nextTide.type === 'high' ? nextTide.coefficient : null, // Only show coeff if next tide is high
+      displayCoefficient: displayCoefficient, // Use the determined coefficient
       nextPeakType: nextTide.type // 'high' or 'low'
   };
 }
@@ -470,9 +489,9 @@ class MareesFranceCard extends LitElement {
                   if (nextTideInfo.nextPeakHeight !== null && !isNaN(parseFloat(nextTideInfo.nextPeakHeight))) {
                     parts.push(`${parseFloat(nextTideInfo.nextPeakHeight).toFixed(1)} m`);
                   }
-                  // Coefficient is only shown for high tides (as per getNextTideStatus logic)
-                  if (nextTideInfo.nextPeakCoefficient !== null) {
-                    const coef = nextTideInfo.nextPeakCoefficient;
+                  // Always show coefficient if available (determined in getNextTideStatus)
+                  if (nextTideInfo.displayCoefficient !== null) {
+                    const coef = nextTideInfo.displayCoefficient;
                     const coefClass = coef >= 100 ? 'warning-coef' : '';
                     // Use secondary text color for coefficient like height, apply warning class if needed
                     parts.push(html`<span class="${coefClass}">Coef. ${coef}</span>`);
