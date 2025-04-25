@@ -271,7 +271,7 @@ class MareesFranceCard extends LitElement {
     // Fetch will be triggered by `updated` or explicitly call here if preferred
     // this._fetchData(); // Example: Call a combined fetch function
   }
- 
+
   // [NEW] Cleanup observer and references when element is disconnected
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -286,7 +286,7 @@ class MareesFranceCard extends LitElement {
     // this._svgContainer = null;
     console.log("Marees Card: Disconnected and cleaned up observer.");
   }
- 
+
   // --- Combined Fetch Function (Optional but cleaner) ---
   async _fetchData() {
       if (!this.hass || !this.config || !this.config.device_id) {
@@ -602,7 +602,7 @@ class MareesFranceCard extends LitElement {
         });                                 // [NEW]
     }
   }
- 
+
   // [NEW] Method to setup the ResizeObserver
   _setupResizeObserver() {
     if (this._resizeObserver) {
@@ -613,7 +613,7 @@ class MareesFranceCard extends LitElement {
         console.warn("Marees Card: Cannot setup ResizeObserver, SVG container not found.");
         return;
     }
- 
+
     this._resizeObserver = new ResizeObserver(entries => {
       // Use rAF to batch updates, improve performance, and avoid layout thrashing
       window.requestAnimationFrame(() => {
@@ -623,59 +623,59 @@ class MareesFranceCard extends LitElement {
     this._resizeObserver.observe(this._svgContainer);
     console.log("Marees Card: ResizeObserver setup.");
   }
- 
+
   // [NEW] Method to apply the inverse scaling to designated elements
   _updateElementScale() {
     // Ensure container, SVG instance, and elements array are ready
     if (!this._svgContainer || !this._svgDraw || this._elementsToKeepSize.length === 0) {
       return;
     }
- 
+
     const svgRect = this._svgContainer.getBoundingClientRect();
     // Ensure viewBox exists and has width before accessing
     const viewBox = this._svgDraw.viewbox(); // Use svg.js method to get viewBox
     const viewBoxWidth = viewBox ? viewBox.width : 500; // Default to 500 if somehow missing
- 
+
     // Check for invalid dimensions
     if (svgRect.width <= 0 || viewBoxWidth <= 0) {
         // console.warn("Marees Card: Invalid dimensions for scaling.", svgRect.width, viewBoxWidth);
         return; // Avoid division by zero or invalid scaling
     }
- 
+
     const scaleFactor = svgRect.width / viewBoxWidth;
- 
+
     // Check for invalid scale factor
     if (scaleFactor <= 0 || !isFinite(scaleFactor)) {
         // console.warn("Marees Card: Invalid scale factor for scaling.", scaleFactor);
         return; // Avoid division by zero or NaN/Infinity
     }
- 
+
     const inverseScale = 1 / scaleFactor;
- 
+
     // Filter out potentially invalid elements before iterating
     this._elementsToKeepSize = this._elementsToKeepSize.filter(element =>
         element && element.node?.isConnected && typeof element.bbox === 'function'
     );
- 
+
     this._elementsToKeepSize.forEach(element => {
       try {
         const bbox = element.bbox();
         // Use cx/cy provided by svg.js bbox for center
         const cx = bbox.cx;
         const cy = bbox.cy;
- 
+
         // Check if center coordinates are valid numbers
         if (isNaN(cx) || isNaN(cy)) {
             console.warn("Marees Card: Invalid bbox center for scaling element:", element, bbox);
             return; // Skip this element if center is invalid
         }
- 
+
         // Apply transform using translate/scale/translate for robust centering
         element.transform({}) // Reset existing transforms first
                .translate(cx, cy)
                .scale(inverseScale)
                .translate(-cx, -cy);
- 
+
       } catch (e) {
         console.error("Marees Card: Error scaling element:", e, element);
         // Consider removing the element from _elementsToKeepSize if errors persist
@@ -683,7 +683,7 @@ class MareesFranceCard extends LitElement {
       }
     });
   }
- 
+
   // --- New method to draw graph using svg.js ---
   _drawGraphWithSvgJs() {
     // Ensure SVG instance and container are ready
@@ -1020,17 +1020,25 @@ class MareesFranceCard extends LitElement {
 
     // --- Draw Current Time Marker (Yellow Dot - Should NOT scale) ---
     if (currentTimeMarker) {
-        const dotRadius = 5; 
+        const dotRadius = 5;
         const dotGroup = draw.group(); // [NEW] Group the dot and its stroke
         dotGroup.attr('id', 'current-time-marker');
         dotGroup.addClass('has-tooltip');
         dotGroup.addClass('draggable-dot'); // NEW: Add class for potential styling/selection
 
-        // Draw the fill
+        // Draw an invisible larger circle for easier grabbing (sticky effect)
+        const hitAreaRadius = dotRadius * 2.5; // Make hit area larger
+        const hitAreaCircle = dotGroup.circle(hitAreaRadius * 2)
+            .center(currentTimeMarker.x, currentTimeMarker.y)
+            .fill('transparent') // Make it invisible
+            // .fill({ color: 'blue', opacity: 0.2 }) // Optional: Semi-transparent for debugging
+            .attr('cursor', 'grab');
+
+        // Draw the visible fill circle on top
         const dotCircle = dotGroup.circle(dotRadius * 2) // Store reference to circle
             .center(currentTimeMarker.x, currentTimeMarker.y)
             .fill('var(--current_tide_color)') // Use CSS variable directly
-            .attr('cursor', 'grab'); // Add grab cursor
+            .attr('pointer-events', 'none'); // Visible dot shouldn't capture events
 
         // this._elementsToKeepSize.push(dotGroup); // REMOVED: Let the dot scale with the SVG to maintain relative position to the curve
 
@@ -1048,22 +1056,23 @@ class MareesFranceCard extends LitElement {
         };
 
         // --- Add Event Listeners for HTML Tooltip & Dragging ---
-        dotGroup.node.addEventListener('mouseover', (e) => {
+        // Attach listeners to the larger invisible hit area circle
+        hitAreaCircle.node.addEventListener('mouseover', (e) => {
             // Only show hover tooltip if NOT dragging
             if (!this._isDraggingDot) {
                 this._showHtmlTooltip(e, this._originalDotPosition.timeStr, this._originalDotPosition.heightStr);
             }
         });
-        dotGroup.node.addEventListener('mouseout', () => {
+        hitAreaCircle.node.addEventListener('mouseout', () => {
             // Hide tooltip if NOT dragging (drag move will handle tooltip otherwise)
              if (!this._isDraggingDot) {
                 this._hideHtmlTooltip();
              }
         });
 
-        // NEW: Add Drag Listeners (Remove helper function args)
-        dotGroup.node.addEventListener('mousedown', (e) => this._handleDragStart(e, dotGroup, dotCircle));
-        dotGroup.node.addEventListener('touchstart', (e) => this._handleDragStart(e, dotGroup, dotCircle), { passive: false }); // Need passive false to prevent scroll
+        // NEW: Add Drag Listeners (Remove helper function args) - Attach to hit area
+        hitAreaCircle.node.addEventListener('mousedown', (e) => this._handleDragStart(e, dotGroup, dotCircle, hitAreaCircle)); // Pass hitAreaCircle too
+        hitAreaCircle.node.addEventListener('touchstart', (e) => this._handleDragStart(e, dotGroup, dotCircle, hitAreaCircle), { passive: false }); // Need passive false to prevent scroll
 
     }
   } // End of _drawGraphWithSvgJs
@@ -1131,7 +1140,7 @@ class MareesFranceCard extends LitElement {
       tooltip.style.display = 'none'; // Hide again before final positioning
       tooltip.style.visibility = 'visible';
 
-      const offsetAbove = 10; // Increased offset
+      const offsetAbove = 25; // Increased offset significantly
 
       // Calculate desired position
       let left = targetCenterX - tooltipWidth / 2;
@@ -1181,7 +1190,7 @@ class MareesFranceCard extends LitElement {
 
  // --- NEW: Drag Handlers (Remove helper function args) ---
 
- _handleDragStart(e, dotGroup, dotCircle) {
+ _handleDragStart(e, dotGroup, dotCircle, hitAreaCircle) { // Added hitAreaCircle
      if (e.button === 2) return; // Ignore right-clicks
      e.preventDefault(); // Prevent text selection/default drag
 
@@ -1190,15 +1199,15 @@ class MareesFranceCard extends LitElement {
 
      // Change color and cursor
      dotCircle.fill('var(--info-color, var(--primary-color))'); // Use info-color with fallback
-     dotCircle.attr('cursor', 'grabbing');
+     hitAreaCircle.attr('cursor', 'grabbing'); // Change cursor on the hit area
 
      // Hide hover tooltip immediately if it was shown
      this._hideHtmlTooltip();
 
      // Bind move/end listeners to window to capture events outside the element
      // Pass only necessary elements, helpers are now class methods
-     this._boundHandleDragMove = (ev) => this._handleDragMove(ev, dotGroup, dotCircle);
-     this._boundHandleDragEnd = (ev) => this._handleDragEnd(ev, dotGroup, dotCircle);
+     this._boundHandleDragMove = (ev) => this._handleDragMove(ev, dotGroup, dotCircle, hitAreaCircle); // Pass hitAreaCircle
+     this._boundHandleDragEnd = (ev) => this._handleDragEnd(ev, dotGroup, dotCircle, hitAreaCircle); // Pass hitAreaCircle
 
      if (e.type === 'touchstart') {
          window.addEventListener('touchmove', this._boundHandleDragMove, { passive: false });
@@ -1210,7 +1219,7 @@ class MareesFranceCard extends LitElement {
      }
  }
 
-  _handleDragMove(e, dotGroup, dotCircle) { // Remove helper function args
+  _handleDragMove(e, dotGroup, dotCircle, hitAreaCircle) { // Added hitAreaCircle
      if (!this._isDraggingDot) return;
      e.preventDefault(); // Prevent scrolling on touch devices
 
@@ -1236,6 +1245,8 @@ class MareesFranceCard extends LitElement {
 
          // Move the dot visually using the clamped X and calculated Y
          dotCircle.center(clampedX, draggedY);
+         // Also move the invisible hit area to keep it centered on the visible dot
+         hitAreaCircle.center(clampedX, draggedY);
 
          // Format time and height for tooltip using the clamped time
          const hours = Math.floor(draggedTotalMinutes / 60);
@@ -1253,7 +1264,7 @@ class MareesFranceCard extends LitElement {
      }
   }
 
- _handleDragEnd(e, dotGroup, dotCircle) {
+ _handleDragEnd(e, dotGroup, dotCircle, hitAreaCircle) { // Added hitAreaCircle
      if (!this._isDraggingDot) return;
 
      this._isDraggingDot = false;
@@ -1261,11 +1272,13 @@ class MareesFranceCard extends LitElement {
 
      // Revert color and cursor
      dotCircle.fill('var(--current_tide_color)');
-     dotCircle.attr('cursor', 'grab');
+     hitAreaCircle.attr('cursor', 'grab'); // Revert cursor on hit area
 
      // Move dot back to original position
      if (this._originalDotPosition) {
          dotCircle.center(this._originalDotPosition.x, this._originalDotPosition.y);
+         // Also move the hit area back
+         hitAreaCircle.center(this._originalDotPosition.x, this._originalDotPosition.y);
      }
 
      // Hide tooltip
@@ -1346,7 +1359,7 @@ class MareesFranceCard extends LitElement {
   }
 
   _interpolateHeight(targetTotalMinutes) {
-      if (this._pointsData.length < 2) return null; // Guard
+      if (!this._pointsData || this._pointsData.length < 2) return null; // Guard, check _pointsData exists
       let prevPoint = null;
       let nextPoint = null;
       // Find the two points surrounding the target time
@@ -1365,52 +1378,8 @@ class MareesFranceCard extends LitElement {
 
       const timeProgress = (targetTotalMinutes - prevPoint.totalMinutes) / timeDiff;
       return prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
-  }
- 
-   // --- NEW: Coordinate/Interpolation Helper Methods ---
- 
-   _timeToX(totalMinutes) {
-       if (!this._graphMargin || this._graphWidth === null) return 0; // Guard
-       // Clamp totalMinutes to the allowed range (0 to 24*60) if needed, though clamping X is preferred
-       // const clampedMinutes = Math.max(0, Math.min(1440, totalMinutes));
-       return this._graphMargin.left + (totalMinutes / (24 * 60)) * this._graphWidth;
    }
- 
-   _heightToY(h) {
-       if (!this._graphMargin || this._graphHeight === null || this._yDomainMin === null || !this._yRange) return 0; // Guard
-       // Ensure height is within domain if necessary, though clamping X handles this indirectly
-       // const clampedH = Math.max(this._yDomainMin, Math.min(this._yDomainMin + this._yRange, h));
-       return this._graphMargin.top + this._graphHeight - ((h - this._yDomainMin) / this._yRange) * this._graphHeight;
-   }
- 
-   _xToTotalMinutes(x) {
-       if (!this._graphMargin || this._graphWidth === null || this._graphWidth <= 0) return 0; // Guard
-       const clampedX = Math.max(this._graphMargin.left, Math.min(this._graphMargin.left + this._graphWidth, x));
-       return ((clampedX - this._graphMargin.left) / this._graphWidth) * (24 * 60);
-   }
- 
-   _interpolateHeight(targetTotalMinutes) {
-       if (!this._pointsData || this._pointsData.length < 2) return null; // Guard, check _pointsData exists
-       let prevPoint = null;
-       let nextPoint = null;
-       // Find the two points surrounding the target time
-       for (let i = 0; i < this._pointsData.length; i++) {
-           if (this._pointsData[i].totalMinutes <= targetTotalMinutes) prevPoint = this._pointsData[i];
-           if (this._pointsData[i].totalMinutes > targetTotalMinutes) { nextPoint = this._pointsData[i]; break; }
-       }
-       // Handle edge cases (before first point or after last point)
-       if (!prevPoint && nextPoint) return nextPoint.heightNum;
-       if (prevPoint && !nextPoint) return prevPoint.heightNum;
-       if (!prevPoint && !nextPoint) return null;
- 
-       // Interpolate
-       const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
-       if (timeDiff <= 0) return prevPoint.heightNum;
- 
-       const timeProgress = (targetTotalMinutes - prevPoint.totalMinutes) / timeDiff;
-       return prevPoint.heightNum + (nextPoint.heightNum - prevPoint.heightNum) * timeProgress;
-   }
- 
+
    getCardSize() {
      // Base size: header(1) + next_tide_status(1) + tabs(1) + graph(~4) = 7
      let size = 7; // Keep size, graph height increase is internal to SVG
@@ -1575,8 +1544,8 @@ class MareesFranceCard extends LitElement {
         height: auto; /* Let aspect-ratio control height */
         max-height: 220px; /* Optional max height increased */
         margin-top: 10px; /* Space above graph */
-        padding-left: 16px; /* Add left padding */
-        padding-right: 16px; /* Add right padding */
+        /* padding-left: 16px; */ /* REMOVED - Let card content padding handle alignment */
+        /* padding-right: 16px; */ /* REMOVED - Let card content padding handle alignment */
       }
       .svg-graph-container .loading-icon {
         position: absolute; /* Position over the graph area */
