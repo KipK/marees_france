@@ -55,10 +55,23 @@ ATTR_DATE: Final = "date"
 
 # Other constants
 ATTRIBUTION: Final = "Data provided by SHOM"
+ATTR_COEFFICIENT: Final = "coefficient"
+ATTR_TIDE_TREND: Final = "tide_trend" # e.g., rising, falling
+ATTR_STARTING_HEIGHT: Final = "starting_height"
+ATTR_FINISHED_HEIGHT: Final = "finished_height"
+ATTR_STARTING_TIME: Final = "starting_time"
+ATTR_FINISHED_TIME: Final = "finished_time"
 MANUFACTURER: Final = "SHOM"
 INTEGRATION_NAME: Final = "Marées France"
+# Storage Keys and Versions
+COEFF_STORAGE_KEY: Final = f"{DOMAIN}_coefficients_cache"
+COEFF_STORAGE_VERSION: Final = 1
+# Note: TIDES_STORAGE_KEY/VERSION and WATERLEVELS_STORAGE_KEY/VERSION are defined in __init__.py
 TIDE_HIGH: Final = "tide.high"
 TIDE_LOW: Final = "tide.low"
+# Tide Coefficient Thresholds
+SPRING_TIDE_THRESHOLD: Final = 100
+NEAP_TIDE_THRESHOLD: Final = 40
 
 # Translation Keys for Sensor State
 STATE_HIGH_TIDE: Final = "high_tide"

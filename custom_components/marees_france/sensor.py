@@ -3,28 +3,38 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
-    SensorEntityDescription
+    # SensorEntityDescription, # No longer needed for individual sensors
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ATTRIBUTION # Import standard attribution constant
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util # Import dt_util for timezone handling
 
 from .const import (
-    ATTR_DATA,
-    ATTR_NEXT_TIDE,
-    ATTR_PREVIOUS_TIDE,
-    ATTRIBUTION,
+    # ATTR_DATA, # No longer used directly by sensors
+    # ATTR_NEXT_TIDE, # Replaced by specific sensor data keys
+    # ATTR_PREVIOUS_TIDE, # Replaced by specific sensor data keys
+    ATTR_COEFFICIENT,
+    ATTR_FINISHED_HEIGHT,
+    ATTR_FINISHED_TIME,
+    ATTR_STARTING_HEIGHT,
+    ATTR_STARTING_TIME,
+    ATTR_TIDE_TREND,
+    ATTRIBUTION, # Keep custom attribution if needed, or use HA const
     CONF_HARBOR_ID,
     DOMAIN,
     MANUFACTURER,
-    TIDE_HIGH,
-    TIDE_LOW,
+    # TIDE_HIGH, # Logic moved to coordinator
+    # TIDE_LOW, # Logic moved to coordinator
 )
 from .coordinator import MareesFranceUpdateCoordinator
 
@@ -36,139 +46,249 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Marées France sensor entry."""
+    """Set up the Marées France sensor entries."""
     coordinator: MareesFranceUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     harbor_id = entry.data[CONF_HARBOR_ID]
 
-    # Define the entity description
-    entity_description = SensorEntityDescription(
-        key="tides",  # Simplified key for the sensor type
-        name=None,  # Explicitly set name to None
-        # translation_key="tides", # Removed as state is formatted manually
-    )
+    sensors_to_add = [
+        MareesFranceNowSensor(coordinator, entry),
+        MareesFranceNextSensor(coordinator, entry),
+        MareesFrancePreviousSensor(coordinator, entry),
+        MareesFranceNextSpringTideSensor(coordinator, entry),
+        MareesFranceNextNeapTideSensor(coordinator, entry),
+    ]
 
-    async_add_entities(
-        [MareesFranceSensor(coordinator, entry, entity_description)],
-        update_before_add=True,  # Fetch data before adding entity
-    )
-    _LOGGER.debug("Added Marées France sensor for harbor: %s", harbor_id)
+    async_add_entities(sensors_to_add, update_before_add=True)
+    _LOGGER.debug("Added 5 Marées France sensors for harbor: %s", harbor_id)
 
 
-# Removed _format_tide_state function as state translation is handled by HA core
-# based on native_value returning a state key and translation_key being set.
+class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], SensorEntity):
+    """Base class for Marées France sensors."""
 
-
-class MareesFranceSensor(
-    CoordinatorEntity[MareesFranceUpdateCoordinator], SensorEntity
-):
-    """Representation of a Marées France Sensor."""
-
-    _attr_has_entity_name = False  # Entity name comes from device name
-    _attr_attribution = ATTRIBUTION
+    _attr_attribution = ATTRIBUTION # Or use ATTR_ATTRIBUTION from const
+    _attr_has_entity_name = True # Use the name defined in the entity
 
     def __init__(
         self,
         coordinator: MareesFranceUpdateCoordinator,
         config_entry: ConfigEntry,
-        entity_description: SensorEntityDescription,
+        sensor_key: str, # e.g., "now", "next"
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize the base sensor."""
         super().__init__(coordinator)
-        self.entity_description = entity_description
         self._config_entry = config_entry
         self._harbor_id = config_entry.data[CONF_HARBOR_ID]
+        self._sensor_key = sensor_key # e.g., "now_data", "next_data"
 
-        # Set unique ID based only on the harbor_id for simplicity
-        self._attr_unique_id = self._harbor_id.lower()
+        # Unique ID: harbor_id_sensorkey (e.g., pornichet_next_tide)
+        self._attr_unique_id = f"{DOMAIN}_{self._harbor_id.lower()}_{self._sensor_key}"
 
-        # Set device info
+        # Device Info linking all sensors to the same device
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
-            # Set device name to just the harbor, as domain is implied
-            name=self._harbor_id.capitalize(),
+            name=self._harbor_id.capitalize(), # Device name is the harbor
             manufacturer=MANUFACTURER,
-            entry_type="service",  # Link to config entry
-            configuration_url=None,  # No specific device config URL
+            entry_type="service",
+            configuration_url=None,
         )
-        _LOGGER.debug("Initialized sensor with unique_id: %s", self._attr_unique_id)
+        _LOGGER.debug("Initialized base sensor with unique_id: %s", self.unique_id)
 
     @property
-    def native_value(self) -> str | None:
-        """Return the state of the sensor (formatted string)."""
-        # We need both current status and next tide info for the new state format
-        tide_status = self.coordinator.data.get("tide_status") # Assumed key from coordinator
-        next_tide = self.coordinator.data.get("next_tide")
-
-        if not tide_status or not next_tide:
-            _LOGGER.debug("Missing tide_status or next_tide data for state")
-            return None # Cannot determine state without status and next tide
-
-        next_tide_time = next_tide.get("time")
-        next_tide_coeff = next_tide.get("coefficient") # Coeff always from next tide
-
-        if not next_tide_time:
-            _LOGGER.debug("Missing next_tide time for state")
-            return None # Cannot determine state without next tide time
-
-        coeff_str = f"Coeff {next_tide_coeff}" if next_tide_coeff else ""
-
-        if tide_status == "rising": # Assumed value
-            state_str = f"Monte jusqu'à {next_tide_time}"
-        elif tide_status == "falling": # Assumed value
-            state_str = f"Descend jusqu'à {next_tide_time}"
-        else:
-            _LOGGER.warning("Unknown tide_status: %s", tide_status)
-            return None # Or return a default state?
-
-        # Combine state string and coefficient string, handling empty coeff
-        return f"{state_str} - {coeff_str}".strip().rstrip('-').strip()
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Return the state attributes."""
-        if not self.coordinator.data:
-            return None
-
-        # Format next/previous tide info using translated_type from coordinator
-        next_tide_data = self.coordinator.data.get("next_tide")
-        prev_tide_data = self.coordinator.data.get("previous_tide")
-
-        def format_attribute_tide(tide_data):
-            if not tide_data or not tide_data.get("time"):
-                return None
-            # Use translated_type provided by coordinator
-            type_label = tide_data.get("translated_type", "Unknown")
-            time_str = tide_data.get("time")
-            parts = [type_label, time_str]
-            return " ".join(parts)
-
-        attrs = {
-            ATTR_DATA: self.coordinator.data.get("data"),
-            ATTR_NEXT_TIDE: format_attribute_tide(next_tide_data),
-            ATTR_PREVIOUS_TIDE: format_attribute_tide(prev_tide_data),
-            "last_update": self.coordinator.data.get("last_update"),
-            "harbor_id": self._harbor_id,
-        }
-        # Filter out None values for next/previous if they don't exist
-        return {k: v for k, v in attrs.items() if v is not None}
-
-    @property
-    def icon(self) -> str:
-        """Return the icon to use in the frontend."""
-        # Dynamically change icon based on tide status (rising/falling)
-        tide_status = self.coordinator.data.get("tide_status")
-
-        if tide_status == "rising":
-            return "mdi:wave-arrow-up" # Reverted to MDI icon
-        if tide_status == "falling":
-            return "mdi:wave-arrow-down" # Reverted to MDI icon
-
-        # Fallback if status is unknown or data is missing
-        _LOGGER.debug("Tide status not available or unknown (%s), using default mdi:waves icon", tide_status)
-        return "mdi:waves"
+    def available(self) -> bool:
+        """Return True if coordinator has data and the specific sensor data exists."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and f"{self._sensor_key}_data" in self.coordinator.data
+            and self.coordinator.data[f"{self._sensor_key}_data"] is not None
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.debug("Updating sensor state for %s", self.unique_id)
+        if self.available:
+             _LOGGER.debug("Updating sensor state for %s", self.unique_id)
+        else:
+             _LOGGER.debug("Sensor %s is unavailable, coordinator data: %s", self.unique_id, self.coordinator.data)
         super()._handle_coordinator_update()
+
+
+class MareesFranceNowSensor(MareesFranceBaseSensor):
+    """Representation of the current tide status sensor."""
+
+    _attr_translation_key = "now_tide" # Used for entity name translation
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the 'now' sensor."""
+        super().__init__(coordinator, config_entry, "now")
+
+    @property
+    def _sensor_data(self) -> dict[str, Any] | None:
+        """Helper to get the specific data block for this sensor."""
+        return self.coordinator.data.get("now_data") if self.coordinator.data else None
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the state of the sensor (raw trend)."""
+        if not self.available or not self._sensor_data:
+            return None
+
+        trend = self._sensor_data.get(ATTR_TIDE_TREND)
+        # Return the raw trend ('rising' or 'falling')
+        # Home Assistant will use the translations defined in en.json/fr.json
+        return trend
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the state attributes."""
+        if not self.available or not self._sensor_data:
+            return None
+        # Return the whole data block as attributes
+        return self._sensor_data
+
+    @property
+    def icon(self) -> str:
+        """Return the icon based on the tide trend."""
+        if self.available and self._sensor_data:
+            trend = self._sensor_data.get(ATTR_TIDE_TREND)
+            if trend == "rising":
+                return "mdi:transfer-up" # Or mdi:arrow-up-bold-outline
+            if trend == "falling":
+                return "mdi:transfer-down" # Or mdi:arrow-down-bold-outline
+        return "mdi:waves" # Default icon
+
+
+class MareesFranceTimestampSensor(MareesFranceBaseSensor):
+    """Base class for sensors representing a specific tide event time."""
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+        sensor_key: str, # e.g., "next", "previous"
+        translation_key: str,
+    ) -> None:
+        """Initialize the timestamp sensor."""
+        super().__init__(coordinator, config_entry, sensor_key)
+        self._attr_translation_key = translation_key
+
+    @property
+    def _sensor_data(self) -> dict[str, Any] | None:
+        """Helper to get the specific data block for this sensor."""
+        return self.coordinator.data.get(f"{self._sensor_key}_data") if self.coordinator.data else None
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return the timestamp of the tide event."""
+        if not self.available or not self._sensor_data:
+            return None
+
+        # For these sensors, the state is the time of the event itself
+        event_time_str = self._sensor_data.get(ATTR_FINISHED_TIME)
+        if not event_time_str:
+            return None
+
+        try:
+            # Return datetime object as required by TIMESTAMP device class
+            return dt_util.parse_datetime(event_time_str)
+        except ValueError:
+            _LOGGER.warning("Could not parse event time for '%s' sensor: %s", self._sensor_key, event_time_str)
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the state attributes."""
+        if not self.available or not self._sensor_data:
+            return None
+        # Return the whole data block as attributes
+        return self._sensor_data
+
+
+class MareesFranceNextSensor(MareesFranceTimestampSensor):
+    """Representation of the next tide sensor."""
+    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+        super().__init__(coordinator, config_entry, "next", "next_tide")
+
+class MareesFrancePreviousSensor(MareesFranceTimestampSensor):
+    """Representation of the previous tide sensor."""
+    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+        super().__init__(coordinator, config_entry, "previous", "previous_tide")
+
+class MareesFranceNextSpringTideSensor(MareesFranceBaseSensor):
+    """Representation of the next spring tide sensor (date and coefficient)."""
+    _attr_translation_key = "next_spring_tide"
+    _attr_icon = "mdi:calendar-arrow-right" # Or mdi:waves-arrow-up
+
+    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+        """Initialize the next spring tide sensor."""
+        # Use "next_spring" as the base key for unique_id
+        super().__init__(coordinator, config_entry, "next_spring")
+
+    @property
+    def available(self) -> bool:
+        """Return True if coordinator has data and the specific sensor data exists."""
+        return (
+            super(CoordinatorEntity, self).available # Use CoordinatorEntity's available check
+            and self.coordinator.data is not None
+            and self.coordinator.data.get("next_spring_date") is not None
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the date string of the next spring tide."""
+        if not self.available:
+            return None
+        return self.coordinator.data.get("next_spring_date")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the coefficient as the only attribute."""
+        if not self.available:
+            return None
+        coeff = self.coordinator.data.get("next_spring_coeff")
+        if coeff is not None:
+            return {ATTR_COEFFICIENT: coeff}
+        return None
+
+
+class MareesFranceNextNeapTideSensor(MareesFranceBaseSensor):
+    """Representation of the next neap tide sensor (date and coefficient)."""
+    _attr_translation_key = "next_neap_tide"
+    _attr_icon = "mdi:calendar-arrow-right" # Or mdi:waves-arrow-down
+
+    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+        """Initialize the next neap tide sensor."""
+        # Use "next_neap" as the base key for unique_id
+        super().__init__(coordinator, config_entry, "next_neap")
+
+    @property
+    def available(self) -> bool:
+        """Return True if coordinator has data and the specific sensor data exists."""
+        return (
+            super(CoordinatorEntity, self).available # Use CoordinatorEntity's available check
+            and self.coordinator.data is not None
+            and self.coordinator.data.get("next_neap_date") is not None
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the date string of the next neap tide."""
+        if not self.available:
+            return None
+        return self.coordinator.data.get("next_neap_date")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the coefficient as the only attribute."""
+        if not self.available:
+            return None
+        coeff = self.coordinator.data.get("next_neap_coeff")
+        if coeff is not None:
+            return {ATTR_COEFFICIENT: coeff}
+        return None

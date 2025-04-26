@@ -36,6 +36,71 @@ Une fois le port sélectionné, l'entité apparaitra dans sensor.marees_france_[
 Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard.
 Ajouter sur le dashboard la carte marees_france.
 
+### Entités
+
+Friendly_name: "[PORT] Marée Actuelle"
+Etat: "Montante/Descendante jusqu'à [HEURE]"
+Attributs:
+. coefficient: 96              - Coéfficient de marée
+. tide_trend:  raising|falling - Tendance
+. starting_height: 1.27        - Hauteur de début de cycle
+. current_height: 2.30         - Hauteur courante
+. finished_height: 4.73        - Hauteur de fin de cycle
+. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
+. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+
+
+nom: [PORT] Prochaine Marée
+Etat: Date/Heure de la prochaine marée
+Attributs:
+. coefficient: 96              - Coéfficient de marée
+. tide_trend:  Low|High tide   - Tendance
+. starting_height: 1.27        - Hauteur de début de cycle
+. finished_height: 4.73        - Hauteur de fin de cycle
+. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
+. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+
+nom: [PORT] Marée Précédente
+Etat: Date/Heure de la précédente marée
+Attributs:
+. coefficient: 96              - Coéfficient de marée
+. tide_trend:  Low|High tide   - Tendance
+. starting_height: 1.27        - Hauteur de début de cycle
+. finished_height: 4.73        - Hauteur de fin de cycle
+. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
+. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+
+
+Nom: Prochaine Grande Marée
+ state: Date/Heure de la prochaine grande marée ( >= 100
+ attributes:
+	. coefficient
+
+	
+next_neap_tide: : 
+ state: Date/Heure de la prochaine eau morte ( <= 40 )
+ attributes:
+	. coefficient
+
+``` 
+
+
+
+	
+
+next_spring_tide: 
+ state: date for next spring tide ( grande marée )
+ attributes:
+	. coefficient
+
+	
+next_neap_tide: : 
+ state: date for next neap tide ( eau morte ) 
+ attributes:
+	. coefficient
+
+```
+
 ### Services
 
 ![image info](./img/card-editor.png)

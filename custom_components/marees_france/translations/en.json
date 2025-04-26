@@ -80,5 +80,86 @@
             }
         }
     },
+"entity": {
+        "sensor": {
+            "now_tide": {
+                "name": "Current Tide",
+                "state": {
+                    "rising": "Rising",
+                    "falling": "Falling"
+                },
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Finished Height" },
+                    "finished_time": { "name": "Finished Time" },
+                    "starting_height": { "name": "Starting Height" },
+                    "starting_time": { "name": "Starting Time" },
+                    "tide_trend": {
+                        "name": "Tide Trend",
+                        "state": {
+                            "rising": "Rising",
+                            "falling": "Falling"
+                        }
+                    }
+                }
+            },
+            "next_tide": {
+                "name": "Next Tide",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Finished Height" },
+                    "finished_time": { "name": "Finished Time" },
+                    "starting_height": { "name": "Starting Height" },
+                    "starting_time": { "name": "Starting Time" },
+                    "tide_trend": {
+                        "name": "Tide Trend",
+                        "state": {
+                            "tide.high": "High Tide",
+                            "tide.low": "Low Tide"
+                        }
+                    }
+                }
+            },
+            "previous_tide": {
+                "name": "Previous Tide",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Finished Height" },
+                    "finished_time": { "name": "Finished Time" },
+                    "starting_height": { "name": "Starting Height" },
+                    "starting_time": { "name": "Starting Time" },
+                    "tide_trend": {
+                        "name": "Tide Trend",
+                        "state": {
+                            "tide.high": "High Tide",
+                            "tide.low": "Low Tide"
+                        }
+                    }
+                }
+            },
+            "next_spring_tide": {
+                "name": "Next Spring Tide",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Finished Height" },
+                    "finished_time": { "name": "Finished Time" },
+                    "starting_height": { "name": "Starting Height" },
+                    "starting_time": { "name": "Starting Time" },
+                    "tide_trend": { "name": "Tide Trend" }
+                }
+            },
+            "next_neap_tide": {
+                "name": "Next Neap Tide",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Finished Height" },
+                    "finished_time": { "name": "Finished Time" },
+                    "starting_height": { "name": "Starting Height" },
+                    "starting_time": { "name": "Starting Time" },
+                    "tide_trend": { "name": "Tide Trend" }
+                }
+            }
+        }
+    },
     "title": "Mar\u00e9es France (SHOM)"
 }

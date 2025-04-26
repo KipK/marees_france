@@ -40,11 +40,81 @@
     },
     "entity": {
         "sensor": {
-            "tides": {
-                "name": "Marées",
+            "now_tide": {
+                "name": "Marée Actuelle",
                 "state": {
-                    "high_tide": "Marée Haute",
-                    "low_tide": "Marée Basse"
+                    "rising": "Montante",
+                    "falling": "Descendante"
+                },
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": {
+                        "name": "Tendance Marée",
+                        "state": {
+                            "rising": "Montante",
+                            "falling": "Descendante"
+                        }
+                    }
+                }
+            },
+            "next_tide": {
+                "name": "Marée Suivante",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": {
+                        "name": "Tendance Marée",
+                        "state": {
+                            "tide.high": "Pleine Mer",
+                            "tide.low": "Basse Mer"
+                        }
+                    }
+                }
+            },
+            "previous_tide": {
+                "name": "Marée Précédente",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": {
+                        "name": "Tendance Marée",
+                        "state": {
+                            "tide.high": "Pleine Mer",
+                            "tide.low": "Basse Mer"
+                        }
+                    }
+                }
+            },
+            "next_spring_tide": {
+                "name": "Prochaine Grande Marée",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": { "name": "Tendance Marée" }
+                }
+            },
+            "next_neap_tide": {
+                "name": "Prochaine Morte-Eau",
+                "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": { "name": "Tendance Marée" }
                 }
             }
         }

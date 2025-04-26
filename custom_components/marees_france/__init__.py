@@ -36,6 +36,8 @@ from .const import (
     WATERLEVELS_URL_TEMPLATE,
     COEFF_URL_TEMPLATE, # Add coefficient URL template
     HEADERS, # Ensure HEADERS is imported
+    SPRING_TIDE_THRESHOLD, # Add Spring threshold
+    NEAP_TIDE_THRESHOLD, # Add Neap threshold
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration # Import frontend helper here
@@ -282,16 +284,18 @@ async def _async_fetch_and_store_tides(
     cache: dict[str, dict[str, Any]],
     harbor_id: str, # API uses harbor_id for tides
     start_date_str: str,
+    duration: int = 8, # Default duration if not specified
 ) -> bool:
-    """Fetch 8 days of tide data starting from start_date_str, parse, store, and save."""
-    # Construct URL for 8 days starting from start_date_str
-    # Note: We add duration=8 here, it's not in the template anymore
-    url = f"{TIDESURL_TEMPLATE.format(harbor_id=harbor_id, date=start_date_str)}&duration=8"
+    """Fetch tide data for a given duration starting from start_date_str, parse, store, and save."""
+    # Construct URL for the specified duration
+    url = f"{TIDESURL_TEMPLATE.format(harbor_id=harbor_id, date=start_date_str)}&duration={duration}"
     session = async_get_clientsession(hass)
-    _LOGGER.debug("Marées France: Fetching 8 days of tide data for %s starting %s from %s", harbor_id, start_date_str, url)
+    _LOGGER.debug("Marées France: Fetching %d day(s) of tide data for %s starting %s from %s", duration, harbor_id, start_date_str, url)
 
     try:
-        async with asyncio.timeout(45): # Slightly longer timeout for multi-day fetch
+        # Adjust timeout based on duration? Maybe 15s + 5s per day?
+        timeout_seconds = 15 + (duration * 5)
+        async with asyncio.timeout(timeout_seconds):
             response = await session.get(url, headers=HEADERS)
             response.raise_for_status()
             # The API returns a dict like {"YYYY-MM-DD": [[tide_info], ...], ...}
@@ -334,21 +338,23 @@ async def async_check_and_prefetch_tides(
     yesterday_str = yesterday.strftime(DATE_FORMAT)
     needs_fetch = False
     needs_save = False
+    fetch_duration = 8 # Fetch 8 days (yesterday + 7 future)
 
     # Check if all required dates (yesterday to today+7) are present
-    for i in range(-1, 8): # -1 (yesterday) to 7 (today+7) -> 9 days total
+    for i in range(-1, fetch_duration -1): # -1 (yesterday) to 6 (today+6) -> 8 days total
         check_date = today + timedelta(days=i)
         check_date_str = check_date.strftime(DATE_FORMAT)
         if check_date_str not in cache.get(harbor_id, {}):
-            _LOGGER.info("Marées France: Missing tide data for %s on %s. Triggering full 8-day fetch.", harbor_id, check_date_str)
+            _LOGGER.info("Marées France: Missing tide data for %s on %s. Triggering full %d-day fetch.", harbor_id, check_date_str, fetch_duration)
             needs_fetch = True
             break # No need to check further dates if one is missing
 
     if needs_fetch:
         # Pass the current cache to the fetch function so it can be updated directly
-        fetch_successful = await _async_fetch_and_store_tides(hass, store, cache, harbor_id, yesterday_str)
+        # Explicitly pass the required duration
+        fetch_successful = await _async_fetch_and_store_tides(hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration)
         if fetch_successful:
-            _LOGGER.info("Marées France: Successfully prefetched 8 days of tide data for %s starting %s.", harbor_id, yesterday_str)
+            _LOGGER.info("Marées France: Successfully prefetched %d days of tide data for %s starting %s.", fetch_duration, harbor_id, yesterday_str)
             # Cache was saved by the helper, but set needs_save for pruning check below
             needs_save = True # Mark that changes (fetch) happened
         else:
@@ -356,7 +362,7 @@ async def async_check_and_prefetch_tides(
             # Don't proceed with pruning if fetch failed, might lose last good data
             return
     else:
-         _LOGGER.info("Marées France: Tide data cache is up to date for %s (yesterday to today+7).", harbor_id)
+         _LOGGER.info("Marées France: Tide data cache is up to date for %s (yesterday to today+%d).", harbor_id, fetch_duration - 1)
 
 
     # Prune cache: remove dates before yesterday for this harbor
@@ -611,6 +617,7 @@ async def async_check_and_prefetch_coefficients(
     _LOGGER.info("Marées France: Finished coefficient data prefetch check for harbor: %s", harbor_id)
 
 
+# Specific Tide Date Prefetch Helper removed as logic is now handled by coordinator
 # --- Service Handler for Coefficients (New) ---
 
 async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceResponse:
@@ -702,14 +709,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY) # Tides store
     coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY) # Add Coeff store
 
-    # --- Coordinator Setup (Now uses Tides Store) ---
-    # Pass the tides_store to the coordinator
-    coordinator = MareesFranceUpdateCoordinator(hass, entry, tides_store)
+    # --- Coordinator Setup (Now uses Tides and Coeff Stores) ---
+    # Pass both stores to the coordinator
+    coordinator = MareesFranceUpdateCoordinator(hass, entry, tides_store, coeff_store) # Add coeff_store
 
     # --- Prefetching (Run before first refresh) ---
+    # Run initial prefetches sequentially
     await async_check_and_prefetch_water_levels(hass, entry, water_level_store)
     await async_check_and_prefetch_tides(hass, entry, tides_store)
-    await async_check_and_prefetch_coefficients(hass, entry, coeff_store) # Add Coeff prefetch
+    # Check coefficients first
+    await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
+    # Specific tide prefetch removed
+
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
@@ -774,10 +785,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, _daily_tides_prefetch_job, hour=rand_t_hour, minute=rand_t_min, second=0
     ))
 
-    # Coefficients Prefetch (Daily - New)
+    # Coefficients Prefetch (Daily - New), followed by specific tide prefetch
     async def _daily_coefficients_prefetch_job(*_):
         _LOGGER.debug("Marées France: Running daily coefficients prefetch job.")
-        await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
+        try:
+            # Assuming async_check_and_prefetch_coefficients handles its own errors and logging
+            await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
+            # Specific tide prefetch removed, coordinator handles finding dates now.
+            _LOGGER.debug("Marées France: Coefficients check done.")
+            # No need to trigger specific tide prefetch here anymore
+        except Exception:
+            _LOGGER.exception("Marées France: Error during scheduled coefficient prefetch job for %s", entry.data.get(CONF_HARBOR_ID))
+
     rand_c_hour = random.randint(1, 5)
     rand_c_min = random.randint(0, 59)
     # Ensure different time from others
