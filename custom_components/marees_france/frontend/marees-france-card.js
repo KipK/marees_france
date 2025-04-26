@@ -337,7 +337,7 @@ class MareesFranceCard extends LitElement {
     // if (this._svgDraw) this._svgDraw.remove(); // Removes the SVG element itself
     // this._svgDraw = null;
     // this._svgContainer = null;
-    console.log("Marees Card: Disconnected and cleaned up observer.");
+    // console.log("Marees Card: Disconnected and cleaned up observer."); // Removed log
     // [NEW] Ensure popstate listener is removed on disconnect
     window.removeEventListener('popstate', this._boundHandlePopState);
   }
@@ -392,7 +392,7 @@ class MareesFranceCard extends LitElement {
     }
 
     try {
-      console.log(`Marees Card: Fetching water levels for device ${this.config.device_id} on ${this._selectedDay}`);
+      // console.log(`Marees Card: Fetching water levels for device ${this.config.device_id} on ${this._selectedDay}`); // Removed log
       const response = await this.hass.callService(
         'marees_france', // domain
         'get_water_levels', // service
@@ -408,7 +408,7 @@ class MareesFranceCard extends LitElement {
       // Check response structure
       if (response && response.response && typeof response.response === 'object') {
           this._waterLevels = response;
-          console.log("Marees Card: Water levels received:", this._waterLevels);
+          // console.log("Marees Card: Water levels received:", this._waterLevels); // Removed log
       } else {
           console.error('Marees Card: Invalid data structure received from get_water_levels:', response);
           this._waterLevels = { error: "Invalid data structure from service" };
@@ -441,7 +441,7 @@ class MareesFranceCard extends LitElement {
     }
 
     try {
-      console.log(`Marees Card: Fetching tide data for device ${this.config.device_id}`);
+      // console.log(`Marees Card: Fetching tide data for device ${this.config.device_id}`); // Removed log
       const response = await this.hass.callService(
         'marees_france', // domain
         'get_tides_data', // service
@@ -456,7 +456,7 @@ class MareesFranceCard extends LitElement {
       // Check response structure
       if (response && response.response && typeof response.response === 'object') {
           this._tideData = response;
-           console.log("Marees Card: Tide data received:", this._tideData);
+           // console.log("Marees Card: Tide data received:", this._tideData); // Removed log
       } else {
           console.error('Marees Card: Invalid data structure received from get_tides_data:', response);
           this._tideData = { error: "Invalid data structure from service" };
@@ -491,8 +491,8 @@ class MareesFranceCard extends LitElement {
       const today = new Date();
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startDateStr = firstDayOfMonth.toISOString().slice(0, 10); // Format YYYY-MM-DD
-
-      console.log(`Marees Card: Fetching coefficient data for device ${this.config.device_id} starting from ${startDateStr}`);
+ 
+      // console.log(`Marees Card: Fetching coefficient data for device ${this.config.device_id} starting from ${startDateStr}`); // Removed log
       const response = await this.hass.callService(
         'marees_france', // domain
         'get_coefficients_data', // service
@@ -510,7 +510,7 @@ class MareesFranceCard extends LitElement {
       if (response && response.response && typeof response.response === 'object' && Object.keys(response.response).length > 0) {
           // Store the whole response object like other fetches
           this._coefficientsData = response;
-          console.log("Marees Card: Coefficient data received:", this._coefficientsData);
+          // console.log("Marees Card: Coefficient data received:", this._coefficientsData); // Removed log
       } else if (response && response.response && typeof response.response === 'object' && Object.keys(response.response).length === 0) {
           console.warn('Marees Card: Received empty coefficient data object from get_coefficients_data:', response);
           // Store the whole response but add an error marker if needed, or just the error
@@ -707,14 +707,14 @@ class MareesFranceCard extends LitElement {
     // [NEW] Push state and add popstate listener
     history.pushState({ mareesCalendarOpen: true }, '', '#marees-calendar');
     window.addEventListener('popstate', this._boundHandlePopState);
-    console.log("Marees Card: Pushed history state and added popstate listener.");
-
+    // console.log("Marees Card: Pushed history state and added popstate listener."); // Removed log
+ 
     // Wait for the dialog and its content to render before adding listeners
     await this.updateComplete; // Wait for LitElement update cycle
 
     this._calendarContentElement = this.shadowRoot?.querySelector('ha-dialog .calendar-dialog-content');
     if (this._calendarContentElement) {
-        console.log("Marees Card: Adding calendar touch listeners.");
+        // console.log("Marees Card: Adding calendar touch listeners."); // Removed log
         // Bind listeners to ensure 'this' context is correct
         this._boundHandleTouchStart = this._handleTouchStart.bind(this);
         this._boundHandleTouchMove = this._handleTouchMove.bind(this);
@@ -730,10 +730,10 @@ class MareesFranceCard extends LitElement {
 
   // [NEW] Handle popstate event
   _handlePopState(event) {
-    console.log("Marees Card: Popstate event fired.", event.state, "Dialog open:", this._isCalendarDialogOpen);
+    // console.log("Marees Card: Popstate event fired.", event.state, "Dialog open:", this._isCalendarDialogOpen); // Removed log
     // If the dialog is open and the new state doesn't indicate it should be (i.e., user navigated back)
     if (this._isCalendarDialogOpen && !event.state?.mareesCalendarOpen) {
-        console.log("Marees Card: Closing dialog due to popstate.");
+        // console.log("Marees Card: Closing dialog due to popstate."); // Removed log
         this._closeCalendarDialog(true); // Pass flag indicating closure is from popstate
     }
   }
@@ -741,23 +741,23 @@ class MareesFranceCard extends LitElement {
   _closeCalendarDialog(isFromPopstate = false) {
     // Prevent closing if already closed
     if (!this._isCalendarDialogOpen) return;
-
-    console.log(`Marees Card: Closing calendar dialog. From popstate: ${isFromPopstate}`);
+ 
+    // console.log(`Marees Card: Closing calendar dialog. From popstate: ${isFromPopstate}`); // Removed log
     this._isCalendarDialogOpen = false; // Set state immediately
-
+ 
     // [NEW] Remove popstate listener
     window.removeEventListener('popstate', this._boundHandlePopState);
-    console.log("Marees Card: Removed popstate listener.");
-
+    // console.log("Marees Card: Removed popstate listener."); // Removed log
+ 
     // [NEW] If closed normally (not via back button) and history state indicates dialog was open, go back.
     if (!isFromPopstate && history.state?.mareesCalendarOpen) {
-        console.log("Marees Card: Dialog closed normally, calling history.back().");
+        // console.log("Marees Card: Dialog closed normally, calling history.back()."); // Removed log
         history.back();
     }
-
+ 
     // Remove touch listeners when dialog closes
     if (this._calendarContentElement) {
-        console.log("Marees Card: Removing calendar touch listeners.");
+        // console.log("Marees Card: Removing calendar touch listeners."); // Removed log
         this._calendarContentElement.removeEventListener('touchstart', this._boundHandleTouchStart);
         this._calendarContentElement.removeEventListener('touchmove', this._boundHandleTouchMove);
         this._calendarContentElement.removeEventListener('touchend', this._boundHandleTouchEnd);
@@ -1016,7 +1016,7 @@ class MareesFranceCard extends LitElement {
     // If config changes, trigger a full refetch.
     // This is the primary trigger for data loading/reloading based on config.
     if (configChanged) {
-        console.log("Marees Card: Config changed, triggering data refetch.");
+        // console.log("Marees Card: Config changed, triggering data refetch."); // Removed log
         this._fetchData(); // Fetch data based on new config
         needsGraphRedraw = true; // Graph will redraw after fetch
     }
@@ -1024,7 +1024,7 @@ class MareesFranceCard extends LitElement {
     // data is null (meaning not fetched yet), AND config did NOT change in this same update cycle
     // (to avoid double fetch when both hass and config arrive close together).
     else if (changedProperties.has('hass') && this.hass && this.config?.device_id && this._waterLevels === null && this._tideData === null) {
-        console.log("Marees Card: Hass available, config ready, and no data yet. Triggering initial fetch.");
+        // console.log("Marees Card: Hass available, config ready, and no data yet. Triggering initial fetch."); // Removed log
         this._fetchData(); // Initial fetch
         needsGraphRedraw = true; // Graph will redraw after fetch
     }
@@ -1063,9 +1063,9 @@ class MareesFranceCard extends LitElement {
       });
     });
     this._resizeObserver.observe(this._svgContainer);
-    console.log("Marees Card: ResizeObserver setup.");
+    // console.log("Marees Card: ResizeObserver setup."); // Removed log
   }
-
+ 
   // [NEW] Method to apply the inverse scaling to designated elements
   _updateElementScale() {
     // Ensure container, SVG instance, and elements array are ready
