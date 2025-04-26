@@ -19,7 +19,10 @@ export function localizeCard(key, hass, ...args) {
       const placeholder = `{${args[i]}}`;
       const value = args[i + 1];
       // Use a regex for global replacement to handle multiple occurrences
-      translated = translated.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), value !== undefined ? value : '');
+      translated = translated.replace(
+        new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
+        value !== undefined ? value : ''
+      );
     }
   }
   return translated;

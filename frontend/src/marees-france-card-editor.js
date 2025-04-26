@@ -1,8 +1,4 @@
-import {
-  LitElement,
-  html,
-  css,
-} from "lit"; // Use bare specifier
+import { LitElement, html, css } from 'lit'; // Use bare specifier
 
 // Import shared localization function
 import { localizeCard } from './localize.js';
@@ -43,7 +39,7 @@ class MareesFranceCardEditor extends LitElement {
     const newConfig = ev.detail.value;
 
     // Fire event to let HA know the config changed
-    fireEvent(this, "config-changed", { config: newConfig });
+    fireEvent(this, 'config-changed', { config: newConfig });
   }
 
   render() {
@@ -55,31 +51,39 @@ class MareesFranceCardEditor extends LitElement {
     const schema = [
       // --- Moved Show Header to top ---
       {
-        name: "show_header",
+        name: 'show_header',
         // Use shared localizeCard, passing hass object directly
-        label: localizeCard('ui.card.marees_france.editor.show_header', this.hass),
+        label: localizeCard(
+          'ui.card.marees_france.editor.show_header',
+          this.hass
+        ),
         selector: { boolean: {} },
         default: true, // Default value for the checkbox
       },
       // --- Device Picker ---
       {
-        name: "device_id",
-        label: localizeCard('ui.card.marees_france.editor.device_label', this.hass),
+        name: 'device_id',
+        label: localizeCard(
+          'ui.card.marees_france.editor.device_label',
+          this.hass
+        ),
         required: true,
         selector: {
-          device: { // Use device selector
-            integration: "marees_france", // Filter by integration
+          device: {
+            // Use device selector
+            integration: 'marees_france', // Filter by integration
             // entity_domain: "sensor" // Optional: Further filter devices providing sensors? Might not be necessary.
-            include_entities: false // We only need the device ID
-          }
+            include_entities: false, // We only need the device ID
+          },
         },
-        context: { // Add context for better filtering if needed (optional)
-             integration: 'marees_france'
-        }
+        context: {
+          // Add context for better filtering if needed (optional)
+          integration: 'marees_france',
+        },
       },
       // --- End Device Picker ---
       {
-        name: "title",
+        name: 'title',
         label: localizeCard('ui.card.marees_france.editor.title', this.hass),
         selector: { text: {} },
       },
@@ -108,6 +112,6 @@ class MareesFranceCardEditor extends LitElement {
   }
 }
 
-customElements.define("marees-france-card-editor", MareesFranceCardEditor);
+customElements.define('marees-france-card-editor', MareesFranceCardEditor);
 
 // Registration is handled by frontend/__init__.py
