@@ -1,31 +1,24 @@
 import { LitElement, html, css } from 'lit'; // Use bare specifier for lit
-// SVG is imported by GraphRenderer now
-// import { SVG } from "@svgdotjs/svg.js";
-
-// Import localization function
+import { state } from 'lit/decorators.js';
 import { localizeCard } from './localize.js';
-
-// Import utility functions
 import { getWeekdayShort3Letters, getNextTideStatus } from './utils.js';
-
-// Import the GraphRenderer class
 import { GraphRenderer } from './graph-renderer.js';
 
 class MareesFranceCard extends LitElement {
-  // --- Properties for GraphRenderer ---
-  _graphRenderer = null; // Instance of GraphRenderer
-  _svgContainer = null; // Reference to the SVG container div in the shadow DOM
+  // --- States for GraphRenderer ---
+  @state({ attribute: false }) _graphRenderer = null; // Instance of GraphRenderer
+  @state({ attribute: false }) _svgContainer = null; // Reference to the SVG container div in the shadow DOM
 
-  // --- Properties for Card State & Interaction ---
-  _isDraggingDot = false; // NEW: Track drag state
-  _originalDotPosition = null; // NEW: Store original {x, y, timeStr, heightStr}
-  _draggedPosition = null; // NEW: Store dragged {timeStr, heightStr} during drag
-  _touchStartX = null; // [NEW] For swipe detection
-  _touchStartY = null; // [NEW] For swipe detection
-  _calendarHasPrevData = false; // [NEW] Store calendar nav state
-  _calendarHasNextData = false; // [NEW] Store calendar nav state
-  _calendarContentElement = null; // [NEW] Reference to the dialog content
-  _boundHandlePopState = null; // [NEW] Store bound popstate handler
+  // --- States for Card State & Interaction ---
+  @state({ type: Boolean }) _isDraggingDot = false; //  Track drag state
+  @state({ type: Object }) _originalDotPosition = null; // Store original {x, y, timeStr, heightStr}
+  @state({ type: Object }) _draggedPosition = null; // Store dragged {timeStr, heightStr} during drag
+  @state({ type: Object }) _touchStartX = null; // For swipe detection
+  @state({ type: Object })  _touchStartY = null; // For swipe detection
+  @state({ type: Boolean }) _calendarHasPrevData = false; // Store calendar nav state
+  @state({ type: Boolean }) _calendarHasNextData = false; // Store calendar nav state
+  @state({ type: Object }) _calendarContentElement = null; // Reference to the dialog content
+  @state({ attribute: false }) _boundHandlePopState = null; // Store bound popstate handler
 
   constructor() {
     super();
@@ -145,9 +138,6 @@ class MareesFranceCard extends LitElement {
       this._fetchTideData(),
       this._fetchCoefficientsData(), // [NEW]
     ]);
-
-    // No need to set loading false here, individual fetches handle it in finally blocks
-    // No need for final requestUpdate here, individual fetches handle it
   }
 
   // --- Fetch Water Level Data ---
@@ -606,8 +596,7 @@ class MareesFranceCard extends LitElement {
         </div>
       </ha-card>
 
-      <!-- Coefficient Calendar Dialog [NEW] -->
-      <!-- Coefficient Calendar Dialog [NEW] - Always rendered, visibility controlled by 'open' -->
+      <!-- Coefficient Calendar Dialog - Always rendered, visibility controlled by 'open' -->
       <ha-dialog
         ?open=${this._isCalendarDialogOpen}
         @closed="${this._closeCalendarDialog}"
@@ -624,7 +613,7 @@ class MareesFranceCard extends LitElement {
     `;
   }
 
-  // --- Dialog Handlers [MODIFIED FOR HISTORY] ---
+  // --- Dialog Handlers ---
   async _openCalendarDialog() {
     // Make async to await updateComplete
     // Prevent opening if already open
@@ -637,7 +626,7 @@ class MareesFranceCard extends LitElement {
     this._isCalendarDialogOpen = true;
     this._calendarSelectedMonth = new Date(); // Reset to current month on open
 
-    // [NEW] Push state and add popstate listener
+    // Push state and add popstate listener
     history.pushState({ mareesCalendarOpen: true }, '', '#marees-calendar');
     window.addEventListener('popstate', this._boundHandlePopState);
     // console.log("Marees Card: Pushed history state and added popstate listener."); // Removed log
@@ -677,7 +666,7 @@ class MareesFranceCard extends LitElement {
     }
   }
 
-  // [NEW] Handle popstate event
+  // Handle popstate event
   _handlePopState(event) {
     // console.log("Marees Card: Popstate event fired.", event.state, "Dialog open:", this._isCalendarDialogOpen); // Removed log
     // If the dialog is open and the new state doesn't indicate it should be (i.e., user navigated back)
@@ -694,11 +683,11 @@ class MareesFranceCard extends LitElement {
     // console.log(`Marees Card: Closing calendar dialog. From popstate: ${isFromPopstate}`); // Removed log
     this._isCalendarDialogOpen = false; // Set state immediately
 
-    // [NEW] Remove popstate listener
+    // Remove popstate listener
     window.removeEventListener('popstate', this._boundHandlePopState);
     // console.log("Marees Card: Removed popstate listener."); // Removed log
 
-    // [NEW] If closed normally (not via back button) and history state indicates dialog was open, go back.
+    // If closed normally (not via back button) and history state indicates dialog was open, go back.
     if (!isFromPopstate && history.state?.mareesCalendarOpen) {
       // console.log("Marees Card: Dialog closed normally, calling history.back()."); // Removed log
       history.back();
@@ -726,7 +715,7 @@ class MareesFranceCard extends LitElement {
     this._touchStartY = null;
   }
 
-  // --- Dialog Content Renderer [MODIFIED FOR GRID CALENDAR & NAV STATE] ---
+  // --- Dialog Content Renderer ---
   _renderCalendarDialogContent() {
     const locale = this.hass.language || 'en';
 

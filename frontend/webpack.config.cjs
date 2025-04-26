@@ -9,7 +9,9 @@ module.exports = {
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, '../custom_components/marees_france/frontend'),
-    clean: true, // Clean the output directory before each build
+    clean: {
+      keep: /__init__\.py$/, // Keep the __init__.py file
+    },
   },
   module: {
     rules: [

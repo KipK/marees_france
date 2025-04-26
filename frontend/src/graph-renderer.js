@@ -143,7 +143,7 @@ export class GraphRenderer {
       return;
     }
 
-    this.resizeObserver = new ResizeObserver((entries) => {
+    this.resizeObserver = new ResizeObserver(() => { // Removed unused 'entries'
       window.requestAnimationFrame(() => {
         this._updateElementScale();
       });

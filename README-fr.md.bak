@@ -57,15 +57,3 @@ L'intégration met à disposition 3 services actions:
 	  device_id: xxxxxxxxxx
 	  date: "2025-04-26"
 	  days: 10
-
-
-## Build
-
-Compiler le frontend
-
-cd frontend
-npm install
-npm run build
-
-Frontend will be exported in custom_components/marees_info/frontend
-

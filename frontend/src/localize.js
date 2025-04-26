@@ -8,7 +8,7 @@ export function localizeCard(key, hass, ...args) {
 
   try {
     translated = key.split('.').reduce((o, i) => o[i], langTranslations) || key;
-  } catch (e) {
+  } catch { 
     // Key not found, use the key itself
     translated = key;
   }
@@ -20,7 +20,7 @@ export function localizeCard(key, hass, ...args) {
       const value = args[i + 1];
       // Use a regex for global replacement to handle multiple occurrences
       translated = translated.replace(
-        new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
+        new RegExp(placeholder.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), // Removed unnecessary \ before /
         value !== undefined ? value : ''
       );
     }
