@@ -4,6 +4,7 @@ Intégration Home-Assistant et sa carte Lovelace pour afficher les marées Fran�
 
 ![image info](./img/card.png)
 
+
 ## Installation
 
 #### Automatique

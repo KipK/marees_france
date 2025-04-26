@@ -16,6 +16,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlow,  # Add OptionsFlow import
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -129,6 +130,29 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
         )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(OptionsFlow):
+    """Handle an options flow for Marées France."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        # For now, we don't have options.
+        # If options are added later, implement form logic here.
+        # Since there are no options, just create an empty entry.
+        return self.async_create_entry(title="", data={})
 
 
 class CannotConnect(HomeAssistantError):

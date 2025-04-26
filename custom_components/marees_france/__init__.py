@@ -711,7 +711,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_check_and_prefetch_tides(hass, entry, tides_store)
     await async_check_and_prefetch_coefficients(hass, entry, coeff_store) # Add Coeff prefetch
 
-    await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     # --- Platform Setup ---
