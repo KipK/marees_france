@@ -2,3 +2,5 @@ venv
 plans
 .pytest_cache
 .venv
+
+/frontend/node_modules/
