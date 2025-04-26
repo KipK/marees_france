@@ -2031,11 +2031,15 @@ class MareesFranceCard extends LitElement {
         /* Allow content to scroll */
         --dialog-content-padding: 0;
         --dialog-z-index: 5; /* Ensure dialog is above other elements */
+        /* Default width for desktop - Set both min and max */
+        --mdc-dialog-min-width: 600px;
+        --mdc-dialog-max-width: 600px;
       }
       .calendar-dialog-content {
-         padding: 10px 12px 10px 12px; /* Adjusted padding */
+         padding: 10px 20px; /* Default padding for desktop */
          max-height: 70vh; /* Limit height and allow scrolling */
-         overflow-y: hidden;
+         overflow-y: hidden; /* Allow vertical scroll if needed */
+         box-sizing: border-box; /* Include padding in width calculation */
       }
       .dialog-loader, .dialog-warning, .no-data-month {
         text-align: center;
@@ -2080,7 +2084,7 @@ class MareesFranceCard extends LitElement {
 
       /* NEW Calendar Grid Styles */
       .calendar-grid {
-          padding: 0 16px; /* Add left/right padding to match card content */
+          /* padding removed, handled by .calendar-dialog-content */
           display: grid;
           grid-template-columns: repeat(7, 1fr);
           gap: 2px; /* Small gap between cells */
@@ -2134,7 +2138,7 @@ class MareesFranceCard extends LitElement {
           justify-content: center; /* Center coeffs horizontally */
           align-items: center; /* Center coeffs vertically */
           gap: 3px; /* Gap between coeffs */
-          width: 3ch;
+          /* width: 3ch; */ /* REMOVED to allow expansion */
       }
 
       .coeff-value {
@@ -2159,11 +2163,18 @@ class MareesFranceCard extends LitElement {
 
       /* Remove old table styles if they exist */
       .calendar-table { display: none; }
-@media (max-width: 600px) {
-        .calendar-grid {
-          padding-left: 0;
-          padding-right: 0;
+      /* Media Query for Mobile Dialog Width */
+      @media (max-width: 600px) {
+        ha-dialog {
+          /* Override default max-width for mobile */
+          --mdc-dialog-min-width: calc(100vw - 20px); /* 10px margin each side */
+          --mdc-dialog-max-width: calc(100vw - 20px);
         }
+        .calendar-dialog-content {
+           /* Reduce padding inside dialog on mobile */
+           padding: 10px 5px;
+        }
+        /* .calendar-grid padding already removed */
       }
     `;
   }

@@ -27,14 +27,32 @@ Une fois le port sélectionné, l'entité apparaitra dans sensor.marees_france_[
 
 ## Utilisation
 
-Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard. Ajouter sur le dashboard la carte marees_france.
+Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard. 
+Ajouter sur le dashboard la carte marees_france.
+
+#### Services
 
 ![image info](./img/card-editor.png)
 
-Pour récupérer une valeur de l'objet "data" en attribut de l'entité sensor.marees_france_[NOM_DU_PORT], voici un exemple:
+L'intégration met à disposition 3 services actions:
 
-Afficher le coefficient de la première marée haute de demain:
+- Marées France (SHOM): Récupérer les données de marées: marees_france.get_tides_data
 
-```yaml
-{{ state_attr('sensor.marees_france_pornichet', 'data')[1]['high_tides'][0]['coefficient'] }}
-```
+	action: marees_france.get_tides_data
+	data:
+	  device_id: xxxxxxxxxx
+  
+- Marées France (SHOM): Obtenir les hauteurs d'eau:
+
+	action: marees_france.get_water_levels
+	data:
+	  device_id: xxxxxxxxxx
+	  date: "2025-04-26"
+  
+- Marées France (SHOM): Obtenir les Données de Coefficients:
+
+	action: marees_france.get_coefficients_data
+	data:
+	  device_id: xxxxxxxxxx
+	  date: "2025-04-26"
+	  days: 10
