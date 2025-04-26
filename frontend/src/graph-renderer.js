@@ -217,13 +217,10 @@ export class GraphRenderer {
 
     this.svgDraw.clear();
     this.elementsToKeepSize = [];
-    // Reset drag state via card reference (if needed, or handle drag separately)
-    // this.card._isDraggingDot = false;
-    // this.card._originalDotPosition = null;
-    // this.card._draggedPosition = null;
 
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
+    const locale = this.hass.language || 'en';
 
     // --- 1. Check for Errors or Missing Data ---
     if (!tideData || tideData.error || !tideData.response) {
@@ -380,31 +377,44 @@ export class GraphRenderer {
       });
     }
 
-    // --- Current Time Marker Data ---
+    // --- Current Time Marker Data (with formatted strings for tooltip) ---
     const now = new Date();
-    let currentTimeMarker = null;
+    let currentTimeMarkerData = null;
+    let currentTimeStr = '';
+    let currentHeightStr = '';
     if (selectedDay === now.toISOString().slice(0, 10)) {
       const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-      const currentHeight = this._interpolateHeight(currentTotalMinutes);
-      if (currentHeight !== null) {
-        const currentX = this._timeToX(currentTotalMinutes);
-        const currentY = this._heightToY(currentHeight);
-        currentTimeMarker = {
-          x: currentX,
-          y: currentY,
-          height: currentHeight,
-          totalMinutes: currentTotalMinutes,
-        };
+      if (
+        this.curveMinMinutes !== null &&
+        this.curveMaxMinutes !== null &&
+        currentTotalMinutes >= this.curveMinMinutes &&
+        currentTotalMinutes <= this.curveMaxMinutes
+      ) {
+        const currentHeight = this._interpolateHeight(currentTotalMinutes);
+        if (currentHeight !== null) {
+          const currentX = this._timeToX(currentTotalMinutes);
+          const currentY = this._heightToY(currentHeight);
+          currentTimeStr = now.toLocaleTimeString(locale, {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          currentHeightStr = currentHeight.toFixed(2);
+          currentTimeMarkerData = {
+            x: currentX,
+            y: currentY,
+            timeStr: currentTimeStr, // Store formatted string
+            heightStr: currentHeightStr, // Store formatted string
+          };
+        }
       }
     }
 
     // --- Drawing the Actual Graph ---
     const draw = this.svgDraw;
-    const locale = this.hass.language || 'en';
     const axisColor = 'var(--secondary-text-color, grey)';
     const primaryTextColor = 'var(--primary-text-color, black)';
     const curveColor = 'var(--primary-color, blue)';
-    const arrowAndTextColor = 'var(--primary-text-color, white)'; // Changed to primary text color
+    const arrowAndTextColor = 'var(--primary-text-color, white)';
     const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)';
     const coefBoxBorderColor =
       'var(--ha-card-border-color, var(--divider-color, grey))';
@@ -419,6 +429,7 @@ export class GraphRenderer {
     const coefBoxRadius = 4;
     const coefBoxTopMargin = 10;
     const coefLineToPeakGap = 3;
+    const dotRadius = 3; // 6px diameter
 
     // Draw Base Elements
     draw
@@ -426,6 +437,62 @@ export class GraphRenderer {
       .fill({ color: curveColor, opacity: 0.4 })
       .stroke('none');
     draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 });
+
+    // --- Interaction Elements (Hover/Touch for Blue Dot) ---
+    const interactionGroup = draw
+      .group()
+      .attr('id', 'interaction-indicator')
+      .hide();
+    const interactionDot = interactionGroup
+      .circle(dotRadius * 2) // Use same radius as yellow dot
+      .fill('var(--info-color, blue)')
+      .attr('pointer-events', 'none');
+
+    // Transparent overlay for capturing events (drawn first)
+    const interactionOverlay = draw
+      .rect(this.graphWidth, this.graphHeight)
+      .move(this.graphMargin.left, this.graphMargin.top)
+      .fill('transparent')
+      .attr('cursor', 'crosshair'); // Indicate interactivity
+
+    // Bind interaction handlers once
+    this._boundHandleInteractionMove = this._handleInteractionMove.bind(
+      this,
+      interactionGroup,
+      interactionDot
+    );
+    this._boundHandleInteractionEnd = this._handleInteractionEnd.bind(
+      this,
+      interactionGroup
+    );
+
+    // Add event listeners to the overlay
+    interactionOverlay.node.addEventListener(
+      'mousemove',
+      this._boundHandleInteractionMove
+    );
+    interactionOverlay.node.addEventListener(
+      'touchstart',
+      this._boundHandleInteractionMove,
+      { passive: false }
+    );
+    interactionOverlay.node.addEventListener(
+      'touchmove',
+      this._boundHandleInteractionMove,
+      { passive: false }
+    );
+    interactionOverlay.node.addEventListener(
+      'mouseleave',
+      this._boundHandleInteractionEnd
+    );
+    interactionOverlay.node.addEventListener(
+      'touchend',
+      this._boundHandleInteractionEnd
+    );
+    interactionOverlay.node.addEventListener(
+      'touchcancel',
+      this._boundHandleInteractionEnd
+    );
 
     // Draw X Axis Labels
     xTicks.forEach((tick) => {
@@ -552,60 +619,39 @@ export class GraphRenderer {
       });
     });
 
-    // --- Draw Current Time Marker ---
-    if (currentTimeMarker) {
-      const dotRadius = 5;
-      const dotGroup = draw.group();
-      dotGroup.attr('id', 'current-time-marker');
-      dotGroup.addClass('has-tooltip');
-      dotGroup.addClass('draggable-dot');
+    // --- Draw Static Current Time Marker (Yellow Dot) ---
+    if (currentTimeMarkerData) {
+      const currentTimeDot = draw
+        .circle(dotRadius * 2) // 6px diameter
+        .center(currentTimeMarkerData.x, currentTimeMarkerData.y)
+        .fill('var(--tide-icon-color)') // Use the specific yellow color
+        .attr('cursor', 'pointer'); // Indicate it's interactive for tooltip
 
-      const hitAreaRadius = dotRadius * 2.5;
-      const hitAreaCircle = dotGroup
-        .circle(hitAreaRadius * 2)
-        .center(currentTimeMarker.x, currentTimeMarker.y)
-        .fill('transparent')
-        .attr('cursor', 'grab');
-
-      const dotCircle = dotGroup
-        .circle(dotRadius * 2)
-        .center(currentTimeMarker.x, currentTimeMarker.y)
-        .fill('var(--current_tide_color)')
-        .attr('pointer-events', 'none');
-
-      const currentTimeStr = now.toLocaleTimeString(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
+      // Add tooltip listeners directly to the yellow dot
+      currentTimeDot.node.addEventListener('mouseover', (e) => {
+        if (this.card && typeof this.card._showCurrentTimeTooltip === 'function') {
+          this.card._showCurrentTimeTooltip(e, currentTimeMarkerData.timeStr, currentTimeMarkerData.heightStr);
+        }
       });
-      const currentHeightStr =
-        currentTimeMarker.height !== null
-          ? currentTimeMarker.height.toFixed(2)
-          : 'N/A';
+      currentTimeDot.node.addEventListener('touchstart', (e) => {
+         // Prevent touch from triggering overlay interaction simultaneously
+        e.stopPropagation();
+        if (this.card && typeof this.card._showCurrentTimeTooltip === 'function') {
+          this.card._showCurrentTimeTooltip(e, currentTimeMarkerData.timeStr, currentTimeMarkerData.heightStr);
+        }
+      }, { passive: true }); // Passive for showing tooltip is fine
 
-      // Store original position data on the card instance for drag/tooltip
-      this.card._originalDotPosition = {
-        x: currentTimeMarker.x,
-        y: currentTimeMarker.y,
-        timeStr: currentTimeStr,
-        heightStr: currentHeightStr,
+      const hideTooltipHandler = () => {
+        if (this.card && typeof this.card._hideInteractionTooltip === 'function') {
+          this.card._hideInteractionTooltip();
+        }
       };
+      currentTimeDot.node.addEventListener('mouseout', hideTooltipHandler);
+      currentTimeDot.node.addEventListener('touchend', hideTooltipHandler);
+      currentTimeDot.node.addEventListener('touchcancel', hideTooltipHandler);
 
-      // Add event listeners (these will call methods on the card instance)
-      hitAreaCircle.node.addEventListener('mouseover', (e) =>
-        this.card._handleTooltipShow(e)
-      );
-      hitAreaCircle.node.addEventListener('mouseout', () =>
-        this.card._handleTooltipHide()
-      );
-      hitAreaCircle.node.addEventListener('mousedown', (e) =>
-        this.card._handleDragStart(e, dotGroup, dotCircle, hitAreaCircle)
-      );
-      hitAreaCircle.node.addEventListener(
-        'touchstart',
-        (e) =>
-          this.card._handleDragStart(e, dotGroup, dotCircle, hitAreaCircle),
-        { passive: false }
-      );
+      // Optional: Add to elementsToKeepSize if scaling is desired, but might not be needed for a simple dot
+      // this.elementsToKeepSize.push(currentTimeDot);
     }
 
     // Trigger scale update after drawing
@@ -614,8 +660,83 @@ export class GraphRenderer {
     });
   }
 
+  // --- Interaction Handlers (Blue Dot) ---
+  _handleInteractionMove(interactionGroup, interactionDot, event) {
+    // Prevent default scrolling on touch devices when interacting
+    if (event.type === 'touchmove' || event.type === 'touchstart') {
+      event.preventDefault();
+    }
+
+    const svgPoint = this.getSVGCoordinates(event);
+    if (
+      !svgPoint ||
+      this.curveMinMinutes === null ||
+      this.curveMaxMinutes === null
+    ) {
+      this._handleInteractionEnd(interactionGroup); // Hide if outside bounds or error
+      return;
+    }
+
+    // Convert X coordinate to total minutes
+    const totalMinutes = this._xToTotalMinutes(svgPoint.x);
+
+    // Clamp time to the actual curve data range
+    const clampedTotalMinutes = Math.max(
+      this.curveMinMinutes,
+      Math.min(this.curveMaxMinutes, totalMinutes)
+    );
+
+    // Interpolate height at the clamped time
+    const height = this._interpolateHeight(clampedTotalMinutes);
+
+    if (height !== null) {
+      // Convert clamped time and interpolated height back to SVG coordinates
+      const finalX = this._timeToX(clampedTotalMinutes);
+      const finalY = this._heightToY(height);
+
+      // Show and move the indicator dot
+      interactionGroup.show();
+      interactionDot.center(finalX, finalY);
+
+      // Call the card's method to update the HTML tooltip
+      if (this.card && typeof this.card._updateInteractionTooltip === 'function') {
+        this.card._updateInteractionTooltip(finalX, finalY, clampedTotalMinutes, height);
+      }
+    } else {
+      // Hide if interpolation fails (e.g., pointer is before/after the curve time range)
+      this._handleInteractionEnd(interactionGroup);
+    }
+  }
+
+  _handleInteractionEnd(interactionGroup) {
+    interactionGroup.hide();
+    // Call the card's method to hide the HTML tooltip
+    if (this.card && typeof this.card._hideInteractionTooltip === 'function') {
+      this.card._hideInteractionTooltip();
+    }
+  }
+
   // Method to clean up resources
   destroy() {
+    // Remove interaction listeners if they were bound
+    if (this._boundHandleInteractionMove && this.svgContainer) {
+      const overlay = this.svgContainer.querySelector(
+        'rect[fill="transparent"]'
+      );
+      if (overlay) {
+        overlay.removeEventListener('mousemove', this._boundHandleInteractionMove);
+        overlay.removeEventListener('touchstart', this._boundHandleInteractionMove);
+        overlay.removeEventListener('touchmove', this._boundHandleInteractionMove);
+        overlay.removeEventListener('mouseleave', this._boundHandleInteractionEnd);
+        overlay.removeEventListener('touchend', this._boundHandleInteractionEnd);
+        overlay.removeEventListener('touchcancel', this._boundHandleInteractionEnd);
+      }
+    }
+    this._boundHandleInteractionMove = null;
+    this._boundHandleInteractionEnd = null;
+
+    // Note: Listeners added directly to currentTimeDot are removed when the SVG is cleared/removed.
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

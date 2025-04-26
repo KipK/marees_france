@@ -10,9 +10,7 @@ class MareesFranceCard extends LitElement {
   @state({ attribute: false }) _svgContainer = null; // Reference to the SVG container div in the shadow DOM
 
   // --- States for Card State & Interaction ---
-  @state({ type: Boolean }) _isDraggingDot = false; //  Track drag state
-  @state({ type: Object }) _originalDotPosition = null; // Store original {x, y, timeStr, heightStr}
-  @state({ type: Object }) _draggedPosition = null; // Store dragged {timeStr, heightStr} during drag
+  // Drag-related states removed (_isDraggingDot, _originalDotPosition, _draggedPosition)
   @state({ type: Object }) _touchStartX = null; // For swipe detection
   @state({ type: Object })  _touchStartY = null; // For swipe detection
   @state({ type: Boolean }) _calendarHasPrevData = false; // Store calendar nav state
@@ -23,11 +21,7 @@ class MareesFranceCard extends LitElement {
   constructor() {
     super();
     this._boundHandlePopState = this._handlePopState.bind(this);
-    // Bind tooltip handlers once (drag handlers bound dynamically)
-    this._boundHandleTooltipShow = this._handleTooltipShow.bind(this);
-    this._boundHandleTooltipHide = this._handleTooltipHide.bind(this);
-    this._boundHandleDragMove = null; // Will be bound in _handleDragStart
-    this._boundHandleDragEnd = null; // Will be bound in _handleDragStart
+    // Tooltip/Drag handlers removed or changed
   }
 
   static get properties() {
@@ -42,8 +36,8 @@ class MareesFranceCard extends LitElement {
       _isLoadingTides: { state: true }, // Loading status for tide data
       _isLoadingCoefficients: { state: true }, // Loading status for coefficient data [NEW]
       _isInitialLoading: { state: true }, // Track initial load vs subsequent loads (maybe combine loaders?)
-      _isDraggingDot: { state: true }, // Needed for conditional tooltip display
-      _draggedPosition: { state: true, attribute: false }, // Needed for tooltip display during drag
+      // _isDraggingDot: { state: true }, // Removed
+      // _draggedPosition: { state: true, attribute: false }, // Removed
       _isCalendarDialogOpen: { state: true },
       _calendarSelectedMonth: { state: true }, // Date object for the calendar month [NEW]
       _calendarHasPrevData: { state: true },
@@ -89,10 +83,7 @@ class MareesFranceCard extends LitElement {
     this._isInitialLoading = true;
     this._isCalendarDialogOpen = false;
     this._calendarSelectedMonth = new Date();
-    // Reset graph-related interaction state
-    this._isDraggingDot = false;
-    this._originalDotPosition = null;
-    this._draggedPosition = null;
+    // Reset graph-related interaction state (Removed)
     // Graph renderer will be initialized in `updated`
   }
 
@@ -106,8 +97,7 @@ class MareesFranceCard extends LitElement {
     this._svgContainer = null; // Clear container reference
     // Ensure popstate listener is removed
     window.removeEventListener('popstate', this._boundHandlePopState);
-    // Clean up any lingering drag listeners (safety measure)
-    this._removeDragListeners();
+    // Clean up any lingering drag listeners (Removed)
   }
 
   // --- Combined Fetch Function (Optional but cleaner) ---
@@ -1078,26 +1068,67 @@ class MareesFranceCard extends LitElement {
     }
   }
 
-  // --- Tooltip Helpers (Remain on Card) ---
-  _handleTooltipShow(evt) {
-    // Only show hover tooltip if NOT dragging
-    if (!this._isDraggingDot && this._originalDotPosition) {
+  // --- [NEW] Tooltip Handler for Static Current Time Dot ---
+  _showCurrentTimeTooltip(event, timeStr, heightStr) {
+    // Directly call the HTML tooltip display function with pre-formatted data
+    this._showHtmlTooltip(event, timeStr, heightStr);
+  }
+
+  // --- Tooltip Handlers for Interaction (Blue Dot) ---
+  _updateInteractionTooltip(svgX, svgY, timeMinutes, height) {
+    const svg = this._svgContainer?.querySelector('svg');
+    if (!svg) {
+      console.warn('Marees Card: SVG element not found for tooltip update.');
+      return;
+    }
+
+    // Format time and height
+    const hours = Math.floor(timeMinutes / 60);
+    const minutes = Math.floor(timeMinutes % 60);
+    const formattedTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    const formattedHeightStr = height.toFixed(2); // Assuming height is always a number here
+
+    try {
+      // Calculate screen coordinates from SVG coordinates
+      const ctm = svg.getScreenCTM();
+      if (!ctm) {
+        console.warn('Marees Card: Could not get CTM for tooltip positioning.');
+        this._hideHtmlTooltip(); // Hide if we can't position
+        return;
+      }
+      const svgPt = svg.createSVGPoint();
+      svgPt.x = svgX;
+      svgPt.y = svgY;
+      const screenPt = svgPt.matrixTransform(ctm);
+
+      // Create a synthetic event object for positioning
+      const syntheticEvent = {
+        clientX: screenPt.x,
+        clientY: screenPt.y,
+        type: 'interactionMove', // Indicate the source
+      };
+
+      // Call the existing HTML tooltip function
       this._showHtmlTooltip(
-        evt,
-        this._originalDotPosition.timeStr,
-        this._originalDotPosition.heightStr
+        syntheticEvent,
+        formattedTimeStr,
+        formattedHeightStr
       );
+    } catch (transformError) {
+      console.error(
+        'Marees Card: Error transforming SVG point for tooltip:',
+        transformError
+      );
+      this._hideHtmlTooltip(); // Hide on error
     }
   }
 
-  _handleTooltipHide() {
-    // Hide tooltip if NOT dragging (drag move will handle tooltip otherwise)
-    if (!this._isDraggingDot) {
-      this._hideHtmlTooltip();
-    }
+  _hideInteractionTooltip() {
+    this._hideHtmlTooltip();
   }
 
-  _showHtmlTooltip(evt, time, height, isDragging = false) {
+  // --- HTML Tooltip Display Logic (Modified) ---
+  _showHtmlTooltip(evt, time, height) { // Removed isDragging parameter
     const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
     if (!tooltip) return;
 
@@ -1106,61 +1137,43 @@ class MareesFranceCard extends LitElement {
     void tooltip.offsetWidth; // Force reflow
     tooltip.innerHTML = `<strong>${time}</strong><br>${height} m`;
 
-    const targetElement = evt.currentTarget || evt.target;
-    if (!targetElement && !(isDragging && evt.type === 'syntheticDrag')) {
-      console.warn(
-        'Tooltip: Cannot determine target element or synthetic event.'
-      );
+    // Use clientX/clientY directly from the (potentially synthetic) event
+    if (evt.clientX === undefined || evt.clientY === undefined) {
+      console.warn('Tooltip: Event missing clientX/clientY for positioning.');
       this._hideHtmlTooltip();
       return;
     }
 
     const cardRect = this.getBoundingClientRect();
-    let targetCenterX, targetTopY, targetHeight;
-
-    if (
-      isDragging &&
-      evt.type === 'syntheticDrag' &&
-      evt.clientX !== undefined &&
-      evt.clientY !== undefined
-    ) {
-      targetCenterX = evt.clientX - cardRect.left;
-      targetTopY = evt.clientY - cardRect.top;
-      targetHeight = 1;
-    } else if (targetElement?.getBoundingClientRect) {
-      const targetRect = targetElement.getBoundingClientRect();
-      targetCenterX = targetRect.left + targetRect.width / 2 - cardRect.left;
-      targetTopY = targetRect.top - cardRect.top;
-      targetHeight = targetRect.height;
-    } else {
-      console.warn(
-        'Tooltip: Cannot determine target coordinates from event:',
-        evt
-      );
-      this._hideHtmlTooltip();
-      return;
-    }
+    const targetCenterX = evt.clientX - cardRect.left;
+    const targetTopY = evt.clientY - cardRect.top;
+    // We don't have a target element height for synthetic events, use a small default or adjust offset
+    const targetHeight = 1;
 
     const tooltipWidth = tooltip.offsetWidth;
     const tooltipHeight = tooltip.offsetHeight;
 
     if (tooltipWidth <= 0 || tooltipHeight <= 0) {
+      // Tooltip might not be rendered yet or has no content
       this._hideHtmlTooltip();
       return;
     }
 
-    const isTouchEvent = evt.type.startsWith('touch');
-    const offsetAbove = isTouchEvent ? 45 : 10;
+    const isTouchEvent = evt.type.startsWith('touch') || evt.type === 'interactionMove'; // Treat interaction move like touch for offset
+    const offsetAbove = isTouchEvent ? 45 : 10; // Keep larger offset for touch/interaction
     let left = targetCenterX - tooltipWidth / 2;
     let top = targetTopY - tooltipHeight - offsetAbove;
     const safetyMargin = 2;
 
+    // Boundary checks (same as before)
     if (left < safetyMargin) left = safetyMargin;
     if (left + tooltipWidth > cardRect.width - safetyMargin)
       left = cardRect.width - tooltipWidth - safetyMargin;
     if (top < safetyMargin) {
-      top = targetTopY + targetHeight + offsetAbove;
+      // Try positioning below if it doesn't fit above
+      top = targetTopY + targetHeight + offsetAbove; // Use targetHeight (even if small)
       if (top + tooltipHeight > cardRect.height - safetyMargin) {
+        // If it doesn't fit below either, clamp to bottom
         top = cardRect.height - tooltipHeight - safetyMargin;
       }
     }
@@ -1177,180 +1190,8 @@ class MareesFranceCard extends LitElement {
     }
   }
 
-  // --- Drag Handlers (Remain on Card, interact with GraphRenderer) ---
-  _handleDragStart(e, dotGroup, dotCircle, hitAreaCircle) {
-    if (e.button === 2) return;
-    e.preventDefault();
-
-    this._isDraggingDot = true;
-    this.requestUpdate('_isDraggingDot');
-
-    dotCircle.fill('var(--info-color, var(--primary-color))');
-    hitAreaCircle.attr('cursor', 'grabbing');
-    this._hideHtmlTooltip(); // Hide hover tooltip
-
-    // Bind move/end listeners to window
-    this._boundHandleDragMove = (ev) =>
-      this._handleDragMove(ev, dotGroup, dotCircle, hitAreaCircle);
-    this._boundHandleDragEnd = (ev) =>
-      this._handleDragEnd(ev, dotGroup, dotCircle, hitAreaCircle);
-
-    if (e.type === 'touchstart') {
-      window.addEventListener('touchmove', this._boundHandleDragMove, {
-        passive: false,
-      });
-      window.addEventListener('touchend', this._boundHandleDragEnd, {
-        once: true,
-      });
-      window.addEventListener('touchcancel', this._boundHandleDragEnd, {
-        once: true,
-      });
-    } else {
-      window.addEventListener('mousemove', this._boundHandleDragMove);
-      window.addEventListener('mouseup', this._boundHandleDragEnd, {
-        once: true,
-      });
-    }
-  }
-
-  _handleDragMove(e, dotGroup, dotCircle, hitAreaCircle) {
-    if (!this._isDraggingDot || !this._graphRenderer) return;
-    e.preventDefault();
-
-    const svgPoint = this._graphRenderer.getSVGCoordinates(e);
-    // Check if graphRenderer has the necessary data (boundaries) before proceeding
-    if (
-      !svgPoint ||
-      this._graphRenderer.curveMinMinutes === null ||
-      this._graphRenderer.curveMaxMinutes === null
-    )
-      return;
-
-    // Calculate the min/max X coordinates based on the actual curve data times from the renderer
-    const minX = this._graphRenderer._timeToX(
-      this._graphRenderer.curveMinMinutes
-    );
-    const maxX = this._graphRenderer._timeToX(
-      this._graphRenderer.curveMaxMinutes
-    );
-
-    // Clamp the pointer's X coordinate to the curve's boundaries
-    const clampedX = Math.max(minX, Math.min(maxX, svgPoint.x));
-
-    // Convert clamped X back to total minutes using renderer's method
-    const draggedTotalMinutes = this._graphRenderer._xToTotalMinutes(clampedX);
-
-    // Interpolate height based on the clamped dragged time using renderer's method
-    const draggedHeight =
-      this._graphRenderer._interpolateHeight(draggedTotalMinutes);
-
-    if (draggedHeight !== null) {
-      // Calculate the precise Y on the curve using renderer's method
-      const draggedY = this._graphRenderer._heightToY(draggedHeight);
-
-      // Move the visual dot elements
-      dotCircle.center(clampedX, draggedY);
-      hitAreaCircle.center(clampedX, draggedY);
-
-      // Format time and height for tooltip using the clamped time
-      const hours = Math.floor(draggedTotalMinutes / 60);
-      const minutes = Math.floor(draggedTotalMinutes % 60);
-      const draggedTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-      const draggedHeightStr = draggedHeight.toFixed(2);
-
-      // Store dragged position data on the card for tooltip
-      this._draggedPosition = {
-        timeStr: draggedTimeStr,
-        heightStr: draggedHeightStr,
-      };
-      this.requestUpdate('_draggedPosition');
-
-      // Update and show tooltip with dragged data
-      const svg = this._svgContainer?.querySelector('svg');
-      if (svg) {
-        try {
-          const ctm = svg.getScreenCTM();
-          if (ctm) {
-            const svgPt = svg.createSVGPoint();
-            svgPt.x = clampedX;
-            svgPt.y = draggedY;
-            const screenPt = svgPt.matrixTransform(ctm);
-            const syntheticEvent = {
-              clientX: screenPt.x,
-              clientY: screenPt.y,
-              type: 'syntheticDrag',
-            };
-            this._showHtmlTooltip(
-              syntheticEvent,
-              draggedTimeStr,
-              draggedHeightStr,
-              true
-            ); // Pass true for isDragging
-          } else {
-            console.warn(
-              'Marees Card: Could not get CTM for tooltip positioning.'
-            );
-          }
-        } catch (transformError) {
-          console.error(
-            'Marees Card: Error transforming SVG point for tooltip:',
-            transformError
-          );
-        }
-      } else {
-        console.warn(
-          'Marees Card: Could not find SVG element for tooltip positioning.'
-        );
-      }
-    }
-  }
-
-  _handleDragEnd(e, dotGroup, dotCircle, hitAreaCircle) {
-    if (!this._isDraggingDot) return;
-
-    this._isDraggingDot = false;
-    this.requestUpdate('_isDraggingDot');
-
-    // Revert color and cursor
-    dotCircle.fill('var(--current_tide_color)');
-    hitAreaCircle.attr('cursor', 'grab');
-
-    // Move dot back to original position visually
-    if (this._originalDotPosition) {
-      dotCircle.center(
-        this._originalDotPosition.x,
-        this._originalDotPosition.y
-      );
-      hitAreaCircle.center(
-        this._originalDotPosition.x,
-        this._originalDotPosition.y
-      );
-    }
-
-    this._hideHtmlTooltip();
-
-    // Clean up card state
-    this._draggedPosition = null;
-    this.requestUpdate('_draggedPosition');
-
-    // Remove window listeners
-    this._removeDragListeners();
-  }
-
-  // Helper to remove drag listeners
-  _removeDragListeners() {
-    if (this._boundHandleDragMove) {
-      window.removeEventListener('mousemove', this._boundHandleDragMove);
-      window.removeEventListener('touchmove', this._boundHandleDragMove);
-      this._boundHandleDragMove = null;
-    }
-    if (this._boundHandleDragEnd) {
-      window.removeEventListener('mouseup', this._boundHandleDragEnd);
-      window.removeEventListener('touchend', this._boundHandleDragEnd);
-      window.removeEventListener('touchcancel', this._boundHandleDragEnd);
-      this._boundHandleDragEnd = null;
-    }
-  }
+  // --- Drag Handlers (Removed) ---
+  // _handleDragStart, _handleDragMove, _handleDragEnd, _removeDragListeners removed
 
   getCardSize() {
     return 7; // Keep original size calculation

@@ -1,17 +1,22 @@
+```yaml
+
+```
+
 # Intégration Home-Assistant Marées France
 
 Intégration Home-Assistant et sa carte Lovelace pour afficher les marées Françaises du Shom.
 
 ![image info](./img/card.png)
 
+Auteur: @KipK
 
 ## Installation
 
-#### Automatique
+### Automatique
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
+[![Ouvrez votre instance Home Assistant et ajouter automatiquement le dépôt dans le Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
 
-#### Manuelle
+### Manuelle
 
 Ajouter le repository à HACS:  <KipK/marees_france>
 
@@ -28,10 +33,10 @@ Une fois le port sélectionné, l'entité apparaitra dans sensor.marees_france_[
 
 ## Utilisation
 
-Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard. 
+Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard.
 Ajouter sur le dashboard la carte marees_france.
 
-#### Services
+### Services
 
 ![image info](./img/card-editor.png)
 
@@ -39,33 +44,40 @@ L'intégration met à disposition 3 services actions:
 
 - Marées France (SHOM): Récupérer les données de marées: marees_france.get_tides_data
 
-	action: marees_france.get_tides_data
-	data:
-	  device_id: xxxxxxxxxx
-  
+```lang=yaml
+action: marees_france.get_tides_data
+data:
+device_id: xxxxxxxxxx
+```
+
 - Marées France (SHOM): Obtenir les hauteurs d'eau:
 
-	action: marees_france.get_water_levels
-	data:
-	  device_id: xxxxxxxxxx
-	  date: "2025-04-26"
-  
+```lang=yaml
+action: marees_france.get_water_levels
+data:
+device_id: xxxxxxxxxx
+date: "2025-04-26"
+```
+
 - Marées France (SHOM): Obtenir les Données de Coefficients:
 
-	action: marees_france.get_coefficients_data
-	data:
-	  device_id: xxxxxxxxxx
-	  date: "2025-04-26"
-	  days: 10
-
+```lang=yaml
+action: marees_france.get_coefficients_data
+data:
+device_id: xxxxxxxxxx
+date: "2025-04-26"
+days: 10
+```
 
 ## Build
 
 Compiler le frontend
 
+
+```lang=sh
 cd frontend
 npm install
 npm run build
+```
 
 Frontend will be exported in custom_components/marees_info/frontend
-
