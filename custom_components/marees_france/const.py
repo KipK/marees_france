@@ -65,9 +65,12 @@ ATTR_CURRENT_HEIGHT: Final = "current_height"
 MANUFACTURER: Final = "SHOM"
 INTEGRATION_NAME: Final = "Marées France"
 # Storage Keys and Versions
+WATERLEVELS_STORAGE_KEY: Final = f"{DOMAIN}_water_levels_cache"
+WATERLEVELS_STORAGE_VERSION: Final = 1
+TIDES_STORAGE_KEY: Final = f"{DOMAIN}_tides_cache"
+TIDES_STORAGE_VERSION: Final = 1
 COEFF_STORAGE_KEY: Final = f"{DOMAIN}_coefficients_cache"
 COEFF_STORAGE_VERSION: Final = 1
-# Note: TIDES_STORAGE_KEY/VERSION and WATERLEVELS_STORAGE_KEY/VERSION are defined in __init__.py
 TIDE_HIGH: Final = "tide.high"
 TIDE_LOW: Final = "tide.low"
 # Tide Coefficient Thresholds

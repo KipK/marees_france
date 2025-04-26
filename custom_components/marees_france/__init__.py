@@ -23,21 +23,27 @@ import homeassistant.helpers.device_registry as dr # Add device registry import
 
 # Local application/library specific imports
 from .const import (
-    DOMAIN,
-    PLATFORMS,
-    SERVICE_GET_WATER_LEVELS,
-    SERVICE_GET_TIDES_DATA, # Add new service name
-    SERVICE_GET_COEFFICIENTS_DATA, # Add new service name
-    CONF_HARBOR_ID,
-    ATTR_HARBOR_NAME,
     ATTR_DATE,
-    DATE_FORMAT, # Add DATE_FORMAT
-    TIDESURL_TEMPLATE, # Add TIDESURL_TEMPLATE
-    WATERLEVELS_URL_TEMPLATE,
+    ATTR_HARBOR_NAME,
+    COEFF_STORAGE_KEY, # Import storage keys
+    COEFF_STORAGE_VERSION,
     COEFF_URL_TEMPLATE, # Add coefficient URL template
+    CONF_HARBOR_ID,
+    DATE_FORMAT, # Add DATE_FORMAT
+    DOMAIN,
     HEADERS, # Ensure HEADERS is imported
-    SPRING_TIDE_THRESHOLD, # Add Spring threshold
     NEAP_TIDE_THRESHOLD, # Add Neap threshold
+    PLATFORMS,
+    SERVICE_GET_COEFFICIENTS_DATA, # Add new service name
+    SERVICE_GET_TIDES_DATA, # Add new service name
+    SERVICE_GET_WATER_LEVELS,
+    SPRING_TIDE_THRESHOLD, # Add Spring threshold
+    TIDES_STORAGE_KEY,
+    TIDES_STORAGE_VERSION,
+    TIDESURL_TEMPLATE, # Add TIDESURL_TEMPLATE
+    WATERLEVELS_STORAGE_KEY,
+    WATERLEVELS_STORAGE_VERSION,
+    WATERLEVELS_URL_TEMPLATE,
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration # Import frontend helper here
@@ -46,14 +52,6 @@ from .frontend import JSModuleRegistration # Import frontend helper here
 # from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
 
 _LOGGER = logging.getLogger(__name__)
-
-# Storage constants
-WATERLEVELS_STORAGE_KEY = f"{DOMAIN}_water_levels_cache"
-WATERLEVELS_STORAGE_VERSION = 1
-TIDES_STORAGE_KEY = f"{DOMAIN}_tides_cache" # New key for tides
-TIDES_STORAGE_VERSION = 1 # New version for tides
-COEFF_STORAGE_KEY = f"{DOMAIN}_coefficients_cache" # New key for coefficients
-COEFF_STORAGE_VERSION = 1 # New version for coefficients
 
 # Service Schemas
 SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
@@ -754,9 +752,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY) # Tides store
     coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY) # Add Coeff store
 
-    # --- Coordinator Setup (Now uses Tides and Coeff Stores) ---
-    # Pass both stores to the coordinator
-    coordinator = MareesFranceUpdateCoordinator(hass, entry, tides_store, coeff_store) # Add coeff_store
+    # --- Coordinator Setup (Now uses Tides, Coeff, and Water Level Stores) ---
+    # Pass all three stores to the coordinator
+    coordinator = MareesFranceUpdateCoordinator(
+        hass,
+        entry,
+        tides_store,
+        coeff_store,
+        water_level_store # Pass the water level store
+    )
 
     # --- Prefetching (Run before first refresh) ---
     # Run initial prefetches sequentially

@@ -101,7 +101,7 @@
                             "falling": "Falling"
                         }
                     },
-"current_height": { "name": "Current Height" },
+"current_height": { "name": "Current Height" }
                 }
             },
             "next_tide": {

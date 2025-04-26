@@ -150,12 +150,21 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
             return None
 
         attributes = {}
-        # Explicitly add desired attributes
+        # Explicitly add all desired attributes from the coordinator's now_data
         if (trend := self._sensor_data.get(ATTR_TIDE_TREND)) is not None:
             attributes[ATTR_TIDE_TREND] = trend
-        if (height := self._sensor_data.get(ATTR_CURRENT_HEIGHT)) is not None:
-            attributes[ATTR_CURRENT_HEIGHT] = height
-        # Add other relevant attributes from now_data if needed in the future
+        if (current_height := self._sensor_data.get(ATTR_CURRENT_HEIGHT)) is not None:
+            attributes[ATTR_CURRENT_HEIGHT] = current_height
+        if (coeff := self._sensor_data.get(ATTR_COEFFICIENT)) is not None:
+            attributes[ATTR_COEFFICIENT] = coeff
+        if (start_h := self._sensor_data.get(ATTR_STARTING_HEIGHT)) is not None:
+            attributes[ATTR_STARTING_HEIGHT] = start_h
+        if (finish_h := self._sensor_data.get(ATTR_FINISHED_HEIGHT)) is not None:
+            attributes[ATTR_FINISHED_HEIGHT] = finish_h
+        if (start_t := self._sensor_data.get(ATTR_STARTING_TIME)) is not None:
+            attributes[ATTR_STARTING_TIME] = start_t
+        if (finish_t := self._sensor_data.get(ATTR_FINISHED_TIME)) is not None:
+            attributes[ATTR_FINISHED_TIME] = finish_t
 
         return attributes if attributes else None
 
