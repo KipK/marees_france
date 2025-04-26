@@ -256,6 +256,11 @@ class MareesFranceCard extends LitElement {
   _isDraggingDot = false; // NEW: Track drag state
   _originalDotPosition = null; // NEW: Store original {x, y, timeStr, heightStr}
   _draggedPosition = null; // NEW: Store dragged {timeStr, heightStr} during drag
+  _touchStartX = null; // [NEW] For swipe detection
+  _touchStartY = null; // [NEW] For swipe detection
+  _calendarHasPrevData = false; // [NEW] Store calendar nav state
+  _calendarHasNextData = false; // [NEW] Store calendar nav state
+  _calendarContentElement = null; // [NEW] Reference to the dialog content
 
   static get properties() {
     return {
@@ -273,7 +278,10 @@ class MareesFranceCard extends LitElement {
       _draggedPosition: { state: true, attribute: false }, // NEW: Added attribute: false for Lit
       _isCalendarDialogOpen: { state: true, type: Boolean }, // Dialog open state [NEW]
       _calendarSelectedMonth: { state: true }, // Date object for the calendar month [NEW]
-      // _originalDotPosition doesn't need to be reactive
+      _calendarHasPrevData: { state: true }, // [NEW] Make reactive
+      _calendarHasNextData: { state: true }, // [NEW] Make reactive
+      // _touchStartX, _touchStartY don't need to be reactive
+      // _calendarContentElement doesn't need to be reactive
     };
   }
 
@@ -673,21 +681,50 @@ class MareesFranceCard extends LitElement {
     `;
   }
 
-  // --- Dialog Handlers [NEW] ---
-  _openCalendarDialog() {
+  // --- Dialog Handlers [MODIFIED] ---
+  async _openCalendarDialog() { // Make async to await updateComplete
     // Fetch coefficient data if it hasn't been fetched yet or resulted in an error
     if (!this._coefficientsData || this._coefficientsData.error) {
         this._fetchCoefficientsData(); // Fetch on demand if needed
     }
     this._isCalendarDialogOpen = true;
     this._calendarSelectedMonth = new Date(); // Reset to current month on open
+
+    // Wait for the dialog and its content to render before adding listeners
+    await this.updateComplete; // Wait for LitElement update cycle
+
+    this._calendarContentElement = this.shadowRoot?.querySelector('ha-dialog .calendar-dialog-content');
+    if (this._calendarContentElement) {
+        console.log("Marees Card: Adding calendar touch listeners.");
+        // Bind listeners to ensure 'this' context is correct
+        this._boundHandleTouchStart = this._handleTouchStart.bind(this);
+        this._boundHandleTouchMove = this._handleTouchMove.bind(this);
+        this._boundHandleTouchEnd = this._handleTouchEnd.bind(this);
+
+        this._calendarContentElement.addEventListener('touchstart', this._boundHandleTouchStart, { passive: true }); // passive:true initially
+        this._calendarContentElement.addEventListener('touchmove', this._boundHandleTouchMove, { passive: false }); // passive:false to allow preventDefault
+        this._calendarContentElement.addEventListener('touchend', this._boundHandleTouchEnd, { passive: true });
+    } else {
+        console.warn("Marees Card: Could not find calendar content element to attach listeners.");
+    }
   }
 
   _closeCalendarDialog() {
     this._isCalendarDialogOpen = false;
+    // Remove listeners when dialog closes
+    if (this._calendarContentElement) {
+        console.log("Marees Card: Removing calendar touch listeners.");
+        this._calendarContentElement.removeEventListener('touchstart', this._boundHandleTouchStart);
+        this._calendarContentElement.removeEventListener('touchmove', this._boundHandleTouchMove);
+        this._calendarContentElement.removeEventListener('touchend', this._boundHandleTouchEnd);
+        this._calendarContentElement = null; // Clear reference
+    }
+    // Reset touch state
+    this._touchStartX = null;
+    this._touchStartY = null;
   }
 
-  // --- Dialog Content Renderer [MODIFIED FOR GRID CALENDAR] ---
+  // --- Dialog Content Renderer [MODIFIED FOR GRID CALENDAR & NAV STATE] ---
   _renderCalendarDialogContent() {
     const locale = this.hass.language || 'en';
 
@@ -699,6 +736,9 @@ class MareesFranceCard extends LitElement {
     // Handle error state
     if (!this._coefficientsData || this._coefficientsData.error || !this._coefficientsData.response) {
       const errorMsg = this._coefficientsData?.error || localizeCard('ui.card.marees_france.no_coefficient_data', this.hass);
+      // Reset nav state on error
+      this._calendarHasPrevData = false;
+      this._calendarHasNextData = false;
       return html`<div class="dialog-warning">${errorMsg}</div>`;
     }
 
@@ -742,15 +782,17 @@ class MareesFranceCard extends LitElement {
 
     // 3. Next month's padding days
     const totalCells = startingDay + daysInMonth;
-    const remainingCells = 42 - totalCells; // How many cells needed to fill the last row
+    // Ensure we always have 42 cells(6 rows)
+    const targetCells =  42;
+    const remainingCells = targetCells - totalCells;
     for (let i = 1; i <= remainingCells; i++) {
         calendarDays.push({ day: i, isPadding: true, isCurrentMonth: false });
     }
 
-    // --- Check if Prev/Next Months have data (using existing logic) ---
+    // --- Check if Prev/Next Months have data and store in state --- [MODIFIED]
     const availableDates = Object.keys(actualCoeffData).sort();
-    let hasPrevData = false;
-    let hasNextData = false;
+    let hasPrev = false; // Use local vars for calculation
+    let hasNext = false;
     if (availableDates.length > 0) {
         const prevMonthDateObj = new Date(currentYear, currentMonth - 1, 1);
         const nextMonthDateObj = new Date(currentYear, currentMonth + 1, 1);
@@ -760,11 +802,11 @@ class MareesFranceCard extends LitElement {
         const nextMonthMonth = nextMonthDateObj.getMonth();
 
         try {
-            hasPrevData = availableDates.some(dateStr => {
+            hasPrev = availableDates.some(dateStr => {
                 const d = new Date(dateStr);
                 return d.getFullYear() === prevMonthYear && d.getMonth() === prevMonthMonth;
             });
-            hasNextData = availableDates.some(dateStr => {
+            hasNext = availableDates.some(dateStr => {
                 const d = new Date(dateStr);
                 return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonthMonth;
             });
@@ -772,13 +814,17 @@ class MareesFranceCard extends LitElement {
             console.error("Marees Card Dialog: Error checking prev/next month data:", error);
         }
     }
+    // Update state properties (will trigger re-render if changed, but that's ok here)
+    this._calendarHasPrevData = hasPrev;
+    this._calendarHasNextData = hasNext;
+    // --- End Modification ---
 
     return html`
       <div class="calendar-dialog-content">
         <div class="calendar-header">
           <ha-icon-button
             @click="${() => this._changeCalendarMonth(-1)}"
-            .disabled=${!hasPrevData}
+            .disabled=${!this._calendarHasPrevData} 
             title="${localizeCard('ui.card.marees_france.previous_month', this.hass)}"
           >
             <ha-icon icon="mdi:chevron-left"></ha-icon>
@@ -789,7 +835,7 @@ class MareesFranceCard extends LitElement {
           <ha-icon-button
             icon="mdi:chevron-right"
             @click="${() => this._changeCalendarMonth(1)}"
-            .disabled=${!hasNextData}
+            .disabled=${!this._calendarHasNextData}
             title="${localizeCard('ui.card.marees_france.next_month', this.hass)}"
           >
             <ha-icon icon="mdi:chevron-right"></ha-icon>
@@ -823,14 +869,82 @@ class MareesFranceCard extends LitElement {
     `;
   }
 
-  // --- Change Calendar Month Handler [NEW] ---
+  // --- Change Calendar Month Handler [MODIFIED] ---
   _changeCalendarMonth(monthOffset) {
     const newMonth = new Date(this._calendarSelectedMonth);
     newMonth.setMonth(newMonth.getMonth() + monthOffset);
     newMonth.setDate(1); // Go to the first day of the new month
     this._calendarSelectedMonth = newMonth;
+    // Data availability (_calendarHasPrevData/_calendarHasNextData) will be recalculated on the next render
   }
 
+  // --- [NEW] Touch Handlers for Calendar Swipe ---
+  _handleTouchStart(ev) {
+    // Only track single touch
+    if (ev.touches.length === 1) {
+        this._touchStartX = ev.touches[0].clientX;
+        this._touchStartY = ev.touches[0].clientY;
+        // console.log(`Touch Start: X=${this._touchStartX}, Y=${this._touchStartY}`);
+    } else {
+        this._touchStartX = null; // Reset if multiple touches
+        this._touchStartY = null;
+    }
+  }
+
+  _handleTouchMove(ev) {
+    if (!this._touchStartX || !this._touchStartY) {
+        return; // No valid start touch
+    }
+
+    const currentX = ev.touches[0].clientX;
+    const currentY = ev.touches[0].clientY;
+    const deltaX = currentX - this._touchStartX;
+    const deltaY = currentY - this._touchStartY;
+
+    // If horizontal movement is significantly larger than vertical, prevent default scroll
+    if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) { // Adjust multiplier as needed
+        // console.log("Preventing scroll due to horizontal swipe");
+        ev.preventDefault();
+    }
+  }
+
+  _handleTouchEnd(ev) {
+    if (!this._touchStartX || !this._touchStartY || ev.changedTouches.length !== 1) {
+        // console.log("Touch End: Invalid start or multiple touches.");
+        this._touchStartX = null; // Reset state
+        this._touchStartY = null;
+        return; // No valid start touch or multiple end touches
+    }
+
+    const touchEndX = ev.changedTouches[0].clientX;
+    const touchEndY = ev.changedTouches[0].clientY;
+    const deltaX = touchEndX - this._touchStartX;
+    const deltaY = touchEndY - this._touchStartY;
+    const swipeThreshold = 50; // Minimum pixels for a swipe
+
+    // console.log(`Touch End: EndX=${touchEndX}, EndY=${touchEndY}, DeltaX=${deltaX}, DeltaY=${deltaY}`);
+    // console.log(`Nav State: Prev=${this._calendarHasPrevData}, Next=${this._calendarHasNextData}`);
+
+    // Check for horizontal swipe (significant X movement, minimal Y movement)
+    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaY) < swipeThreshold) {
+        // console.log(`Swipe detected: ${deltaX > 0 ? 'Right' : 'Left'}`);
+        if (deltaX > 0 && this._calendarHasPrevData) { // Swipe Right -> Previous Month
+            // console.log("Triggering Previous Month");
+            this._changeCalendarMonth(-1);
+        } else if (deltaX < 0 && this._calendarHasNextData) { // Swipe Left -> Next Month
+            // console.log("Triggering Next Month");
+            this._changeCalendarMonth(1);
+        } else {
+            // console.log("Swipe detected but navigation disabled for this direction.");
+        }
+    } else {
+        // console.log("No significant horizontal swipe detected.");
+    }
+
+    // Reset touch start coordinates for the next touch
+    this._touchStartX = null;
+    this._touchStartY = null;
+  }
 
   // --- Lifecycle method to handle updates and SVG drawing ---
   updated(changedProperties) {
