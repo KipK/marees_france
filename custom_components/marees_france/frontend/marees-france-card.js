@@ -479,14 +479,19 @@ class MareesFranceCard extends LitElement {
     }
 
     try {
-      console.log(`Marees Card: Fetching coefficient data for device ${this.config.device_id}`);
+      // Calculate the first day of the current month
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startDateStr = firstDayOfMonth.toISOString().slice(0, 10); // Format YYYY-MM-DD
+
+      console.log(`Marees Card: Fetching coefficient data for device ${this.config.device_id} starting from ${startDateStr}`);
       const response = await this.hass.callService(
         'marees_france', // domain
         'get_coefficients_data', // service
         { // data
           device_id: this.config.device_id, // Use device_id
-          // date: "YYYY-MM-DD", // Optional: backend defaults to today if omitted
-          days: 365 // Fetch all data
+          date: startDateStr, // Explicitly request data starting from the 1st of the month
+          days: 365 // Fetch 365 days from the start date
         },
         undefined, // target
         false, // blocking
