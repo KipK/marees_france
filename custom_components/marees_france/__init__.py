@@ -541,7 +541,9 @@ async def async_check_and_prefetch_coefficients(
         for d_str in dates_to_prune:
             try:
                 d_date = date.fromisoformat(d_str)
-                if d_date < today:
+                # Prune if the date's year is before the current year,
+                # or if the year is the same but the month is before the current month.
+                if d_date.year < today.year or (d_date.year == today.year and d_date.month < today.month):
                     del cache[harbor_id][d_str]
                     needs_save = True
                     pruned_count += 1
@@ -560,27 +562,31 @@ async def async_check_and_prefetch_coefficients(
     # --- Check and Fetch ---
     harbor_cache = cache.get(harbor_id, {})
     first_missing_date = None
-    last_required_date = today + timedelta(days=364)
+    # Define the required range: 365 days starting from the 1st of the current month
+    first_day_of_current_month = today.replace(day=1)
+    required_start_date = first_day_of_current_month
+    required_end_date = required_start_date + timedelta(days=364) # 365 days total including start date
 
-    # Check from today up to 365 days ahead
-    for i in range(365):
-        check_date = today + timedelta(days=i)
-        check_date_str = check_date.strftime(DATE_FORMAT)
+    # Check from the required start date up to the required end date
+    current_check_date = required_start_date
+    while current_check_date <= required_end_date:
+        check_date_str = current_check_date.strftime(DATE_FORMAT)
         if check_date_str not in harbor_cache:
             if first_missing_date is None:
-                first_missing_date = check_date
-            # Keep checking until the end of the 365-day window to find the full range to fetch
+                first_missing_date = current_check_date
+            # Keep checking until the end of the required window to find the full range to fetch
         elif first_missing_date is not None:
             # We found data *after* finding a missing date. This shouldn't happen with contiguous fetching.
             # Log a warning and fetch from the first missing date anyway.
              _LOGGER.warning("Marées France: Found cached coefficient data for %s after missing date %s. Inconsistency detected.", check_date_str, first_missing_date.strftime(DATE_FORMAT))
-             # Continue checking to ensure we fetch up to the last required date if needed
+             # Continue checking to ensure we fetch up to the required end date if needed
+        current_check_date += timedelta(days=1)
 
     if first_missing_date is not None:
         fetch_start_date = first_missing_date
-        # Calculate days needed: from first missing date up to the last required date
-        fetch_days = (last_required_date - fetch_start_date).days + 1
-        _LOGGER.info("Marées France: Missing coefficient data for %s starting %s. Need to fetch %d days.", harbor_id, fetch_start_date.strftime(DATE_FORMAT), fetch_days)
+        # Calculate days needed: from first missing date up to the required end date
+        fetch_days = (required_end_date - fetch_start_date).days + 1
+        _LOGGER.info("Marées France: Missing coefficient data for %s starting %s (up to %s). Need to fetch %d days.", harbor_id, fetch_start_date.strftime(DATE_FORMAT), required_end_date.strftime(DATE_FORMAT), fetch_days)
 
         fetch_successful = await _async_fetch_and_store_coefficients(hass, store, cache, harbor_id, fetch_start_date, fetch_days)
         if fetch_successful:
@@ -595,7 +601,7 @@ async def async_check_and_prefetch_coefficients(
                  _LOGGER.debug("Marées France: Saved pruned coefficients cache for %s after failed fetch.", harbor_id)
             return # Exit prefetch check
     else:
-         _LOGGER.info("Marées France: Coefficient data cache is up to date for %s (today to today+364).", harbor_id)
+         _LOGGER.info("Marées France: Coefficient data cache is up to date for %s (from %s to %s).", harbor_id, required_start_date.strftime(DATE_FORMAT), required_end_date.strftime(DATE_FORMAT))
 
     # Save if only pruning occurred
     if needs_save:

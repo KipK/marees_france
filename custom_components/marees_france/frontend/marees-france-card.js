@@ -274,14 +274,12 @@ class MareesFranceCard extends LitElement {
       _isLoadingTides: { state: true }, // Loading status for tide data
       _isLoadingCoefficients: { state: true }, // Loading status for coefficient data [NEW]
       _isInitialLoading: { state: true }, // Track initial load vs subsequent loads (maybe combine loaders?)
-      _isDraggingDot: { state: true, type: Boolean }, // NEW: Added type for Lit
+      _isDraggingDot: { state: true }, // NEW: Added type for Lit
       _draggedPosition: { state: true, attribute: false }, // NEW: Added attribute: false for Lit
-      _isCalendarDialogOpen: { state: true, type: Boolean }, // Dialog open state [NEW]
+      _isCalendarDialogOpen: { state: true }, // Dialog open state [NEW]
       _calendarSelectedMonth: { state: true }, // Date object for the calendar month [NEW]
-      _calendarHasPrevData: { state: true }, // [NEW] Make reactive
-      _calendarHasNextData: { state: true }, // [NEW] Make reactive
-      // _touchStartX, _touchStartY don't need to be reactive
-      // _calendarContentElement doesn't need to be reactive
+      _calendarHasPrevData: { state: true }, 
+      _calendarHasNextData: { state: true }, 
     };
   }
 
