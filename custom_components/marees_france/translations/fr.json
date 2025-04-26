@@ -58,7 +58,8 @@
                             "rising": "Montante",
                             "falling": "Descendante"
                         }
-                    }
+                    },
+"current_height": { "name": "Hauteur Actuelle" }
                 }
             },
             "next_tide": {

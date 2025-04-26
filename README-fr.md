@@ -77,29 +77,10 @@ Nom: Prochaine Grande Marée
 	. coefficient
 
 	
-next_neap_tide: : 
- state: Date/Heure de la prochaine eau morte ( <= 40 )
+Nom: Prochaine Morte-Eau: 
+ state: Date/Heure de la prochaine morte-eau ( <= 40 )
  attributes:
 	. coefficient
-
-``` 
-
-
-
-	
-
-next_spring_tide: 
- state: date for next spring tide ( grande marée )
- attributes:
-	. coefficient
-
-	
-next_neap_tide: : 
- state: date for next neap tide ( eau morte ) 
- attributes:
-	. coefficient
-
-```
 
 ### Services
 

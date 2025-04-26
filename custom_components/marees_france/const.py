@@ -61,6 +61,7 @@ ATTR_STARTING_HEIGHT: Final = "starting_height"
 ATTR_FINISHED_HEIGHT: Final = "finished_height"
 ATTR_STARTING_TIME: Final = "starting_time"
 ATTR_FINISHED_TIME: Final = "finished_time"
+ATTR_CURRENT_HEIGHT: Final = "current_height"
 MANUFACTURER: Final = "SHOM"
 INTEGRATION_NAME: Final = "Marées France"
 # Storage Keys and Versions

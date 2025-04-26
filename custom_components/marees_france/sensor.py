@@ -24,6 +24,7 @@ from .const import (
     # ATTR_NEXT_TIDE, # Replaced by specific sensor data keys
     # ATTR_PREVIOUS_TIDE, # Replaced by specific sensor data keys
     ATTR_COEFFICIENT,
+    ATTR_CURRENT_HEIGHT, # Add the new constant
     ATTR_FINISHED_HEIGHT,
     ATTR_FINISHED_TIME,
     ATTR_STARTING_HEIGHT,
@@ -147,8 +148,16 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
         """Return the state attributes."""
         if not self.available or not self._sensor_data:
             return None
-        # Return the whole data block as attributes
-        return self._sensor_data
+
+        attributes = {}
+        # Explicitly add desired attributes
+        if (trend := self._sensor_data.get(ATTR_TIDE_TREND)) is not None:
+            attributes[ATTR_TIDE_TREND] = trend
+        if (height := self._sensor_data.get(ATTR_CURRENT_HEIGHT)) is not None:
+            attributes[ATTR_CURRENT_HEIGHT] = height
+        # Add other relevant attributes from now_data if needed in the future
+
+        return attributes if attributes else None
 
     @property
     def icon(self) -> str:
