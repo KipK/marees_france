@@ -29,11 +29,9 @@ PLATFORMS: Final = [Platform.SENSOR]
 
 # Configuration constants
 CONF_HARBOR_ID: Final = "harbor_id"
-CONF_SCAN_INTERVAL: Final = "scan_interval"
 
 # Default values
 DEFAULT_HARBOR: Final = "PORNICHET"
-DEFAULT_SCAN_INTERVAL_HOURS: Final = 24
 
 # API URLs
 HARBORSURL: Final = "https://services.data.shom.fr/x13f1b4faeszdyinv9zqxmx1/wfs?service=WFS&version=1.0.0&srsName=EPSG:3857&request=GetFeature&typeName=SPM_PORTS_WFS:liste_ports_spm_h2m&outputFormat=application/json"

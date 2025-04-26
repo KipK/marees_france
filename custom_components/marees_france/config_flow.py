@@ -16,9 +16,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
 )
-from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -28,7 +26,6 @@ import homeassistant.helpers.config_validation as cv
 from .const import (
     CONF_HARBOR_ID,
     DEFAULT_HARBOR,
-    DEFAULT_SCAN_INTERVAL_HOURS,
     DOMAIN,
     HARBORSURL,
     HEADERS,
@@ -126,56 +123,11 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_HARBOR_ID, default=DEFAULT_HARBOR): vol.In(
                     self._harbors
                 ),
-                vol.Required(
-                    CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL_HOURS
-                ): cv.positive_int,
             }
         )
 
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
-        )
-
-    @staticmethod
-    @callback
-    def async_get_options_flow(
-        config_entry: ConfigEntry,
-    ) -> OptionsFlow:
-        """Get the options flow for this handler."""
-        return MareesFranceOptionsFlowHandler(config_entry)
-
-
-class MareesFranceOptionsFlowHandler(OptionsFlow):
-    """Handle an options flow for Marées France. Allows changing scan interval."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Manage the options."""
-        errors: dict[str, str] = {}
-
-        if user_input is not None:
-            # Update the config entry with new options
-            return self.async_create_entry(title="", data=user_input)
-
-        # Define the schema for the options form, pre-filled with current values
-        options_schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_SCAN_INTERVAL,
-                    default=self.config_entry.options.get(
-                        CONF_SCAN_INTERVAL
-                    ),  # Use current option value
-                ): cv.positive_int,
-            }
-        )
-
-        return self.async_show_form(
-            step_id="init", data_schema=options_schema, errors=errors
         )
 
 

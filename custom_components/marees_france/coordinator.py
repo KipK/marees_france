@@ -22,10 +22,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     CONF_HARBOR_ID,
-    CONF_SCAN_INTERVAL,
     DATE_FORMAT,
     DOMAIN,
-    DEFAULT_SCAN_INTERVAL_HOURS, # Add missing import
+    # DEFAULT_SCAN_INTERVAL_HOURS, # Removed
     # HEADERS, # No longer fetching
     # TIDESURL_TEMPLATE, # No longer fetching
     TIDE_HIGH,
@@ -55,10 +54,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.tides_store = tides_store # Store the passed store object
         # self.websession = async_get_clientsession(hass) # No longer needed
 
-        update_interval_hours = entry.options.get(
-            CONF_SCAN_INTERVAL, entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_HOURS) # Use get with default
-        )
-        update_interval = timedelta(hours=update_interval_hours)
+        # Set a fixed update interval (e.g., 1 hour) as configuration is removed
+        update_interval = timedelta(hours=1)
 
         super().__init__(
             hass,
