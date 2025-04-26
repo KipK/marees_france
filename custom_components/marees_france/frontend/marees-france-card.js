@@ -1947,8 +1947,8 @@ class MareesFranceCard extends LitElement {
         grid-template-columns: repeat(7, 1fr);
         margin-bottom: 16px;
         gap: 4px;
-        padding-left: 16px; /* Add left padding */
-        padding-right: 16px; /* Add right padding */
+        /* padding-left: 16px; */ /* REMOVED - Let card content padding handle alignment */
+        /* padding-right: 16px; */ /* REMOVED - Let card content padding handle alignment */
       }
       .tab {
         display: flex; /* Use flexbox for vertical alignment */
