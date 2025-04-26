@@ -261,6 +261,12 @@ class MareesFranceCard extends LitElement {
   _calendarHasPrevData = false; // [NEW] Store calendar nav state
   _calendarHasNextData = false; // [NEW] Store calendar nav state
   _calendarContentElement = null; // [NEW] Reference to the dialog content
+  _boundHandlePopState = null; // [NEW] Store bound popstate handler
+
+  constructor() { // [NEW] Add constructor to bind methods
+    super();
+    this._boundHandlePopState = this._handlePopState.bind(this);
+  }
 
   static get properties() {
     return {
@@ -332,6 +338,8 @@ class MareesFranceCard extends LitElement {
     // this._svgDraw = null;
     // this._svgContainer = null;
     console.log("Marees Card: Disconnected and cleaned up observer.");
+    // [NEW] Ensure popstate listener is removed on disconnect
+    window.removeEventListener('popstate', this._boundHandlePopState);
   }
 
   // --- Combined Fetch Function (Optional but cleaner) ---
@@ -684,14 +692,22 @@ class MareesFranceCard extends LitElement {
     `;
   }
 
-  // --- Dialog Handlers [MODIFIED] ---
+  // --- Dialog Handlers [MODIFIED FOR HISTORY] ---
   async _openCalendarDialog() { // Make async to await updateComplete
+    // Prevent opening if already open
+    if (this._isCalendarDialogOpen) return;
+
     // Fetch coefficient data if it hasn't been fetched yet or resulted in an error
     if (!this._coefficientsData || this._coefficientsData.error) {
         this._fetchCoefficientsData(); // Fetch on demand if needed
     }
     this._isCalendarDialogOpen = true;
     this._calendarSelectedMonth = new Date(); // Reset to current month on open
+
+    // [NEW] Push state and add popstate listener
+    history.pushState({ mareesCalendarOpen: true }, '', '#marees-calendar');
+    window.addEventListener('popstate', this._boundHandlePopState);
+    console.log("Marees Card: Pushed history state and added popstate listener.");
 
     // Wait for the dialog and its content to render before adding listeners
     await this.updateComplete; // Wait for LitElement update cycle
@@ -712,9 +728,34 @@ class MareesFranceCard extends LitElement {
     }
   }
 
-  _closeCalendarDialog() {
-    this._isCalendarDialogOpen = false;
-    // Remove listeners when dialog closes
+  // [NEW] Handle popstate event
+  _handlePopState(event) {
+    console.log("Marees Card: Popstate event fired.", event.state, "Dialog open:", this._isCalendarDialogOpen);
+    // If the dialog is open and the new state doesn't indicate it should be (i.e., user navigated back)
+    if (this._isCalendarDialogOpen && !event.state?.mareesCalendarOpen) {
+        console.log("Marees Card: Closing dialog due to popstate.");
+        this._closeCalendarDialog(true); // Pass flag indicating closure is from popstate
+    }
+  }
+
+  _closeCalendarDialog(isFromPopstate = false) {
+    // Prevent closing if already closed
+    if (!this._isCalendarDialogOpen) return;
+
+    console.log(`Marees Card: Closing calendar dialog. From popstate: ${isFromPopstate}`);
+    this._isCalendarDialogOpen = false; // Set state immediately
+
+    // [NEW] Remove popstate listener
+    window.removeEventListener('popstate', this._boundHandlePopState);
+    console.log("Marees Card: Removed popstate listener.");
+
+    // [NEW] If closed normally (not via back button) and history state indicates dialog was open, go back.
+    if (!isFromPopstate && history.state?.mareesCalendarOpen) {
+        console.log("Marees Card: Dialog closed normally, calling history.back().");
+        history.back();
+    }
+
+    // Remove touch listeners when dialog closes
     if (this._calendarContentElement) {
         console.log("Marees Card: Removing calendar touch listeners.");
         this._calendarContentElement.removeEventListener('touchstart', this._boundHandleTouchStart);
