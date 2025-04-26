@@ -1524,111 +1524,104 @@ class MareesFranceCard extends LitElement {
       const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
       if (!tooltip) return;
 
-      // Format the content
+      // --- Revised Show Logic ---
+      // 1. Make element visible and ready for measurement
+      tooltip.style.visibility = 'visible';
+      tooltip.style.display = 'block';
+
+      // 2. Force reflow (read offsetWidth) to ensure styles are applied for measurement
+      void tooltip.offsetWidth; // Reading offsetWidth forces reflow
+
+      // 3. Format the content AFTER ensuring the element is ready
       tooltip.innerHTML = `<strong>${time}</strong><br>${height} m`;
 
-      // Positioning logic (remains mostly the same, might need adjustment based on event source if dragging)
+      // Positioning logic
       const targetElement = evt.currentTarget || evt.target; // Handle different event targets
-      if (!targetElement) return;
+      // Allow synthetic drag events without targetElement
+      if (!targetElement && !(isDragging && evt.type === 'syntheticDrag')) {
+          console.warn("Tooltip: Cannot determine target element or synthetic event.");
+          this._hideHtmlTooltip(); // Hide if target is invalid
+          return;
+      }
 
-      const cardRect = this.getBoundingClientRect();
-      // Use the stored dot position if dragging, otherwise use event target bounds
-      let targetRect;
-      if (isDragging && this._draggedPosition) {
-          // Need to estimate rect based on _draggedPosition's SVG coords
-          // This is tricky without the actual element. Let's try using the event coords for now.
-          // We might need to pass the SVG element reference during drag updates.
-          // For simplicity, let's use the event page coordinates directly for positioning during drag.
-           const svgPoint = this._getSVGCoordinates(evt); // Get SVG coords from event
-           if (!svgPoint) return;
+       const cardRect = this.getBoundingClientRect();
+       let targetCenterX, targetTopY, targetHeight; // Use these for positioning calculation
 
-           // --- FIX: Extract clientX/clientY correctly for touch/mouse events ---
-           let clientX, clientY;
-           if (evt.touches && evt.touches.length > 0) {
-               clientX = evt.touches[0].clientX;
-               clientY = evt.touches[0].clientY;
-           } else if (evt.clientX !== undefined && evt.clientY !== undefined) {
-               clientX = evt.clientX;
-               clientY = evt.clientY;
-           } else {
-               return; // Cannot determine event coordinates
+       if (isDragging && evt.type === 'syntheticDrag' && evt.clientX !== undefined && evt.clientY !== undefined) {
+           // --- Use synthetic event coords directly ---
+           targetCenterX = evt.clientX - cardRect.left;
+           targetTopY = evt.clientY - cardRect.top;
+           targetHeight = 1; // Effectively treat the anchor as a point
+       } else if (targetElement?.getBoundingClientRect) {
+           // --- Original logic for hover events ---
+           const targetRect = targetElement.getBoundingClientRect();
+           targetCenterX = targetRect.left + targetRect.width / 2 - cardRect.left;
+           targetTopY = targetRect.top - cardRect.top;
+           targetHeight = targetRect.height;
+       } else {
+           console.warn("Tooltip: Cannot determine target coordinates from event:", evt);
+           this._hideHtmlTooltip(); // Hide if coords are invalid
+           return; // Cannot get coordinates
+       }
+
+       // Measure tooltip dimensions (needs display: block from above)
+       const tooltipWidth = tooltip.offsetWidth;
+       const tooltipHeight = tooltip.offsetHeight;
+
+       // Check for invalid dimensions (can happen if element is not fully rendered or content is empty)
+       if (tooltipWidth <= 0 || tooltipHeight <= 0) {
+           // console.warn("Tooltip: Invalid dimensions measured.", tooltipWidth, tooltipHeight);
+           // Don't try to position if dimensions are invalid, keep it hidden
+           this._hideHtmlTooltip(); // Use the hide function
+           return;
+       }
+
+       // Determine offset based on event type (touch vs mouse vs synthetic)
+       const isTouchEvent = evt.type.startsWith('touch');
+       const offsetAbove = isTouchEvent ? 45 : 10; // 45px for touch, 10px for mouse/synthetic
+
+       // Calculate desired position
+       let left = targetCenterX - tooltipWidth / 2;
+       let top = targetTopY - tooltipHeight - offsetAbove;
+
+       // Boundary checks (remain the same)
+       const safetyMargin = 2; // Small margin
+
+       // Check left boundary
+       if (left < safetyMargin) {
+           left = safetyMargin;
+       }
+       // Check right boundary
+       if (left + tooltipWidth > cardRect.width - safetyMargin) {
+           left = cardRect.width - tooltipWidth - safetyMargin;
+       }
+       // Check top boundary (if it goes above card, maybe position below instead?)
+       if (top < safetyMargin) {
+           // Option 1: Clamp to top
+           // top = safetyMargin;
+           // Option 2: Position below the dot (use calculated targetHeight)
+           top = targetTopY + targetHeight + offsetAbove; // Position below
+           // Check bottom boundary
+           if (top + tooltipHeight > cardRect.height - safetyMargin) {
+               // If positioning below also fails, try clamping to the bottom edge
+               top = cardRect.height - tooltipHeight - safetyMargin;
+               // As a last resort if clamping to top AND bottom fails (very tall tooltip/short card),
+               // maybe just center it vertically? Or stick to bottom clamp. Let's stick to bottom clamp.
            }
-           // --- End FIX ---
+       }
 
-           // Approximate target rect based on SVG point and dot radius (needs refinement)
-           const dotRadiusPx = 5 * (cardRect.width / 500); // Estimate pixel radius based on scale
-           targetRect = {
-               left: clientX - dotRadiusPx, // Use extracted clientX
-               top: clientY - dotRadiusPx,  // Use extracted clientY
-               width: dotRadiusPx * 2,
-               height: dotRadiusPx * 2
-           };
-
-      } else if (targetElement.getBoundingClientRect) {
-           targetRect = targetElement.getBoundingClientRect();
-      } else {
-          return; // Cannot get bounds
-      }
-
-
-      const targetCenterX = targetRect.left + targetRect.width / 2 - cardRect.left;
-      const targetTopY = targetRect.top - cardRect.top;
-
-      // Temporarily display tooltip to measure its dimensions
-      tooltip.style.visibility = 'hidden'; // Keep it from flashing
-      tooltip.style.display = 'block';
-      const tooltipWidth = tooltip.offsetWidth;
-      const tooltipHeight = tooltip.offsetHeight;
-      tooltip.style.display = 'none'; // Hide again before final positioning
-      tooltip.style.visibility = 'visible';
-
-      // Determine offset based on event type (touch vs mouse)
-      const isTouchEvent = evt.type.startsWith('touch');
-      const offsetAbove = isTouchEvent ? 45 : 10; // 45px for touch, 10px for mouse
-
-      // Calculate desired position
-      let left = targetCenterX - tooltipWidth / 2;
-      let top = targetTopY - tooltipHeight - offsetAbove;
-
-      // Boundary checks (remain the same)
-      const safetyMargin = 2; // Small margin
-
-      // Check left boundary
-      if (left < safetyMargin) {
-          left = safetyMargin;
-      }
-      // Check right boundary
-      if (left + tooltipWidth > cardRect.width - safetyMargin) {
-          left = cardRect.width - tooltipWidth - safetyMargin;
-      }
-      // Check top boundary (if it goes above card, maybe position below instead?)
-      if (top < safetyMargin) {
-          // Option 1: Clamp to top
-          // top = safetyMargin;
-          // Option 2: Position below the dot
-          top = targetTopY + targetRect.height + offsetAbove; // Position below
-          if (top + tooltipHeight > cardRect.height - safetyMargin) {
-              top = cardRect.height - tooltipHeight - safetyMargin;
-          }
-      }
-
-     // Apply final position and display
-     tooltip.style.left = `${left}px`;
-     tooltip.style.top = `${top}px`;
-     tooltip.style.display = 'block';
-     tooltip.style.opacity = '1'; // Ensure visible
- }
+      // Apply final position and display
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      // tooltip.style.display = 'block'; // Already set above
+  }
 
  _hideHtmlTooltip() {
      const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
      if (tooltip) {
-         tooltip.style.opacity = '0'; // Fade out
-         // Use transitionend or setTimeout to set display: none after fade
-         setTimeout(() => {
-             if (tooltip.style.opacity === '0') { // Check if still hidden
-                tooltip.style.display = 'none';
-             }
-         }, 150); // Match CSS transition duration if any
+         // Just hide it directly, remove opacity transition dependency for hiding
+         tooltip.style.display = 'none';
+         tooltip.style.visibility = 'hidden'; // Also set visibility hidden
      }
  }
 
@@ -1703,8 +1696,35 @@ class MareesFranceCard extends LitElement {
          this.requestUpdate('_draggedPosition'); // Update state
 
          // Update and show tooltip with dragged data
-         // Pass the event 'e' for positioning, and isDragging = true
-         this._showHtmlTooltip(e, draggedTimeStr, draggedHeightStr, true);
+         // --- FIX: Calculate screen coords from clamped SVG coords ---
+         const svg = this._svgContainer?.querySelector('svg');
+         if (svg) {
+             try {
+                 const ctm = svg.getScreenCTM();
+                 if (ctm) {
+                     const svgPt = svg.createSVGPoint();
+                     svgPt.x = clampedX;
+                     svgPt.y = draggedY;
+                     const screenPt = svgPt.matrixTransform(ctm);
+                     // Create a synthetic event-like object for positioning
+                     const syntheticEvent = {
+                         clientX: screenPt.x,
+                         clientY: screenPt.y,
+                         type: 'syntheticDrag' // Indicate source
+                     };
+                     this._showHtmlTooltip(syntheticEvent, draggedTimeStr, draggedHeightStr, true);
+                 } else {
+                     // Fallback or skip if CTM is missing
+                     console.warn("Marees Card: Could not get CTM for tooltip positioning.");
+                 }
+             } catch (transformError) {
+                 console.error("Marees Card: Error transforming SVG point for tooltip:", transformError);
+             }
+         } else {
+              // Fallback or skip if SVG element is missing
+              console.warn("Marees Card: Could not find SVG element for tooltip positioning.");
+         }
+         // --- End FIX ---
      }
   }
 
@@ -2035,14 +2055,9 @@ class MareesFranceCard extends LitElement {
       .svg-graph-target svg .has-tooltip {
           cursor: pointer;
       }
-      /* NEW: Style for draggable dot */
-      .svg-graph-target svg .draggable-dot {
-          /* Add specific styles if needed, e.g., hover effects */
-      }
       /* Tooltip styles (within SVG) - Not used for HTML tooltip */
       #marker-tooltip {
           pointer-events: none; /* Tooltip should not capture mouse events */
-          transition: opacity 0.1s ease-in-out;
       }
 
       /* HTML Tooltip Styles */
@@ -2059,8 +2074,6 @@ class MareesFranceCard extends LitElement {
         z-index: 100; /* Ensure it's above the SVG */
         pointer-events: none; /* Tooltip should not interfere with mouse */
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: opacity 0.1s ease-in-out; /* Add transition for fade */
-        opacity: 0; /* Start hidden */
       }
       .chart-tooltip strong {
         font-weight: bold;
