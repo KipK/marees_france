@@ -19,6 +19,7 @@ export class GraphRenderer {
     this.curveMaxMinutes = null;
     this.yDomainMin = null;
     this.yRange = null;
+    this.currentTimeMarkerData = null; // Store current time marker info
 
     this._initializeSvg();
     this._setupResizeObserver();
@@ -399,14 +400,24 @@ export class GraphRenderer {
             minute: '2-digit',
           });
           currentHeightStr = currentHeight.toFixed(2);
-          currentTimeMarkerData = {
+          // Store data for snapping logic
+          this.currentTimeMarkerData = {
             x: currentX,
             y: currentY,
             timeStr: currentTimeStr, // Store formatted string
             heightStr: currentHeightStr, // Store formatted string
+            totalMinutes: currentTotalMinutes,
+            height: currentHeight,
           };
+          currentTimeMarkerData = this.currentTimeMarkerData; // Also assign to local var for drawing
+        } else {
+          this.currentTimeMarkerData = null; // Reset if no valid height
         }
+      } else {
+         this.currentTimeMarkerData = null; // Reset if not today
       }
+    } else {
+       this.currentTimeMarkerData = null; // Reset if not today
     }
 
     // --- Drawing the Actual Graph ---
@@ -429,7 +440,7 @@ export class GraphRenderer {
     const coefBoxRadius = 4;
     const coefBoxTopMargin = 10;
     const coefLineToPeakGap = 3;
-    const dotRadius = 3; // 6px diameter
+    const dotRadius = 6; // 12px diameter
 
     // Draw Base Elements
     draw
@@ -621,39 +632,18 @@ export class GraphRenderer {
 
     // --- Draw Static Current Time Marker (Yellow Dot) ---
     if (currentTimeMarkerData) {
-      const currentTimeDot = draw
-        .circle(dotRadius * 2) // 6px diameter
+      const currentTimeDot = draw; // Assign draw first
+      currentTimeDot.circle(dotRadius * 2) // 12px diameter
         .center(currentTimeMarkerData.x, currentTimeMarkerData.y)
         .fill('var(--tide-icon-color)') // Use the specific yellow color
-        .attr('cursor', 'pointer'); // Indicate it's interactive for tooltip
+        .attr('pointer-events', 'none'); // Make the yellow dot non-interactive
 
-      // Add tooltip listeners directly to the yellow dot
-      currentTimeDot.node.addEventListener('mouseover', (e) => {
-        if (this.card && typeof this.card._showCurrentTimeTooltip === 'function') {
-          this.card._showCurrentTimeTooltip(e, currentTimeMarkerData.timeStr, currentTimeMarkerData.heightStr);
-        }
-      });
-      currentTimeDot.node.addEventListener('touchstart', (e) => {
-         // Prevent touch from triggering overlay interaction simultaneously
-        e.stopPropagation();
-        if (this.card && typeof this.card._showCurrentTimeTooltip === 'function') {
-          this.card._showCurrentTimeTooltip(e, currentTimeMarkerData.timeStr, currentTimeMarkerData.heightStr);
-        }
-      }, { passive: true }); // Passive for showing tooltip is fine
-
-      const hideTooltipHandler = () => {
-        if (this.card && typeof this.card._hideInteractionTooltip === 'function') {
-          this.card._hideInteractionTooltip();
-        }
-      };
-      currentTimeDot.node.addEventListener('mouseout', hideTooltipHandler);
-      currentTimeDot.node.addEventListener('touchend', hideTooltipHandler);
-      currentTimeDot.node.addEventListener('touchcancel', hideTooltipHandler);
+      // REMOVED all listeners from currentTimeDot (mouseover, mouseout)
+      // Interaction is now solely handled by the overlay
 
       // Optional: Add to elementsToKeepSize if scaling is desired, but might not be needed for a simple dot
       // this.elementsToKeepSize.push(currentTimeDot);
     }
-
     // Trigger scale update after drawing
     window.requestAnimationFrame(() => {
       this._updateElementScale();
@@ -694,13 +684,40 @@ export class GraphRenderer {
       const finalX = this._timeToX(clampedTotalMinutes);
       const finalY = this._heightToY(height);
 
-      // Show and move the indicator dot
+      // Always move the blue dot to the interpolated position
       interactionGroup.show();
       interactionDot.center(finalX, finalY);
 
-      // Call the card's method to update the HTML tooltip
+      // Determine if the interpolated position is close to the current time marker
+      // for styling purposes only (isSnapped flag).
+      let isSnapped = false;
+      const snapThreshold = 10; // Pixels in SVG coordinates for proximity check
+      // Check proximity for BOTH mouse and touch events
+      if (this.currentTimeMarkerData) {
+        const dx = finalX - this.currentTimeMarkerData.x;
+        const dy = finalY - this.currentTimeMarkerData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < snapThreshold) {
+          isSnapped = true; // Close enough to yellow dot for styling
+        }
+      }
+
+      // Use the interpolated values for the tooltip content and position,
+      // but pass the isSnapped flag for styling.
+      const tooltipX = finalX;
+      const tooltipY = finalY;
+      const tooltipTime = clampedTotalMinutes;
+      const tooltipHeight = height;
+
+      // Call the card's method to update the HTML tooltip, passing snap status
       if (this.card && typeof this.card._updateInteractionTooltip === 'function') {
-        this.card._updateInteractionTooltip(finalX, finalY, clampedTotalMinutes, height);
+        this.card._updateInteractionTooltip(
+          tooltipX,       // Use interpolated X for positioning tooltip
+          tooltipY,       // Use interpolated Y for positioning tooltip
+          tooltipTime,    // Use interpolated time for content
+          tooltipHeight,  // Use interpolated height for content
+          isSnapped       // Pass the proximity flag for styling
+        );
       }
     } else {
       // Hide if interpolation fails (e.g., pointer is before/after the curve time range)

@@ -1,10 +1,13 @@
 import { LitElement, html, css } from 'lit'; // Use bare specifier for lit
-import { state } from 'lit/decorators.js';
+import { state, property } from 'lit/decorators.js';
 import { localizeCard } from './localize.js';
 import { getWeekdayShort3Letters, getNextTideStatus } from './utils.js';
 import { GraphRenderer } from './graph-renderer.js';
 
 class MareesFranceCard extends LitElement {
+
+  @property({ attribute: false }) hass = null;
+  @property({ attribute: false }) config = null;
   // --- States for GraphRenderer ---
   @state({ attribute: false }) _graphRenderer = null; // Instance of GraphRenderer
   @state({ attribute: false }) _svgContainer = null; // Reference to the SVG container div in the shadow DOM
@@ -1068,14 +1071,8 @@ class MareesFranceCard extends LitElement {
     }
   }
 
-  // --- [NEW] Tooltip Handler for Static Current Time Dot ---
-  _showCurrentTimeTooltip(event, timeStr, heightStr) {
-    // Directly call the HTML tooltip display function with pre-formatted data
-    this._showHtmlTooltip(event, timeStr, heightStr);
-  }
-
-  // --- Tooltip Handlers for Interaction (Blue Dot) ---
-  _updateInteractionTooltip(svgX, svgY, timeMinutes, height) {
+  // --- Tooltip Handlers for Interaction (Blue Dot & Snapped Yellow Dot) ---
+  _updateInteractionTooltip(svgX, svgY, timeMinutes, height, isSnapped = false) { // Add isSnapped parameter
     const svg = this._svgContainer?.querySelector('svg');
     if (!svg) {
       console.warn('Marees Card: SVG element not found for tooltip update.');
@@ -1108,6 +1105,16 @@ class MareesFranceCard extends LitElement {
         type: 'interactionMove', // Indicate the source
       };
 
+      // Get tooltip element and apply/remove snapped class
+      const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
+      if (tooltip) {
+        if (isSnapped) {
+          tooltip.classList.add('snapped-tooltip');
+        } else {
+          tooltip.classList.remove('snapped-tooltip');
+        }
+      }
+
       // Call the existing HTML tooltip function
       this._showHtmlTooltip(
         syntheticEvent,
@@ -1124,6 +1131,11 @@ class MareesFranceCard extends LitElement {
   }
 
   _hideInteractionTooltip() {
+    // Ensure snapped class is removed when hiding
+    const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
+    if (tooltip) {
+      tooltip.classList.remove('snapped-tooltip');
+    }
     this._hideHtmlTooltip();
   }
 
@@ -1442,6 +1454,14 @@ class MareesFranceCard extends LitElement {
         font-weight: bold;
         font-weight: bold;
       }
+      .chart-tooltip.snapped-tooltip {
+        border-color: var(--tide-icon-color); /* Yellow border */
+        color: var(--tide-icon-color); /* Yellow text */
+      }
+      .chart-tooltip.snapped-tooltip strong {
+         color: var(--tide-icon-color); /* Ensure bold text is also yellow */
+      }
+
 
       /* Dialog Styles [MODIFIED FOR GRID] */
       ha-dialog {
