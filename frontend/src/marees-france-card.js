@@ -50,8 +50,7 @@ class MareesFranceCard extends LitElement {
 
   // Define card editor
   static async getConfigElement() {
-    // Dynamically import the editor component when needed
-    await import('./marees-france-card-editor.js');
+    // editor component already loaded
     return document.createElement('marees-france-card-editor');
   }
 
