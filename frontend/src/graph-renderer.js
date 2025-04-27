@@ -145,7 +145,8 @@ export class GraphRenderer {
       return;
     }
 
-    this.resizeObserver = new ResizeObserver(() => { // Removed unused 'entries'
+    this.resizeObserver = new ResizeObserver(() => {
+      // Removed unused 'entries'
       window.requestAnimationFrame(() => {
         this._updateElementScale();
       });
@@ -415,10 +416,10 @@ export class GraphRenderer {
           this.currentTimeMarkerData = null; // Reset if no valid height
         }
       } else {
-         this.currentTimeMarkerData = null; // Reset if not today
+        this.currentTimeMarkerData = null; // Reset if not today
       }
     } else {
-       this.currentTimeMarkerData = null; // Reset if not today
+      this.currentTimeMarkerData = null; // Reset if not today
     }
 
     // --- Drawing the Actual Graph ---
@@ -634,7 +635,8 @@ export class GraphRenderer {
     // --- Draw Static Current Time Marker (Yellow Dot) ---
     this.currentTimeDotElement = null; // Reset reference
     if (currentTimeMarkerData) {
-      this.currentTimeDotElement = draw.circle(dotRadius * 2) // 12px diameter
+      this.currentTimeDotElement = draw
+        .circle(dotRadius * 2) // 12px diameter
         .center(currentTimeMarkerData.x, currentTimeMarkerData.y)
         .fill('var(--tide-icon-color)') // Use the specific yellow color
         .attr('pointer-events', 'none'); // Keep it non-interactive for mouse events
@@ -647,14 +649,14 @@ export class GraphRenderer {
     });
   }
 
-// --- Public method to explicitly refresh scaling ---
+  // --- Public method to explicitly refresh scaling ---
   refreshDimensionsAndScale() {
     // Use rAF to ensure it runs after potential layout changes
     window.requestAnimationFrame(() => {
-        // Add extra check for container existence before scaling
-        if (this.svgContainer && this.svgDraw) {
-             this._updateElementScale();
-        }
+      // Add extra check for container existence before scaling
+      if (this.svgContainer && this.svgDraw) {
+        this._updateElementScale();
+      }
     });
   }
   // --- Interaction Handlers (Blue Dot) ---
@@ -712,7 +714,10 @@ export class GraphRenderer {
       // Apply scaling based on snap status
       if (this.currentTimeDotElement) {
         const scaleValue = isSnapped ? 1.3 : 1.0;
-        this.currentTimeDotElement.transform({ scale: scaleValue, origin: 'center center' });
+        this.currentTimeDotElement.transform({
+          scale: scaleValue,
+          origin: 'center center',
+        });
       }
 
       // Determine which data to show in the tooltip based on snap status
@@ -733,13 +738,16 @@ export class GraphRenderer {
       }
 
       // Call the card's method to update the HTML tooltip, passing snap status and correct data
-      if (this.card && typeof this.card._updateInteractionTooltip === 'function') {
+      if (
+        this.card &&
+        typeof this.card._updateInteractionTooltip === 'function'
+      ) {
         this.card._updateInteractionTooltip(
-          tooltipX,           // Use determined X for positioning tooltip
-          tooltipY,           // Use determined Y for positioning tooltip
-          tooltipTimeValue,   // Use determined time for content
+          tooltipX, // Use determined X for positioning tooltip
+          tooltipY, // Use determined Y for positioning tooltip
+          tooltipTimeValue, // Use determined time for content
           tooltipHeightValue, // Use determined height for content
-          isSnapped           // Pass the proximity flag for styling
+          isSnapped // Pass the proximity flag for styling
         );
       }
     } else {
@@ -756,7 +764,10 @@ export class GraphRenderer {
     }
     // Ensure yellow dot is reset to normal scale when interaction ends
     if (this.currentTimeDotElement) {
-        this.currentTimeDotElement.transform({ scale: 1.0, origin: 'center center' });
+      this.currentTimeDotElement.transform({
+        scale: 1.0,
+        origin: 'center center',
+      });
     }
   }
 
@@ -768,12 +779,30 @@ export class GraphRenderer {
         'rect[fill="transparent"]'
       );
       if (overlay) {
-        overlay.removeEventListener('mousemove', this._boundHandleInteractionMove);
-        overlay.removeEventListener('touchstart', this._boundHandleInteractionMove);
-        overlay.removeEventListener('touchmove', this._boundHandleInteractionMove);
-        overlay.removeEventListener('mouseleave', this._boundHandleInteractionEnd);
-        overlay.removeEventListener('touchend', this._boundHandleInteractionEnd);
-        overlay.removeEventListener('touchcancel', this._boundHandleInteractionEnd);
+        overlay.removeEventListener(
+          'mousemove',
+          this._boundHandleInteractionMove
+        );
+        overlay.removeEventListener(
+          'touchstart',
+          this._boundHandleInteractionMove
+        );
+        overlay.removeEventListener(
+          'touchmove',
+          this._boundHandleInteractionMove
+        );
+        overlay.removeEventListener(
+          'mouseleave',
+          this._boundHandleInteractionEnd
+        );
+        overlay.removeEventListener(
+          'touchend',
+          this._boundHandleInteractionEnd
+        );
+        overlay.removeEventListener(
+          'touchcancel',
+          this._boundHandleInteractionEnd
+        );
       }
     }
     this._boundHandleInteractionMove = null;

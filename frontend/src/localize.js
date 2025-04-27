@@ -8,7 +8,7 @@ export function localizeCard(key, hass, ...args) {
 
   try {
     translated = key.split('.').reduce((o, i) => o[i], langTranslations) || key;
-  } catch { 
+  } catch {
     // Key not found, use the key itself
     translated = key;
   }

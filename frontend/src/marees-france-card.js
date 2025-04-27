@@ -5,7 +5,6 @@ import { getWeekdayShort3Letters, getNextTideStatus } from './utils.js';
 import { GraphRenderer } from './graph-renderer.js';
 
 class MareesFranceCard extends LitElement {
-
   @property({ attribute: false }) hass = null;
   @property({ attribute: false }) config = null;
   // --- States for GraphRenderer ---
@@ -15,7 +14,7 @@ class MareesFranceCard extends LitElement {
   // --- States for Card State & Interaction ---
   // Drag-related states removed (_isDraggingDot, _originalDotPosition, _draggedPosition)
   @state({ type: Object }) _touchStartX = null; // For swipe detection
-  @state({ type: Object })  _touchStartY = null; // For swipe detection
+  @state({ type: Object }) _touchStartY = null; // For swipe detection
   @state({ type: Boolean }) _calendarHasPrevData = false; // Store calendar nav state
   @state({ type: Boolean }) _calendarHasNextData = false; // Store calendar nav state
   @state({ type: Object }) _calendarContentElement = null; // Reference to the dialog content
@@ -95,7 +94,7 @@ class MareesFranceCard extends LitElement {
     super.connectedCallback();
     // Re-setup observer if needed (though firstUpdated should handle initial setup)
     if (!this._mutationObserver && this.shadowRoot) {
-        this._setupMutationObserver();
+      this._setupMutationObserver();
     }
   }
 
@@ -103,8 +102,8 @@ class MareesFranceCard extends LitElement {
     super.disconnectedCallback();
     // Disconnect observer
     if (this._mutationObserver) {
-        this._mutationObserver.disconnect();
-        this._mutationObserver = null;
+      this._mutationObserver.disconnect();
+      this._mutationObserver = null;
     }
     // Destroy the graph renderer if it exists
     if (this._graphRenderer) {
@@ -481,8 +480,9 @@ class MareesFranceCard extends LitElement {
           ? html`
               <div class="card-header">
                 ${this.config.title ?? // User-defined title takes precedence
-                  this._deviceName ?? // Then use the fetched device name
-                  localizeCard('ui.card.marees_france.default_title', this.hass)} {/* Fallback */}
+                this._deviceName ?? // Then use the fetched device name
+                localizeCard('ui.card.marees_france.default_title', this.hass)}
+                {/* Fallback */}
               </div>
             `
           : ''}
@@ -588,19 +588,24 @@ class MareesFranceCard extends LitElement {
           </div>
 
           <!-- SVG Graph Container (Hidden in Edit Mode) -->
-          ${!this.hass?.editMode ? html`
-            <div class="svg-graph-container">
-              ${this._isLoadingWater || this._isLoadingTides
-                ? html`
-                    <ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>
-                  `
-                : ''}
-              <!-- Target for svg.js -->
-              <div id="marees-graph-target" class="svg-graph-target">
-                <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
-              </div>
-            </div>
-          ` : ''}
+          ${!this.hass?.editMode
+            ? html`
+                <div class="svg-graph-container">
+                  ${this._isLoadingWater || this._isLoadingTides
+                    ? html`
+                        <ha-icon
+                          icon="mdi:loading"
+                          class="loading-icon"
+                        ></ha-icon>
+                      `
+                    : ''}
+                  <!-- Target for svg.js -->
+                  <div id="marees-graph-target" class="svg-graph-target">
+                    <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
+                  </div>
+                </div>
+              `
+            : ''}
           <!-- HTML Tooltip Element -->
           <div id="marees-html-tooltip" class="chart-tooltip"></div>
         </div>
@@ -1057,15 +1062,18 @@ class MareesFranceCard extends LitElement {
     }
 
     // --- Fetch Device Name ---
-    const deviceIdChanged = changedProperties.has('config') && changedProperties.get('config')?.device_id !== this.config?.device_id;
-    const hassOrDeviceChanged = changedProperties.has('hass') || deviceIdChanged;
+    const deviceIdChanged =
+      changedProperties.has('config') &&
+      changedProperties.get('config')?.device_id !== this.config?.device_id;
+    const hassOrDeviceChanged =
+      changedProperties.has('hass') || deviceIdChanged;
 
     if (hassOrDeviceChanged && this.hass && this.config?.device_id) {
       const device = this.hass.devices?.[this.config.device_id];
       const newName = device ? device.name : null;
       if (newName !== this._deviceName) {
-         this._deviceName = newName;
-         // console.log("Marees Card: Updated device name:", this._deviceName); // Optional debug log
+        this._deviceName = newName;
+        // console.log("Marees Card: Updated device name:", this._deviceName); // Optional debug log
       }
     } else if (hassOrDeviceChanged && (!this.hass || !this.config?.device_id)) {
       // Reset if hass or device_id becomes unavailable
@@ -1075,7 +1083,7 @@ class MareesFranceCard extends LitElement {
     // --- Trigger Graph Draw on Data Change (if renderer exists) ---
     // Renderer creation/destruction is handled by the MutationObserver
     if (dataOrLoadingChanged && this._graphRenderer) {
-        this._drawGraphIfReady();
+      this._drawGraphIfReady();
     }
   }
 
@@ -1084,11 +1092,18 @@ class MareesFranceCard extends LitElement {
     if (!this.shadowRoot) return; // Need shadowRoot
     if (this._mutationObserver) return; // Already setup
 
-    this._mutationObserver = new MutationObserver(this._handleMutation.bind(this));
-    this._mutationObserver.observe(this.shadowRoot, { childList: true, subtree: true });
+    this._mutationObserver = new MutationObserver(
+      this._handleMutation.bind(this)
+    );
+    this._mutationObserver.observe(this.shadowRoot, {
+      childList: true,
+      subtree: true,
+    });
 
     // Initial check in case the container is already there when observer starts
-    this._handleContainerStateChange(this.shadowRoot.querySelector('#marees-graph-target'));
+    this._handleContainerStateChange(
+      this.shadowRoot.querySelector('#marees-graph-target')
+    );
   }
 
   // --- Mutation Observer Callback ---
@@ -1099,9 +1114,12 @@ class MareesFranceCard extends LitElement {
         let containerRemoved = false;
         let targetNode = null;
 
-        mutation.addedNodes.forEach(node => {
+        mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const container = node.id === 'marees-graph-target' ? node : node.querySelector('#marees-graph-target');
+            const container =
+              node.id === 'marees-graph-target'
+                ? node
+                : node.querySelector('#marees-graph-target');
             if (container) {
               containerAdded = true;
               targetNode = container;
@@ -1109,21 +1127,24 @@ class MareesFranceCard extends LitElement {
           }
         });
 
-        mutation.removedNodes.forEach(node => {
+        mutation.removedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-             // Check if the removed node itself is the container, or if it contained the container
-             if (node.id === 'marees-graph-target' || (this._svgContainer && node.contains(this._svgContainer))) {
-                containerRemoved = true;
-             }
+            // Check if the removed node itself is the container, or if it contained the container
+            if (
+              node.id === 'marees-graph-target' ||
+              (this._svgContainer && node.contains(this._svgContainer))
+            ) {
+              containerRemoved = true;
+            }
           }
         });
 
         if (containerAdded) {
-            // console.log('[MareesCard] MutationObserver: Graph container added.');
-            this._handleContainerStateChange(targetNode);
+          // console.log('[MareesCard] MutationObserver: Graph container added.');
+          this._handleContainerStateChange(targetNode);
         } else if (containerRemoved) {
-            // console.log('[MareesCard] MutationObserver: Graph container removed.');
-            this._handleContainerStateChange(null); // Pass null to indicate removal
+          // console.log('[MareesCard] MutationObserver: Graph container removed.');
+          this._handleContainerStateChange(null); // Pass null to indicate removal
         }
       }
     }
@@ -1131,29 +1152,29 @@ class MareesFranceCard extends LitElement {
 
   // --- Handle Container State Change (Called by Observer/Initial Check) ---
   _handleContainerStateChange(containerElement) {
-     const containerExists = !!containerElement;
+    const containerExists = !!containerElement;
 
-     // Destroy renderer if container is gone but renderer instance exists
-     if (!containerExists && this._graphRenderer) {
-       this._graphRenderer.destroy();
-       this._graphRenderer = null;
-       this._svgContainer = null;
-     }
-     // Create renderer if container exists but renderer instance doesn't
-     else if (containerExists && !this._graphRenderer) {
-       this._svgContainer = containerElement; // Store the actual element reference
-       this._graphRenderer = new GraphRenderer(
-         this,
-         this._svgContainer,
-         this.hass
-       );
-       // Attempt to draw immediately after creation if data is ready
-       this._drawGraphIfReady();
-     }
-     // If container exists and renderer exists, ensure draw (covers race conditions)
-     else if (containerExists && this._graphRenderer) {
-        this._drawGraphIfReady();
-     }
+    // Destroy renderer if container is gone but renderer instance exists
+    if (!containerExists && this._graphRenderer) {
+      this._graphRenderer.destroy();
+      this._graphRenderer = null;
+      this._svgContainer = null;
+    }
+    // Create renderer if container exists but renderer instance doesn't
+    else if (containerExists && !this._graphRenderer) {
+      this._svgContainer = containerElement; // Store the actual element reference
+      this._graphRenderer = new GraphRenderer(
+        this,
+        this._svgContainer,
+        this.hass
+      );
+      // Attempt to draw immediately after creation if data is ready
+      this._drawGraphIfReady();
+    }
+    // If container exists and renderer exists, ensure draw (covers race conditions)
+    else if (containerExists && this._graphRenderer) {
+      this._drawGraphIfReady();
+    }
   }
 
   // --- Helper method to draw graph if conditions are met ---
@@ -1162,11 +1183,14 @@ class MareesFranceCard extends LitElement {
     const dataIsReady =
       !this._isLoadingWater &&
       !this._isLoadingTides &&
-      this._waterLevels && !this._waterLevels.error &&
-      this._tideData && !this._tideData.error;
+      this._waterLevels &&
+      !this._waterLevels.error &&
+      this._tideData &&
+      !this._tideData.error;
 
     // Also check if the container is still connected in the DOM
-    const containerStillExists = this._svgContainer && this.shadowRoot.contains(this._svgContainer);
+    const containerStillExists =
+      this._svgContainer && this.shadowRoot.contains(this._svgContainer);
 
     if (this._graphRenderer && containerStillExists && dataIsReady) {
       // console.log('[MareesCard] _drawGraphIfReady: Conditions met. Drawing graph.');
@@ -1180,16 +1204,25 @@ class MareesFranceCard extends LitElement {
         this._graphRenderer.refreshDimensionsAndScale(); // Uses rAF internally
         // console.log('[MareesCard] _drawGraphIfReady: drawGraph() and refreshDimensionsAndScale() called.');
       } catch (e) {
-        console.error('[MareesCard] _drawGraphIfReady: Error during graph draw/refresh:', e);
+        console.error(
+          '[MareesCard] _drawGraphIfReady: Error during graph draw/refresh:',
+          e
+        );
       }
     } else {
-       // console.log(`[MareesCard] _drawGraphIfReady: Draw skipped. Renderer: ${!!this._graphRenderer}, ContainerExists: ${containerStillExists}, DataReady: ${dataIsReady}`);
+      // console.log(`[MareesCard] _drawGraphIfReady: Draw skipped. Renderer: ${!!this._graphRenderer}, ContainerExists: ${containerStillExists}, DataReady: ${dataIsReady}`);
     }
   }
 
-
   // --- Tooltip Handlers for Interaction (Blue Dot & Snapped Yellow Dot) ---
-  _updateInteractionTooltip(svgX, svgY, timeMinutes, height, isSnapped = false) { // Add isSnapped parameter
+  _updateInteractionTooltip(
+    svgX,
+    svgY,
+    timeMinutes,
+    height,
+    isSnapped = false
+  ) {
+    // Add isSnapped parameter
     // Do not show tooltip if in edit mode
     if (this.hass?.editMode) return;
 
@@ -1260,7 +1293,8 @@ class MareesFranceCard extends LitElement {
   }
 
   // --- HTML Tooltip Display Logic (Modified) ---
-  _showHtmlTooltip(evt, time, height) { // Removed isDragging parameter
+  _showHtmlTooltip(evt, time, height) {
+    // Removed isDragging parameter
     const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
     if (!tooltip) return;
 
@@ -1291,7 +1325,8 @@ class MareesFranceCard extends LitElement {
       return;
     }
 
-    const isTouchEvent = evt.type.startsWith('touch') || evt.type === 'interactionMove'; // Treat interaction move like touch for offset
+    const isTouchEvent =
+      evt.type.startsWith('touch') || evt.type === 'interactionMove'; // Treat interaction move like touch for offset
     const offsetAbove = isTouchEvent ? 45 : 10; // Keep larger offset for touch/interaction
     let left = targetCenterX - tooltipWidth / 2;
     let top = targetTopY - tooltipHeight - offsetAbove;
@@ -1579,9 +1614,8 @@ class MareesFranceCard extends LitElement {
         color: var(--tide-icon-color); /* Yellow text */
       }
       .chart-tooltip.snapped-tooltip strong {
-         color: var(--tide-icon-color); /* Ensure bold text is also yellow */
+        color: var(--tide-icon-color); /* Ensure bold text is also yellow */
       }
-
 
       /* Dialog Styles [MODIFIED FOR GRID] */
       ha-dialog {
