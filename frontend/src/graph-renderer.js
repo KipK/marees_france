@@ -650,6 +650,16 @@ export class GraphRenderer {
     });
   }
 
+// --- Public method to explicitly refresh scaling ---
+  refreshDimensionsAndScale() {
+    // Use rAF to ensure it runs after potential layout changes
+    window.requestAnimationFrame(() => {
+        // Add extra check for container existence before scaling
+        if (this.svgContainer && this.svgDraw) {
+             this._updateElementScale();
+        }
+    });
+  }
   // --- Interaction Handlers (Blue Dot) ---
   _handleInteractionMove(interactionGroup, interactionDot, event) {
     // Prevent default scrolling on touch devices when interacting

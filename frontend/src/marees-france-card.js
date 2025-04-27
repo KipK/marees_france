@@ -20,6 +20,7 @@ class MareesFranceCard extends LitElement {
   @state({ type: Boolean }) _calendarHasNextData = false; // Store calendar nav state
   @state({ type: Object }) _calendarContentElement = null; // Reference to the dialog content
   @state({ attribute: false }) _boundHandlePopState = null; // Store bound popstate handler
+  _mutationObserver = null; // For watching the graph container
 
   constructor() {
     super();
@@ -89,8 +90,21 @@ class MareesFranceCard extends LitElement {
     // Graph renderer will be initialized in `updated`
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    // Re-setup observer if needed (though firstUpdated should handle initial setup)
+    if (!this._mutationObserver && this.shadowRoot) {
+        this._setupMutationObserver();
+    }
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
+    // Disconnect observer
+    if (this._mutationObserver) {
+        this._mutationObserver.disconnect();
+        this._mutationObserver = null;
+    }
     // Destroy the graph renderer if it exists
     if (this._graphRenderer) {
       this._graphRenderer.destroy();
@@ -571,18 +585,20 @@ class MareesFranceCard extends LitElement {
             })}
           </div>
 
-          <!-- SVG Graph Container -->
-          <div class="svg-graph-container">
-            ${this._isLoadingWater || this._isLoadingTides
-              ? html`
-                  <ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>
-                `
-              : ''}
-            <!-- Target for svg.js -->
-            <div id="marees-graph-target" class="svg-graph-target">
-              <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
+          <!-- SVG Graph Container (Hidden in Edit Mode) -->
+          ${!this.hass?.editMode ? html`
+            <div class="svg-graph-container">
+              ${this._isLoadingWater || this._isLoadingTides
+                ? html`
+                    <ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>
+                  `
+                : ''}
+              <!-- Target for svg.js -->
+              <div id="marees-graph-target" class="svg-graph-target">
+                <!-- SVG will be drawn here by _drawGraphWithSvgJs -->
+              </div>
             </div>
-          </div>
+          ` : ''}
           <!-- HTML Tooltip Element -->
           <div id="marees-html-tooltip" class="chart-tooltip"></div>
         </div>
@@ -998,84 +1014,167 @@ class MareesFranceCard extends LitElement {
     this._touchStartY = null;
   }
 
-  // --- Lifecycle method to handle updates and GraphRenderer ---
+  // --- Setup observer on first update ---
+  firstUpdated(changedProperties) {
+    super.firstUpdated(changedProperties);
+    this._setupMutationObserver();
+  }
+
+  // --- Lifecycle method to handle updates ---
   updated(changedProperties) {
     super.updated(changedProperties);
+    // console.log('[MareesCard] updated() called. changedProperties:', changedProperties);
 
-    let needsGraphRedraw = false;
+    const configChanged = changedProperties.has('config');
+    const hassChanged = changedProperties.has('hass'); // Need this for initial load check
 
-    // Initialize GraphRenderer on first update or if container ref is lost/recreated
-    if (!this._graphRenderer || !this.shadowRoot.contains(this._svgContainer)) {
-      this._svgContainer = this.shadowRoot.querySelector(
-        '#marees-graph-target'
-      );
-      if (this._svgContainer) {
-        // If renderer exists, destroy the old one first
-        if (this._graphRenderer) {
-          this._graphRenderer.destroy();
-        }
-        // Create new renderer instance
-        this._graphRenderer = new GraphRenderer(
-          this,
-          this._svgContainer,
-          this.hass
-        );
-        needsGraphRedraw = true; // Need initial draw after setup
-      }
-    }
-
-    let configChanged = changedProperties.has('config');
-
-    // Trigger full data refetch on config change
-    if (configChanged) {
-      this._fetchData();
-      needsGraphRedraw = true; // Graph will redraw after fetch completes
-    }
-    // Trigger initial data fetch if hass/config ready and data not yet fetched
-    else if (
-      changedProperties.has('hass') &&
-      this.hass &&
-      this.config?.device_id &&
-      this._waterLevels === null &&
-      this._tideData === null
-    ) {
-      this._fetchData();
-      needsGraphRedraw = true;
-    }
-
-    // Check if data relevant to the graph changed OR if edit mode was toggled
-    if (
+    const dataOrLoadingChanged =
       changedProperties.has('_selectedDay') ||
       changedProperties.has('_waterLevels') ||
       changedProperties.has('_tideData') ||
       changedProperties.has('_isLoadingWater') ||
-      changedProperties.has('_isLoadingTides')
+      changedProperties.has('_isLoadingTides');
+
+    // --- Handle Data Fetching ---
+    if (configChanged) {
+      // console.log("[MareesCard] Config changed, fetching data.");
+      this._fetchData(); // Fetch all data on config change
+    }
+    // Trigger initial data fetch if hass/config ready and data not yet fetched/loading
+    else if (
+      hassChanged && // Check hass for initial load scenario
+      this.hass &&
+      this.config?.device_id &&
+      this._waterLevels === null && // No water data yet
+      this._tideData === null && // No tide data yet
+      !this._isLoadingWater && // Not already loading water
+      !this._isLoadingTides // Not already loading tides
     ) {
-      needsGraphRedraw = true;
-    } else if (changedProperties.has('hass') && this._graphRenderer && this._waterLevels && !this._waterLevels.error && this._tideData && !this._tideData.error) {
-      // If only hass changed (like exiting edit mode) and data/renderer are ready, force redraw
-      needsGraphRedraw = true;
+      // console.log("[MareesCard] Initial load detected, fetching data.");
+      this._fetchData(); // Fetch all data initially
     }
 
-
-    // Call GraphRenderer to draw if needed and data is ready
-    if (
-      needsGraphRedraw &&
-      this._graphRenderer &&
-      !this._isLoadingWater &&
-      !this._isLoadingTides
-    ) {
-      // Pass necessary data to the renderer
-      this._graphRenderer.drawGraph(
-        this._tideData,
-        this._waterLevels,
-        this._selectedDay
-      );
+    // --- Trigger Graph Draw on Data Change (if renderer exists) ---
+    // Renderer creation/destruction is handled by the MutationObserver
+    if (dataOrLoadingChanged && this._graphRenderer) {
+        this._drawGraphIfReady();
     }
   }
 
+  // --- Mutation Observer Setup ---
+  _setupMutationObserver() {
+    if (!this.shadowRoot) return; // Need shadowRoot
+    if (this._mutationObserver) return; // Already setup
+
+    this._mutationObserver = new MutationObserver(this._handleMutation.bind(this));
+    this._mutationObserver.observe(this.shadowRoot, { childList: true, subtree: true });
+
+    // Initial check in case the container is already there when observer starts
+    this._handleContainerStateChange(this.shadowRoot.querySelector('#marees-graph-target'));
+  }
+
+  // --- Mutation Observer Callback ---
+  _handleMutation(mutationsList) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        let containerAdded = false;
+        let containerRemoved = false;
+        let targetNode = null;
+
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const container = node.id === 'marees-graph-target' ? node : node.querySelector('#marees-graph-target');
+            if (container) {
+              containerAdded = true;
+              targetNode = container;
+            }
+          }
+        });
+
+        mutation.removedNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+             // Check if the removed node itself is the container, or if it contained the container
+             if (node.id === 'marees-graph-target' || (this._svgContainer && node.contains(this._svgContainer))) {
+                containerRemoved = true;
+             }
+          }
+        });
+
+        if (containerAdded) {
+            // console.log('[MareesCard] MutationObserver: Graph container added.');
+            this._handleContainerStateChange(targetNode);
+        } else if (containerRemoved) {
+            // console.log('[MareesCard] MutationObserver: Graph container removed.');
+            this._handleContainerStateChange(null); // Pass null to indicate removal
+        }
+      }
+    }
+  }
+
+  // --- Handle Container State Change (Called by Observer/Initial Check) ---
+  _handleContainerStateChange(containerElement) {
+     const containerExists = !!containerElement;
+
+     // Destroy renderer if container is gone but renderer instance exists
+     if (!containerExists && this._graphRenderer) {
+       this._graphRenderer.destroy();
+       this._graphRenderer = null;
+       this._svgContainer = null;
+     }
+     // Create renderer if container exists but renderer instance doesn't
+     else if (containerExists && !this._graphRenderer) {
+       this._svgContainer = containerElement; // Store the actual element reference
+       this._graphRenderer = new GraphRenderer(
+         this,
+         this._svgContainer,
+         this.hass
+       );
+       // Attempt to draw immediately after creation if data is ready
+       this._drawGraphIfReady();
+     }
+     // If container exists and renderer exists, ensure draw (covers race conditions)
+     else if (containerExists && this._graphRenderer) {
+        this._drawGraphIfReady();
+     }
+  }
+
+  // --- Helper method to draw graph if conditions are met ---
+  _drawGraphIfReady() {
+    // Check conditions: must have renderer, container, and ready data
+    const dataIsReady =
+      !this._isLoadingWater &&
+      !this._isLoadingTides &&
+      this._waterLevels && !this._waterLevels.error &&
+      this._tideData && !this._tideData.error;
+
+    // Also check if the container is still connected in the DOM
+    const containerStillExists = this._svgContainer && this.shadowRoot.contains(this._svgContainer);
+
+    if (this._graphRenderer && containerStillExists && dataIsReady) {
+      // console.log('[MareesCard] _drawGraphIfReady: Conditions met. Drawing graph.');
+      try {
+        this._graphRenderer.drawGraph(
+          this._tideData,
+          this._waterLevels,
+          this._selectedDay
+        );
+        // Refresh scaling *after* drawing
+        this._graphRenderer.refreshDimensionsAndScale(); // Uses rAF internally
+        // console.log('[MareesCard] _drawGraphIfReady: drawGraph() and refreshDimensionsAndScale() called.');
+      } catch (e) {
+        console.error('[MareesCard] _drawGraphIfReady: Error during graph draw/refresh:', e);
+      }
+    } else {
+       // console.log(`[MareesCard] _drawGraphIfReady: Draw skipped. Renderer: ${!!this._graphRenderer}, ContainerExists: ${containerStillExists}, DataReady: ${dataIsReady}`);
+    }
+  }
+
+
   // --- Tooltip Handlers for Interaction (Blue Dot & Snapped Yellow Dot) ---
   _updateInteractionTooltip(svgX, svgY, timeMinutes, height, isSnapped = false) { // Add isSnapped parameter
+    // Do not show tooltip if in edit mode
+    if (this.hass?.editMode) return;
+
     const svg = this._svgContainer?.querySelector('svg');
     if (!svg) {
       console.warn('Marees Card: SVG element not found for tooltip update.');
