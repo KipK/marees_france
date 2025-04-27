@@ -12,7 +12,7 @@ from typing import Any # Add Any import
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse # Add SupportsResponse here
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, CoreState, EVENT_HOMEASSISTANT_STARTED # Add CoreState, EVENT_HOMEASSISTANT_STARTED, Add SupportsResponse here
 from homeassistant.exceptions import HomeAssistantError # Import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession # Import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change # Add time tracker import
@@ -597,14 +597,29 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
 
 # --- Component Setup ---
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Marées France component."""
-    # Register the custom frontend panel (custom card)
-    # This should only happen once
+async def async_register_frontend_modules_when_ready(hass: HomeAssistant):
+    """Register frontend modules once Home Assistant is started."""
+    _LOGGER.debug("Home Assistant started, registering frontend modules.")
     module_register = JSModuleRegistration(hass)
     await module_register.async_register()
     _LOGGER.debug("Marées France: Registered Marées France frontend module.")
-    # Return true to indicate successful setup of the component
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Marées France component."""
+    # Defer frontend registration until HA is started
+    async def _setup_frontend(_event=None):
+        """Register frontend modules."""
+        await async_register_frontend_modules_when_ready(hass)
+
+    if hass.state == CoreState.running:
+        _LOGGER.debug("Home Assistant already running, registering frontend modules immediately.")
+        await _setup_frontend()
+    else:
+        _LOGGER.debug("Home Assistant not running yet, scheduling frontend module registration.")
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
+
+    # Return true immediately, registration is now handled asynchronously
     return True
 
 
