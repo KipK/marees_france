@@ -1,127 +1,136 @@
-```yaml
+# 🌊 Intégration Home Assistant — Marées France
 
-```
+**Affichez les marées françaises du SHOM directement dans Home Assistant, grâce à une intégration simple et une carte Lovelace personnalisée.**
 
-# Intégration Home-Assistant Marées France
+![Carte Lovelace Marées France](./img/card.png)
 
-Intégration Home-Assistant et sa carte Lovelace pour afficher les marées Françaises du Shom.
+**Auteur** : [@KipK](https://github.com/KipK)
 
-![image info](./img/card.png)
+---
 
-Auteur: @KipK
+## 🚀 Installation
 
-## Installation
+### Automatique via HACS
 
-### Automatique
-
-[![Ouvrez votre instance Home Assistant et ajouter automatiquement le dépôt dans le Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
+[![Ajouter à Home Assistant via HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
 
 ### Manuelle
 
-Ajouter le repository à HACS:  <KipK/marees_france>
+1. Ajouter le dépôt `KipK/marees_france` dans HACS.
+2. Rechercher **Marées France** dans HACS et installer l’intégration.
 
-Rechercher "Marées France" dans HACS et installer.
+---
 
-## Configuration
+## ⚙️ Configuration
 
-Dans Appareils et Services / Intégrations, ajouter une Intégration, sélectionner Marées France.
-Sélectionner le port le plus proche dans la liste.
+1. Dans **Appareils et Services → Ajouter une intégration**, rechercher **Marées France**.
+2. Sélectionner le **port le plus proche** dans la liste proposée.
 
-![image info](./img/integration-config.png)
+![Configuration de l'intégration](./img/integration-config.png)
 
-Une fois le port sélectionné, l'entité apparaitra dans sensor.marees_france_[NOM_DU_PORT]
+Une fois configurée, l’entité sera disponible sous le nom :  
+`sensor.marees_france_[NOM_DU_PORT]`
 
-## Utilisation
+---
 
-Une carte Lovelace est pré-installée avec l'intégration pour afficher les données sur votre dashboard.
-Ajouter sur le dashboard la carte marees_france.
+## 🖼️ Utilisation
 
-### Entités
+Une **carte Lovelace personnalisée** est fournie avec l'intégration !  
+Ajoutez simplement la **carte Marées France** dans votre dashboard.
 
-Friendly_name: "[PORT] Marée Actuelle"
-Etat: "Montante/Descendante jusqu'à [HEURE]"
-Attributs:
-. coefficient: 96              - Coéfficient de marée
-. tide_trend:  raising|falling - Tendance
-. starting_height: 1.27        - Hauteur de début de cycle
-. current_height: 2.30         - Hauteur courante
-. finished_height: 4.73        - Hauteur de fin de cycle
-. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
-. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+---
 
+## 📈 Entités créées
 
-nom: [PORT] Prochaine Marée
-Etat: Date/Heure de la prochaine marée
-Attributs:
-. coefficient: 96              - Coéfficient de marée
-. tide_trend:  Low|High tide   - Tendance
-. starting_height: 1.27        - Hauteur de début de cycle
-. finished_height: 4.73        - Hauteur de fin de cycle
-. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
-. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+### Marée actuelle
 
-nom: [PORT] Marée Précédente
-Etat: Date/Heure de la précédente marée
-Attributs:
-. coefficient: 96              - Coéfficient de marée
-. tide_trend:  Low|High tide   - Tendance
-. starting_height: 1.27        - Hauteur de début de cycle
-. finished_height: 4.73        - Hauteur de fin de cycle
-. starting time: 2025-04-2(..) - Date/Heure du départ de cycle
-. finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
+| Attribut             | Description                    |
+|----------------------|---------------------------------|
+| `coefficient`         | Coefficient de marée            |
+| `tide_trend`          | Montante / Descendante          |
+| `current_height`      | Hauteur actuelle                |
+| `starting_height`     | Hauteur au début du cycle       |
+| `finished_height`     | Hauteur à la fin du cycle       |
+| `starting_time`       | Heure de début du cycle         |
+| `finished_time`       | Heure de fin du cycle           |
 
-Nom: Prochaine Grande Marée
- state: Date/Heure de la prochaine grande marée ( >= 100
- attributes:
-. coefficient
+État : `Montante` ou `Descendante` jusqu’à l’heure indiquée.
 
-Nom: Prochaine Morte-Eau: 
- state: Date/Heure de la prochaine morte-eau ( <= 40 )
- attributes:
-. coefficient
+### Prochaine marée
 
-### Services
+Même attributs que ci-dessus, pour l’événement de marée suivant.
 
-![image info](./img/card-editor.png)
+### Marée précédente
 
-L'intégration met à disposition 3 services actions:
+Même attributs que ci-dessus, pour l’événement de marée précédent.
 
-- Marées France (SHOM): Récupérer les données de marées: marees_france.get_tides_data
+### Prochaine grande marée
 
-```lang=yaml
+- **État** : Date/heure de la prochaine grande marée (coefficient ≥ 100)
+- **Attribut** : `coefficient`
+
+### Prochaine morte-eau
+
+- **État** : Date/heure de la prochaine morte-eau (coefficient ≤ 40)
+- **Attribut** : `coefficient`
+
+---
+
+## 🛠️ Services disponibles
+
+![Éditeur de carte](./img/card-editor.png)
+
+Trois services sont disponibles :
+
+### 1. Récupérer les données de marées
+
+```yaml
 action: marees_france.get_tides_data
 data:
-device_id: xxxxxxxxxx
+  device_id: xxxxxxxxxx
 ```
 
-- Marées France (SHOM): Obtenir les hauteurs d'eau:
+### 2. Obtenir les hauteurs d’eau pour une date spécifique
 
-```lang=yaml
+```yaml
 action: marees_france.get_water_levels
 data:
-device_id: xxxxxxxxxx
-date: "2025-04-26"
+  device_id: xxxxxxxxxx
+  date: "2025-04-26"
 ```
 
-- Marées France (SHOM): Obtenir les Données de Coefficients:
+### 3. Obtenir les coefficients pour plusieurs jours
 
-```lang=yaml
+```yaml
 action: marees_france.get_coefficients_data
 data:
-device_id: xxxxxxxxxx
-date: "2025-04-26"
-days: 10
+  device_id: xxxxxxxxxx
+  date: "2025-04-26"
+  days: 10
 ```
 
-## Build
+---
 
-Compiler le frontend
+## 🛠️ Build du Frontend
 
+Pour compiler la carte Lovelace :
 
-```lang=sh
+```bash
 cd frontend
 npm install
 npm run build
 ```
 
-Frontend will be exported in custom_components/marees_info/frontend
+Le build sera généré dans :  
+`custom_components/marees_info/frontend`
+
+---
+
+# 🎯 Notes
+
+- Source des données : **SHOM** (Service Hydrographique et Océanographique de la Marine).
+- Entièrement compatible avec **Home Assistant** via **HACS**.
+
+---
+
+👉 [🇬🇧 Read this documentation in English](./README.md)
