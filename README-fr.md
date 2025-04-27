@@ -38,6 +38,8 @@ Une fois configurée, l’entité sera disponible sous le nom :
 Une **carte Lovelace personnalisée** est fournie avec l'intégration !  
 Ajoutez simplement la **carte Marées France** dans votre dashboard.
 
+![Éditeur de carte](./img/card-editor.png)
+
 ---
 
 ## 📈 Entités créées
@@ -78,7 +80,6 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 
 ## 🛠️ Services disponibles
 
-![Éditeur de carte](./img/card-editor.png)
 
 Trois services sont disponibles :
 

@@ -38,6 +38,8 @@ Once configured, the entity will appear as:
 A **custom Lovelace card** is provided with the integration!  
 Simply add the **Tides France card** to your dashboard.
 
+![Card Editor](./img/card-editor.png)
+
 ---
 
 ## 📈 Entities created
@@ -77,8 +79,6 @@ Same attributes as above, for the last tide event.
 ---
 
 ## 🛠️ Available Services
-
-![Card Editor](./img/card-editor.png)
 
 Three services are available:
 
