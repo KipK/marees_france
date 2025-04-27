@@ -60,7 +60,7 @@ class MareesFranceCard extends LitElement {
     return {
       device_id: '', // Use device_id now
       show_header: true,
-      title: localizeCard('ui.card.marees_france.default_title', null), // Provide default title
+      title: null, 
     };
   }
 
@@ -482,7 +482,6 @@ class MareesFranceCard extends LitElement {
                 ${this.config.title ?? // User-defined title takes precedence
                 this._deviceName ?? // Then use the fetched device name
                 localizeCard('ui.card.marees_france.default_title', this.hass)}
-                {/* Fallback */}
               </div>
             `
           : ''}
