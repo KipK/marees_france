@@ -1,4 +1,4 @@
-# 🌊 Home Assistant Integration — Tides France
+# 🌊 Home Assistant Integration — Marées France
 
 👉 [🇫🇷 Read this documentation in French](./README-fr.md)
 
