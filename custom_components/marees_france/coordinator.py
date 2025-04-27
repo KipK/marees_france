@@ -16,10 +16,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 # from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady # No longer fetching
 # from homeassistant.helpers.aiohttp_client import async_get_clientsession # No longer fetching
+from homeassistant.helpers.aiohttp_client import async_get_clientsession # Needed for fetch helper
 from homeassistant.helpers.storage import Store # Import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+# Import necessary components from __init__ for the fetch helper
 from .const import (
     ATTR_COEFFICIENT, # Add attribute keys
     ATTR_CURRENT_HEIGHT, # Add current height attribute
@@ -37,8 +39,13 @@ from .const import (
     STATE_LOW_TIDE,
     TIDE_HIGH,
     TIDE_LOW,
-    # Storage keys/versions are no longer needed here
+    HEADERS, # Needed for fetch helper
+    WATERLEVELS_STORAGE_KEY, # Needed for fetch helper store access
+    WATERLEVELS_STORAGE_VERSION, # Needed for fetch helper store access
+    WATERLEVELS_URL_TEMPLATE, # Needed for fetch helper URL
 )
+# Import the helper function from the new api_helpers module
+from .api_helpers import _async_fetch_and_store_water_level
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,8 +116,39 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         future_window_days = 366 # Look up to a year ahead for coeffs
         tides_data_for_parser = {}
         coeff_data_for_parser = {}
-        water_level_data_for_parser = harbor_water_level_cache.get(today_str) # Get today's water levels
+        water_level_data_for_parser = harbor_water_level_cache.get(today_str) # Try getting today's water levels first
 
+        # --- Check and Fetch Today's Water Levels if Missing ---
+        if water_level_data_for_parser is None:
+            _LOGGER.info(
+                "Marées France Coordinator: Today's (%s) water level data missing from cache for %s. Attempting fetch...",
+                today_str, self.harbor_id
+            )
+            # We need the store object again here to pass to the helper
+            # Note: Re-creating the Store object here is okay as it points to the same underlying file.
+            # Alternatively, store it on self during __init__ if preferred.
+            wl_store = Store[dict[str, dict[str, Any]]](self.hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
+            # The helper needs the full cache dictionary to update it before saving.
+            # We already loaded it as water_level_cache_full.
+            fetched_data = await _async_fetch_and_store_water_level(
+                self.hass,
+                wl_store, # Pass the store object
+                water_level_cache_full, # Pass the full cache dict
+                self.harbor_id,
+                today_str
+            )
+            if fetched_data:
+                _LOGGER.info("Marées France Coordinator: Successfully fetched today's water level data.")
+                water_level_data_for_parser = fetched_data # Use the freshly fetched data
+                # Update the harbor-specific cache view as well, although it's less critical now
+                harbor_water_level_cache[today_str] = fetched_data
+            else:
+                _LOGGER.warning(
+                    "Marées France Coordinator: Failed to fetch today's water level data on demand. Current height will be unavailable.",
+                )
+                # water_level_data_for_parser remains None
+
+        # --- Continue preparing data for parser ---
         for i in range(-1, future_window_days + 1): # -1 for yesterday's tides
             check_date = today + timedelta(days=i)
             check_date_str = check_date.strftime(DATE_FORMAT)
@@ -148,6 +186,10 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Parse the combined tide and coefficient data
             # Pass only high/low translations needed for next/previous attributes initially
             # Pass water level data to the parser
+            _LOGGER.debug(
+                "Marées France Coordinator: Calling _parse_tide_data with water_level_data_for_parser: %s",
+                water_level_data_for_parser
+            )
             return await self._parse_tide_data(
                 tides_data_for_parser,
                 coeff_data_for_parser,
@@ -300,22 +342,51 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # --- Calculate Current Height from Water Levels ---
         current_water_height = None
-        if water_level_raw_data and isinstance(water_level_raw_data.get("data"), list):
-            water_levels = water_level_raw_data["data"]
+        # Add detailed logging before the check
+        _LOGGER.debug("Marées France Coordinator: Checking water level data for current height calculation. Received data: %s", water_level_raw_data)
+
+        water_levels = None # Initialize
+        today_str_check = date.today().strftime(DATE_FORMAT) # Get today's date string key
+
+        if isinstance(water_level_raw_data, dict) and isinstance(water_level_raw_data.get(today_str_check), list):
+            # Directly access the list using today's date string as the key
+            _LOGGER.debug("Marées France Coordinator: Extracting water levels using key '%s'.", today_str_check)
+            water_levels = water_level_raw_data[today_str_check]
+        elif water_level_raw_data is not None:
+             _LOGGER.warning("Marées France Coordinator: Received water level data, but it's not a dictionary or lacks the expected key '%s'. Data: %s", today_str_check, water_level_raw_data)
+        # else: water_level_raw_data is None, already logged before calling parse
+
+        # Proceed only if we successfully extracted water_levels list
+        if water_levels:
             closest_entry = None
             min_diff = timedelta.max
+            # Use the date string key for parsing
+            today_str_parse = today_str_check
 
             for entry in water_levels:
                 if isinstance(entry, list) and len(entry) == 2:
                     try:
-                        # Water level timestamp is already ISO UTC string
-                        entry_dt = datetime.fromisoformat(entry[0])
+                        # Combine date and time, parse, localize, convert to UTC
+                        time_str = entry[0]
+                        # Ensure time_str has seconds if missing (strptime needs %S)
+                        if len(time_str) == 5: # HH:MM
+                            time_str += ":00" # Append :00 for seconds
+                        elif len(time_str) != 8: # Not HH:MM:SS
+                            raise ValueError(f"Unexpected time format: {time_str}")
+
+                        dt_naive = datetime.strptime(f"{today_str_parse} {time_str}", f"{DATE_FORMAT} %H:%M:%S")
+                        # Assume water level times are Europe/Paris like tide times
+                        dt_local = paris_tz.localize(dt_naive) # paris_tz is defined earlier in the function
+                        entry_dt = dt_local.astimezone(timezone.utc)
+
                         diff = abs(now_utc - entry_dt)
                         if diff < min_diff:
                             min_diff = diff
                             closest_entry = entry
-                    except (ValueError, TypeError):
-                        _LOGGER.warning("Marées France Coordinator: Skipping invalid water level entry format: %s", entry)
+                    except (ValueError, TypeError, pytz.exceptions.AmbiguousTimeError, pytz.exceptions.NonExistentTimeError) as e:
+                        # Add more detail to this warning, include the exception
+                        _LOGGER.warning("Marées France Coordinator: Skipping water level entry due to parsing/timezone error for %s: %s (%s)",
+                                        entry, e.__class__.__name__, e)
                         continue
 
             if closest_entry:
@@ -330,9 +401,11 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 else:
                      _LOGGER.warning("Marées France Coordinator: Closest water level entry is too old (%s difference). Cannot determine current height.", min_diff)
             else:
-                 _LOGGER.warning("Marées France Coordinator: Could not find any valid water level entries for today.")
-        else:
-             _LOGGER.warning("Marées France Coordinator: No water level data available for today to determine current height.")
+                 # This log might trigger if all entries fail timestamp parsing
+                 _LOGGER.warning("Marées France Coordinator: Could not find any valid/parseable water level entries for today.")
+        # else: # This else corresponds to 'if water_levels:' - logging already handled above if water_levels is None/empty
+             # _LOGGER.warning("Marées France Coordinator: No valid water level list available for today to determine current height.")
+
 
         # Add current height to now_data if available
         if now_data is not None and current_water_height is not None:
@@ -387,14 +460,18 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 break
 
         # --- Assemble final data structure ---
+        # Convert date strings to date objects if they exist
+        next_spring_date_obj = date.fromisoformat(next_spring_date_str) if next_spring_date_str else None
+        next_neap_date_obj = date.fromisoformat(next_neap_date_str) if next_neap_date_str else None
+
         final_data = {
             "now_data": now_data,
             "next_data": next_data,
             "previous_data": previous_data,
-            # Simplified Spring/Neap data
-            "next_spring_date": next_spring_date_str,
+            # Use date objects for HA compatibility
+            "next_spring_date": next_spring_date_obj,
             "next_spring_coeff": next_spring_coeff,
-            "next_neap_date": next_neap_date_str,
+            "next_neap_date": next_neap_date_obj,
             "next_neap_coeff": next_neap_coeff,
             "last_update": last_update_iso, # Use stored ISO string
         }
