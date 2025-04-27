@@ -1043,7 +1043,7 @@ class MareesFranceCard extends LitElement {
       needsGraphRedraw = true;
     }
 
-    // Check if data relevant to the graph changed
+    // Check if data relevant to the graph changed OR if edit mode was toggled
     if (
       changedProperties.has('_selectedDay') ||
       changedProperties.has('_waterLevels') ||
@@ -1052,7 +1052,11 @@ class MareesFranceCard extends LitElement {
       changedProperties.has('_isLoadingTides')
     ) {
       needsGraphRedraw = true;
+    } else if (changedProperties.has('hass') && this._graphRenderer && this._waterLevels && !this._waterLevels.error && this._tideData && !this._tideData.error) {
+      // If only hass changed (like exiting edit mode) and data/renderer are ready, force redraw
+      needsGraphRedraw = true;
     }
+
 
     // Call GraphRenderer to draw if needed and data is ready
     if (
