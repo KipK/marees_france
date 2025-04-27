@@ -70,17 +70,15 @@ Attributs:
 . starting time: 2025-04-2(..) - Date/Heure du départ de cycle
 . finished_time: 2025-04-2(..) - Date/Heure de la fin de cycle
 
-
 Nom: Prochaine Grande Marée
  state: Date/Heure de la prochaine grande marée ( >= 100
  attributes:
-	. coefficient
+. coefficient
 
-	
 Nom: Prochaine Morte-Eau: 
  state: Date/Heure de la prochaine morte-eau ( <= 40 )
  attributes:
-	. coefficient
+. coefficient
 
 ### Services
 

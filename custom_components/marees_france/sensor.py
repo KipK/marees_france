@@ -32,6 +32,7 @@ from .const import (
     ATTR_TIDE_TREND,
     ATTRIBUTION, # Keep custom attribution if needed, or use HA const
     CONF_HARBOR_ID,
+    CONF_HARBOR_NAME, # Import the harbor name constant
     DOMAIN,
     MANUFACTURER,
     # TIDE_HIGH, # Logic moved to coordinator
@@ -79,15 +80,18 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._harbor_id = config_entry.data[CONF_HARBOR_ID]
+        # Get the human-readable harbor name, fallback to ID if missing (e.g., pre-migration)
+        self._harbor_name = config_entry.data.get(CONF_HARBOR_NAME, self._harbor_id)
         self._sensor_key = sensor_key # e.g., "now_data", "next_data"
 
         # Unique ID: harbor_id_sensorkey (e.g., pornichet_next_tide)
         self._attr_unique_id = f"{DOMAIN}_{self._harbor_id.lower()}_{self._sensor_key}"
 
         # Device Info linking all sensors to the same device
+        # Use the stored harbor name for the device name
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
-            name=self._harbor_id.capitalize(), # Device name is the harbor
+            name=self._harbor_name, # Use the actual harbor name
             manufacturer=MANUFACTURER,
             entry_type="service",
             configuration_url=None,

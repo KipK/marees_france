@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import logging # Ensure logging is imported first
 import asyncio
 import aiohttp
 import voluptuous as vol
@@ -12,7 +12,6 @@ from typing import Any # Add Any import
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
-# Remove SupportsResponse from here
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse # Add SupportsResponse here
 from homeassistant.exceptions import HomeAssistantError # Import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession # Import async_get_clientsession
@@ -29,9 +28,11 @@ from .const import (
     COEFF_STORAGE_VERSION,
     COEFF_URL_TEMPLATE, # Add coefficient URL template
     CONF_HARBOR_ID,
+    CONF_HARBOR_NAME, # Add CONF_HARBOR_NAME (needed for migration)
     DATE_FORMAT, # Add DATE_FORMAT
     DOMAIN,
-    HEADERS, # Ensure HEADERS is imported
+    HARBORSURL, # Add HARBORSURL (needed for fetch_harbors)
+    HEADERS, # Ensure HEADERS is imported (needed for fetch_harbors)
     NEAP_TIDE_THRESHOLD, # Add Neap threshold
     PLATFORMS,
     SERVICE_GET_COEFFICIENTS_DATA, # Add new service name
@@ -54,11 +55,119 @@ from .api_helpers import (
     _async_fetch_and_store_coefficients,
 )
 
+# Let HA discover config_flow automatically
+
 # Import the standard frontend registration helper
 # from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
 
 _LOGGER = logging.getLogger(__name__)
 
+# --- Exception Class for API Connection Issues ---
+class CannotConnect(HomeAssistantError):
+    """Error to indicate we cannot connect."""
+
+
+# --- Harbor Fetching Logic (Moved from config_flow) ---
+async def fetch_harbors(
+    websession: aiohttp.ClientSession,
+) -> dict[str, dict[str, str]]:
+    """Fetch the list of harbors from the SHOM API."""
+    _LOGGER.debug("Fetching harbor list from %s", HARBORSURL)
+    harbors: dict[str, dict[str, str]] = {}
+    result_harbors: dict[str, dict[str, str]] = {} # Variable to hold result
+    try:
+        async with asyncio.timeout(20):
+            response = await websession.get(HARBORSURL, headers=HEADERS)
+            response.raise_for_status()
+            data = await response.json()
+
+        if not data or "features" not in data:
+            _LOGGER.error("Invalid harbor data received: %s", data)
+            raise CannotConnect("Invalid harbor data received")
+
+        for feature in data.get("features", []):
+            properties = feature.get("properties")
+            if properties and "cst" in properties and "toponyme" in properties:
+                harbor_id = properties["cst"]
+                harbor_name = properties["toponyme"]
+                harbors[harbor_id] = {"display": f"{harbor_name} ({harbor_id})", "name": harbor_name}
+
+        if not harbors:
+            _LOGGER.error("No harbors found in the response.")
+            raise CannotConnect("No harbors found")
+
+        # Sort harbors by display name and store in result variable
+        result_harbors = dict(sorted(harbors.items(), key=lambda item: item[1]["display"]))
+
+    except asyncio.TimeoutError as err:
+        _LOGGER.error("Timeout fetching harbor list: %s", err)
+        raise CannotConnect(f"Timeout fetching harbor list: {err}") from err
+    except aiohttp.ClientError as err:
+        _LOGGER.error("Client error fetching harbor list: %s", err)
+        raise CannotConnect(f"Client error fetching harbor list: {err}") from err
+    except Exception as err:
+        _LOGGER.exception("Unexpected error fetching harbor list")
+        raise CannotConnect(f"Unexpected error fetching harbor list: {err}") from err
+
+    # Return the result after the try...except block
+    return result_harbors
+
+
+# --- Config Entry Migration (Moved from config_flow) ---
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating config entry %s from version %s", config_entry.entry_id, config_entry.version)
+
+    if config_entry.version == 1:
+        new_data = {**config_entry.data}
+        harbor_id = new_data.get(CONF_HARBOR_ID)
+
+        if not harbor_id:
+            _LOGGER.error("Cannot migrate config entry %s: Missing harbor_id", config_entry.entry_id)
+            return False
+
+        try:
+            websession = async_get_clientsession(hass)
+            # Call the local fetch_harbors function
+            all_harbors = await fetch_harbors(websession)
+        except CannotConnect as err:
+            _LOGGER.error("Migration failed for entry %s: Could not fetch harbor list: %s", config_entry.entry_id, err)
+            return False
+        except Exception as err:
+             _LOGGER.exception("Migration failed for entry %s: Unexpected error fetching harbor list", config_entry.entry_id)
+             return False
+
+        harbor_details = all_harbors.get(harbor_id)
+        if not harbor_details or "name" not in harbor_details:
+             _LOGGER.error(
+                 "Migration failed for entry %s: Harbor ID '%s' not found in fetched list or missing 'name'",
+                 config_entry.entry_id,
+                 harbor_id
+             )
+             return False
+
+        harbor_name = harbor_details["name"]
+        new_data[CONF_HARBOR_NAME] = harbor_name
+
+        # Update entry version and data
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2) # Explicitly set version=2
+        _LOGGER.info(
+            "Successfully migrated config entry %s to version 2, added harbor_name: %s",
+            config_entry.entry_id,
+            harbor_name
+        )
+
+    # Handle potential future major version downgrades (optional but good practice)
+    elif config_entry.version > 2:
+        _LOGGER.error(
+            "Cannot migrate config entry %s: Config entry version %s is newer than integration version 2",
+            config_entry.entry_id,
+            config_entry.version
+        )
+        return False # Migration failed
+
+    _LOGGER.debug("Migration check complete for config entry %s", config_entry.entry_id)
+    return True # Return True if migration was successful or not needed for this version
 # Service Schemas
 SERVICE_GET_WATER_LEVELS_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string, # Changed from ATTR_HARBOR_NAME

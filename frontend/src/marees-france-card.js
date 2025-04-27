@@ -46,6 +46,7 @@ class MareesFranceCard extends LitElement {
       _calendarSelectedMonth: { state: true }, // Date object for the calendar month [NEW]
       _calendarHasPrevData: { state: true },
       _calendarHasNextData: { state: true },
+      _deviceName: { state: true }, // State property for the device name
     };
   }
 
@@ -479,8 +480,9 @@ class MareesFranceCard extends LitElement {
         ${this.config.show_header !== false
           ? html`
               <div class="card-header">
-                ${this.config.title ||
-                localizeCard('ui.card.marees_france.default_title', this.hass)}
+                ${this.config.title ?? // User-defined title takes precedence
+                  this._deviceName ?? // Then use the fetched device name
+                  localizeCard('ui.card.marees_france.default_title', this.hass)} {/* Fallback */}
               </div>
             `
           : ''}
@@ -1052,6 +1054,22 @@ class MareesFranceCard extends LitElement {
     ) {
       // console.log("[MareesCard] Initial load detected, fetching data.");
       this._fetchData(); // Fetch all data initially
+    }
+
+    // --- Fetch Device Name ---
+    const deviceIdChanged = changedProperties.has('config') && changedProperties.get('config')?.device_id !== this.config?.device_id;
+    const hassOrDeviceChanged = changedProperties.has('hass') || deviceIdChanged;
+
+    if (hassOrDeviceChanged && this.hass && this.config?.device_id) {
+      const device = this.hass.devices?.[this.config.device_id];
+      const newName = device ? device.name : null;
+      if (newName !== this._deviceName) {
+         this._deviceName = newName;
+         // console.log("Marees Card: Updated device name:", this._deviceName); // Optional debug log
+      }
+    } else if (hassOrDeviceChanged && (!this.hass || !this.config?.device_id)) {
+      // Reset if hass or device_id becomes unavailable
+      this._deviceName = null;
     }
 
     // --- Trigger Graph Draw on Data Change (if renderer exists) ---

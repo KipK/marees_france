@@ -29,6 +29,7 @@ PLATFORMS: Final = [Platform.SENSOR]
 
 # Configuration constants
 CONF_HARBOR_ID: Final = "harbor_id"
+CONF_HARBOR_NAME: Final = "harbor_name"
 
 # Default values
 DEFAULT_HARBOR: Final = "PORNICHET"

@@ -1,5 +1,6 @@
 venv
 plans
+docs
 .pytest_cache
 .venv
 *.bak
