@@ -1,5 +1,7 @@
 # 🌊 Intégration Home Assistant — Marées France
 
+👉 [EN Read this documentation in English](./README.md)
+
 **Affichez les marées françaises du SHOM directement dans Home Assistant, grâce à une intégration simple et une carte Lovelace personnalisée.**
 
 ![Carte Lovelace Marées France](./img/card.png)

@@ -1,5 +1,7 @@
 # 🌊 Home Assistant Integration — Tides France
 
+👉 [🇫🇷 Read this documentation in French](./README-fr.md)
+
 **Display French tides from SHOM directly in Home Assistant, with a simple integration and a custom Lovelace card.**
 
 ![Tides France Lovelace Card](./img/card.png)
