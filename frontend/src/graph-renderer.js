@@ -20,6 +20,7 @@ export class GraphRenderer {
     this.yDomainMin = null;
     this.yRange = null;
     this.currentTimeMarkerData = null; // Store current time marker info
+    this.currentTimeDotElement = null; // Store reference to the yellow dot SVG element
 
     this._initializeSvg();
     this._setupResizeObserver();
@@ -631,18 +632,14 @@ export class GraphRenderer {
     });
 
     // --- Draw Static Current Time Marker (Yellow Dot) ---
+    this.currentTimeDotElement = null; // Reset reference
     if (currentTimeMarkerData) {
-      const currentTimeDot = draw; // Assign draw first
-      currentTimeDot.circle(dotRadius * 2) // 12px diameter
+      this.currentTimeDotElement = draw.circle(dotRadius * 2) // 12px diameter
         .center(currentTimeMarkerData.x, currentTimeMarkerData.y)
         .fill('var(--tide-icon-color)') // Use the specific yellow color
-        .attr('pointer-events', 'none'); // Make the yellow dot non-interactive
+        .attr('pointer-events', 'none'); // Keep it non-interactive for mouse events
 
-      // REMOVED all listeners from currentTimeDot (mouseover, mouseout)
-      // Interaction is now solely handled by the overlay
-
-      // Optional: Add to elementsToKeepSize if scaling is desired, but might not be needed for a simple dot
-      // this.elementsToKeepSize.push(currentTimeDot);
+      // Scaling will be handled by interaction handlers based on proximity
     }
     // Trigger scale update after drawing
     window.requestAnimationFrame(() => {
@@ -708,25 +705,41 @@ export class GraphRenderer {
         const dy = finalY - this.currentTimeMarkerData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < snapThreshold) {
-          isSnapped = true; // Close enough to yellow dot for styling
+          isSnapped = true; // Close enough to yellow dot for styling/scaling
         }
       }
 
-      // Use the interpolated values for the tooltip content and position,
-      // but pass the isSnapped flag for styling.
-      const tooltipX = finalX;
-      const tooltipY = finalY;
-      const tooltipTime = clampedTotalMinutes;
-      const tooltipHeight = height;
+      // Apply scaling based on snap status
+      if (this.currentTimeDotElement) {
+        const scaleValue = isSnapped ? 1.3 : 1.0;
+        this.currentTimeDotElement.transform({ scale: scaleValue, origin: 'center center' });
+      }
 
-      // Call the card's method to update the HTML tooltip, passing snap status
+      // Determine which data to show in the tooltip based on snap status
+      let tooltipX, tooltipY, tooltipTimeValue, tooltipHeightValue;
+
+      if (isSnapped && this.currentTimeMarkerData) {
+        // Use yellow dot's data when snapped
+        tooltipX = this.currentTimeMarkerData.x;
+        tooltipY = this.currentTimeMarkerData.y;
+        tooltipTimeValue = this.currentTimeMarkerData.totalMinutes; // Use raw minutes for consistency if needed, or formatted string
+        tooltipHeightValue = this.currentTimeMarkerData.height;
+      } else {
+        // Use interpolated data when not snapped
+        tooltipX = finalX;
+        tooltipY = finalY;
+        tooltipTimeValue = clampedTotalMinutes;
+        tooltipHeightValue = height;
+      }
+
+      // Call the card's method to update the HTML tooltip, passing snap status and correct data
       if (this.card && typeof this.card._updateInteractionTooltip === 'function') {
         this.card._updateInteractionTooltip(
-          tooltipX,       // Use interpolated X for positioning tooltip
-          tooltipY,       // Use interpolated Y for positioning tooltip
-          tooltipTime,    // Use interpolated time for content
-          tooltipHeight,  // Use interpolated height for content
-          isSnapped       // Pass the proximity flag for styling
+          tooltipX,           // Use determined X for positioning tooltip
+          tooltipY,           // Use determined Y for positioning tooltip
+          tooltipTimeValue,   // Use determined time for content
+          tooltipHeightValue, // Use determined height for content
+          isSnapped           // Pass the proximity flag for styling
         );
       }
     } else {
@@ -740,6 +753,10 @@ export class GraphRenderer {
     // Call the card's method to hide the HTML tooltip
     if (this.card && typeof this.card._hideInteractionTooltip === 'function') {
       this.card._hideInteractionTooltip();
+    }
+    // Ensure yellow dot is reset to normal scale when interaction ends
+    if (this.currentTimeDotElement) {
+        this.currentTimeDotElement.transform({ scale: 1.0, origin: 'center center' });
     }
   }
 
@@ -775,6 +792,7 @@ export class GraphRenderer {
     this.elementsToKeepSize = [];
     this.svgContainer = null;
     this.card = null; // Remove reference to card
+    this.currentTimeDotElement = null; // Clear reference
     // console.log("GraphRenderer destroyed.");
   }
 }

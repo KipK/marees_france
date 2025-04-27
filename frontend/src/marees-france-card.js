@@ -1345,7 +1345,7 @@ class MareesFranceCard extends LitElement {
         color: var(--primary-text-color);
       }
       .card-content {
-        padding: 0 16px 16px 16px; /* No top padding, standard sides/bottom */
+        padding: 0 16px 8px 16px; /* Reduced bottom padding */
       }
 
       /* Next Tide Status Display Styles */
