@@ -1,5 +1,60 @@
+// Define the structure for editor translations
+interface EditorTranslationKeys {
+  show_header: string;
+  device_label: string;
+  title: string;
+}
+
+// Define the structure for card translations
+interface CardTranslationKeys {
+  default_title: string;
+  missing_configuration: string;
+  error_entity_required: string;
+  error_device_required: string;
+  entity_not_found: string;
+  device_not_found: string;
+  no_tide_data: string;
+  no_water_level_data: string;
+  no_coefficient_data: string;
+  waiting_next_tide: string;
+  rising_until: string;
+  falling_until: string;
+  rising_prefix: string;
+  falling_prefix: string;
+  high_tide_short: string;
+  low_tide_short: string;
+  next_tide_at: string;
+  no_data_available: string;
+  height: string;
+  coefficient: string;
+  no_data_for_day: string;
+  no_data_for_month: string;
+  high_tide: string;
+  low_tide: string;
+  tide_at_time: string;
+  chart_js_missing: string;
+  open_calendar: string;
+  coefficient_calendar_title: string;
+  previous_month: string;
+  next_month: string;
+  calendar_date: string;
+  calendar_coeffs: string;
+  editor: EditorTranslationKeys;
+}
+
+// Define the overall translation structure type
+interface TranslationStructure {
+  [lang: string]: {
+    ui: {
+      card: {
+        marees_france: CardTranslationKeys;
+      };
+    };
+  };
+}
+
 // --- Embedded Translations ---
-export const translations = {
+export const translations: TranslationStructure = {
   en: {
     ui: {
       card: {

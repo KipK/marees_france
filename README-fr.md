@@ -114,7 +114,9 @@ data:
 
 ---
 
-## 🛠️ Build du Frontend
+## 🛠️ Développement
+
+### Compilation du Frontend
 
 Pour compiler la carte Lovelace :
 

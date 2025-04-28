@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // Target modern browsers
+    "module": "ESNext", // Use ES modules
+    "moduleResolution": "node", // How modules get resolved
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Enables emit interoperability between CommonJS and ES Modules
+    "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file.
+    "experimentalDecorators": true, // Needed for Lit decorators
+    "useDefineForClassFields": false, // Lit compatibility (see Lit docs)
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "allowJs": true, // Allow JavaScript files to be compiled (for gradual migration)
+    "checkJs": false, // Do not type-check JS files by default
+    "noEmit": true, // Do not emit output files, let Webpack handle it
+    "resolveJsonModule": true, // Allow importing JSON modules
+    "isolatedModules": true, // Ensure modules can be transpiled independently (required by some tools)
+    "lib": ["ES2020", "DOM", "DOM.Iterable"], // Standard libraries to include
+    "sourceMap": true // Generate source maps for debugging
+  },
+  "include": ["src/**/*"], // Which files to include
+  "exclude": ["node_modules", "dist"] // Which files/folders to exclude
+}

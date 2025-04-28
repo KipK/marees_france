@@ -88,7 +88,18 @@ class MareesFranceConfigFlow(ConfigFlow):
                     data={CONF_HARBOR_ID: selected_harbor_id, CONF_HARBOR_NAME: harbor_name}
                 )
 
-        harbor_options = {k: v["display"] for k, v in (self._harbors_cache or {}).items()}
+        # Create harbor options safely, providing fallbacks if 'display' or 'name' is missing
+        harbor_options = {
+            k: v.get("display", v.get("name", k)) # Fallback: display -> name -> key (harbor_id)
+            for k, v in (self._harbors_cache or {}).items()
+            if isinstance(v, dict) # Ensure v is a dictionary before accessing keys
+        }
+
+        # If no valid harbor options could be created, abort.
+        if not harbor_options:
+            _LOGGER.error("No valid harbor options found after fetching. Aborting.")
+            return self.async_abort(reason="cannot_connect")
+
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_HARBOR_ID, default=DEFAULT_HARBOR): vol.In(

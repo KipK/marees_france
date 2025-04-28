@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "lint": "eslint src/**/*.js",
-    "format": "prettier --write src/**/*.js"
+    "lint": "eslint src/**/*.{js,ts}",
+    "format": "prettier --write src/**/*.{js,ts}"
   },
   "keywords": [],
   "author": "",
@@ -18,17 +18,29 @@
     "@babel/eslint-parser": "^7.27.0",
     "@babel/plugin-proposal-decorators": "^7.25.9",
     "@babel/preset-env": "^7.26.9",
+    "@formatjs/intl-durationformat": "^0.7.4",
+    "@lit-labs/observers": "^2.0.5",
+    "@types/node": "^22.15.2",
     "babel-loader": "^10.0.0",
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-lit": "^2.1.1",
     "eslint-plugin-wc": "^3.0.0",
+    "home-assistant-js-websocket": "^9.5.0",
     "prettier": "^3.5.3",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
     "webpack": "^5.99.7",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@formatjs/intl-durationformat": "*",
     "@svgdotjs/svg.js": "^3.2.4",
-    "lit": "^3.3.0"
+    "@types/js-yaml": ">=4.0.0",
+    "decimal.js": "*",
+    "home-assistant-js-websocket": "*",
+    "intl-messageformat": "*",
+    "lit": "^3.3.0",
+    "memoize-one": "*"
   }
 }

@@ -1,5 +1,17 @@
+import {
+  HassObject,
+  ServiceResponseWrapper,
+  GetTidesDataResponseData,
+  ParsedTideEvent,
+  NextTideStatus,
+  TideEventTuple,
+} from './types.js';
+
 // Helper function to get localized weekday abbreviation (3 letters)
-export function getWeekdayShort3Letters(dayIndex, locale) {
+export function getWeekdayShort3Letters(
+  dayIndex: number,
+  locale: string
+): string {
   // Create a date object for a known week starting on Sunday (e.g., Jan 1, 2023 was a Sunday)
   // Adjust index to match JavaScript's Date (0=Sun, 1=Mon, ...)
   // We want 0=Mon, 1=Tue, ... 6=Sun for display order matching the screenshot (L, M, M, J, V, S, D)
@@ -22,10 +34,23 @@ export function getWeekdayShort3Letters(dayIndex, locale) {
 
 // Returns data needed for the next tide peak display
 // Adapts to the new service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
-export function getNextTideStatus(tideServiceData, hass) {
+export function getNextTideStatus(
+  tideServiceData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
+  hass: HassObject | null
+): NextTideStatus | null { // Return type can be null if prerequisites fail
   // Check if the main data object and the 'response' property exist
-  if (!tideServiceData || !tideServiceData.response || !hass) return null;
-  const tideData = tideServiceData.response; // Use the actual data within 'response'
+  if (
+    !tideServiceData ||
+    !tideServiceData.response ||
+    typeof tideServiceData.response !== 'object' || // Ensure response is an object
+    tideServiceData.response.error || // Check for explicit error in response
+    !hass
+  ) {
+    return null; // Return null if data is invalid or hass is missing
+  }
+
+  // Type assertion after checks
+  const tideData = tideServiceData.response as GetTidesDataResponseData;
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -38,10 +63,12 @@ export function getNextTideStatus(tideServiceData, hass) {
     .slice(0, 10);
 
   // Helper function to parse the new array format for a given date
-  const parseTidesForDate = (dateStr) => {
-    if (!tideData[dateStr] || !Array.isArray(tideData[dateStr])) return [];
-    return tideData[dateStr]
-      .map((tideArr) => {
+  const parseTidesForDate = (dateStr: string): ParsedTideEvent[] => {
+    const dailyTides = tideData[dateStr];
+    if (!dailyTides || !Array.isArray(dailyTides)) return [];
+
+    return dailyTides
+      .map((tideArr: TideEventTuple): ParsedTideEvent | null => {
         if (!Array.isArray(tideArr) || tideArr.length < 3) return null; // Need at least type, time, height
         const typeStr = tideArr[0]; // "tide.high" or "tide.low"
         const time = tideArr[1]; // "HH:MM"
@@ -50,7 +77,7 @@ export function getNextTideStatus(tideServiceData, hass) {
           tideArr.length > 3 && tideArr[3] !== '---'
             ? parseInt(tideArr[3], 10)
             : null; // "CC" or "---" -> number or null
-        const type =
+        const type: 'high' | 'low' | null =
           typeStr === 'tide.high'
             ? 'high'
             : typeStr === 'tide.low'
@@ -59,32 +86,39 @@ export function getNextTideStatus(tideServiceData, hass) {
 
         if (!type || !time || isNaN(height)) return null; // Basic validation
 
-        return {
-          type: type,
-          time: time,
-          height: height,
-          coefficient: coefficient,
-          date: dateStr, // Add date for constructing dateTime
-          dateTime: new Date(`${dateStr}T${time}:00`), // Construct Date object
-        };
+        try {
+          return {
+            type: type,
+            time: time,
+            height: height,
+            coefficient: coefficient,
+            date: dateStr, // Add date for constructing dateTime
+            dateTime: new Date(`${dateStr}T${time}:00`), // Construct Date object
+          };
+        } catch (e) {
+          console.error(`Error parsing date/time: ${dateStr}T${time}:00`, e);
+          return null; // Handle potential Date constructor errors
+        }
       })
-      .filter((t) => t !== null); // Remove invalid entries
+      .filter((t): t is ParsedTideEvent => t !== null); // Type predicate to filter out nulls
   };
 
   // Parse tides for the relevant days
-  const todayTides = parseTidesForDate(todayStr);
-  const tomorrowTides = parseTidesForDate(tomorrowStr);
-  const dayAfterTomorrowTides = parseTidesForDate(dayAfterTomorrowStr);
+  const todayTides: ParsedTideEvent[] = parseTidesForDate(todayStr);
+  const tomorrowTides: ParsedTideEvent[] = parseTidesForDate(tomorrowStr);
+  const dayAfterTomorrowTides: ParsedTideEvent[] = parseTidesForDate(
+    dayAfterTomorrowStr
+  );
 
   // Combine and sort all valid tides
-  const allRelevantTides = [
+  const allRelevantTides: ParsedTideEvent[] = [
     ...todayTides,
     ...tomorrowTides,
     ...dayAfterTomorrowTides,
-  ].sort((a, b) => a.dateTime - b.dateTime);
+  ].sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime()); // Use getTime() for comparison
 
-  let nextTide = null;
-  let previousTide = null;
+  let nextTide: ParsedTideEvent | null = null;
+  let previousTide: ParsedTideEvent | null = null;
 
   // Find the first tide strictly after 'now'
   for (let i = 0; i < allRelevantTides.length; i++) {
@@ -96,28 +130,18 @@ export function getNextTideStatus(tideServiceData, hass) {
       }
       break;
     }
+    // If the loop finishes, the last tide before now is the previous one
+    previousTide = allRelevantTides[i];
   }
 
-  // If no previous tide was found in the loop (meaning 'now' is before the first tide in our list),
-  // and there are tides today before 'now', find the latest one that occurred before 'now'.
-  if (
-    !previousTide &&
-    allRelevantTides.length > 0 &&
-    allRelevantTides[0].dateTime > now
-  ) {
-    const tidesBeforeNow = allRelevantTides.filter((t) => t.dateTime <= now);
-    if (tidesBeforeNow.length > 0) {
-      previousTide = tidesBeforeNow[tidesBeforeNow.length - 1]; // Get the last one
-    }
-  }
-
+  // If no next tide was found within the 2-day window
   if (!nextTide) {
     // Return default/error state matching the new structure
     return {
       currentTrendIcon: 'mdi:help-circle-outline',
       nextPeakTime: '--:--',
       nextPeakHeight: null,
-      nextPeakCoefficient: null,
+      displayCoefficient: null, // Changed from nextPeakCoefficient
       nextPeakType: null, // Indicate unknown type
     };
   }
@@ -125,12 +149,12 @@ export function getNextTideStatus(tideServiceData, hass) {
   // Determine trend: If the previous tide was low, we are rising. If previous was high, we are falling.
   // If there's no previous tide (e.g., right at the start), infer trend from the type of the *next* tide.
   // If next is low, we must be falling towards it. If next is high, we must be rising towards it.
-  const isRising = previousTide
+  const isRising: boolean = previousTide
     ? previousTide.type === 'low'
     : nextTide.type === 'high';
 
   // Determine the coefficient to display
-  let displayCoefficient = null;
+  let displayCoefficient: number | null = null;
   if (isRising) {
     // Find the next high tide after now
     const nextHighTide = allRelevantTides.find(

@@ -113,7 +113,9 @@ data:
 
 ---
 
-## 🛠️ Frontend Build
+## 🛠️ Development
+
+###Frontend Build
 
 To compile the Lovelace card:
 

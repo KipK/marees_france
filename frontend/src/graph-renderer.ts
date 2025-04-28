@@ -1,39 +1,79 @@
-import { SVG } from '@svgdotjs/svg.js';
-import { localizeCard } from './localize.js'; // Assuming localize is needed here
+import { SVG, Svg, Element as SvgElement, Circle, G, Rect, Text, Path, Line } from '@svgdotjs/svg.js'; // Use types from the library itself if available
+import { localizeCard } from './localize';
+import {
+  HassObject,
+  ServiceResponseWrapper,
+  GetTidesDataResponseData,
+  GetWaterLevelsResponseData,
+  WaterLevelTuple,
+  TideEventTuple,
+  GraphMargins,
+  PointData,
+  TideMarkerData,
+  CurrentTimeMarkerData,
+} from './types.js';
+
+// Placeholder type for the main card - replace with actual import later
+interface MareesFranceCard {
+  hass?: HassObject | null;
+  _updateInteractionTooltip(
+    svgX: number,
+    svgY: number,
+    timeMinutes: number,
+    height: number,
+    isSnapped: boolean
+  ): void;
+  _hideInteractionTooltip(): void;
+}
 
 export class GraphRenderer {
-  constructor(cardInstance, svgContainer, hass) {
-    this.card = cardInstance; // Reference to the main card component instance
+  private card: MareesFranceCard | null; // Reference to the main card component instance
+  private svgContainer: HTMLDivElement | null;
+  private hass: HassObject | null;
+  private svgDraw: Svg | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  // Use a more specific type if possible, otherwise SvgElement or any
+  private elementsToKeepSize: Array<SvgElement | G | Text | Path | Line> = [];
+
+  // Graph properties
+  private graphMargin: GraphMargins | null = null;
+  private graphWidth: number | null = null;
+  private graphHeight: number | null = null;
+  private pointsData: PointData[] | null = null;
+  private curveMinMinutes: number | null = null;
+  private curveMaxMinutes: number | null = null;
+  private yDomainMin: number | null = null;
+  private yRange: number | null = null;
+  private currentTimeMarkerData: CurrentTimeMarkerData | null = null; // Store current time marker info
+  private currentTimeDotElement: Circle | null = null; // Store reference to the yellow dot SVG element
+
+  // Bound event handlers
+  private _boundHandleInteractionMove: ((event: MouseEvent | TouchEvent) => void) | null = null;
+  private _boundHandleInteractionEnd: ((event: MouseEvent | TouchEvent) => void) | null = null;
+
+
+  constructor(
+    cardInstance: MareesFranceCard,
+    svgContainer: HTMLDivElement,
+    hass: HassObject | null
+  ) {
+    this.card = cardInstance;
     this.svgContainer = svgContainer;
     this.hass = hass;
-    this.svgDraw = null;
-    this.resizeObserver = null;
-    this.elementsToKeepSize = [];
-
-    // Graph properties (initialized in _drawGraph)
-    this.graphMargin = null;
-    this.graphWidth = null;
-    this.graphHeight = null;
-    this.pointsData = null;
-    this.curveMinMinutes = null;
-    this.curveMaxMinutes = null;
-    this.yDomainMin = null;
-    this.yRange = null;
-    this.currentTimeMarkerData = null; // Store current time marker info
-    this.currentTimeDotElement = null; // Store reference to the yellow dot SVG element
 
     this._initializeSvg();
     this._setupResizeObserver();
   }
 
-  _initializeSvg() {
+  private _initializeSvg(): void {
     if (this.svgContainer) {
       // Clear previous SVG content if any
       while (this.svgContainer.firstChild) {
         this.svgContainer.removeChild(this.svgContainer.firstChild);
       }
       // Initialize svg.js instance with viewBox for scaling
-      this.svgDraw = SVG().addTo(this.svgContainer).viewbox(0, 0, 500, 170);
+      // Use type assertion if SVG() return type is not specific enough
+      this.svgDraw = SVG().addTo(this.svgContainer).viewbox(0, 0, 500, 170) as Svg;
     } else {
       console.error(
         'GraphRenderer: SVG container not provided during initialization.'
@@ -42,12 +82,12 @@ export class GraphRenderer {
   }
 
   // --- Coordinate/Interpolation Helper Methods ---
-  _timeToX(totalMinutes) {
+  private _timeToX(totalMinutes: number): number {
     if (!this.graphMargin || this.graphWidth === null) return 0; // Guard
     return this.graphMargin.left + (totalMinutes / (24 * 60)) * this.graphWidth;
   }
 
-  _heightToY(h) {
+  private _heightToY(h: number): number {
     if (
       !this.graphMargin ||
       this.graphHeight === null ||
@@ -62,7 +102,7 @@ export class GraphRenderer {
     );
   }
 
-  _xToTotalMinutes(x) {
+  private _xToTotalMinutes(x: number): number {
     if (!this.graphMargin || this.graphWidth === null || this.graphWidth <= 0)
       return 0; // Guard
     const clampedX = Math.max(
@@ -72,10 +112,10 @@ export class GraphRenderer {
     return ((clampedX - this.graphMargin.left) / this.graphWidth) * (24 * 60);
   }
 
-  _interpolateHeight(targetTotalMinutes) {
+  private _interpolateHeight(targetTotalMinutes: number): number | null {
     if (!this.pointsData || this.pointsData.length < 2) return null; // Guard, check pointsData exists
-    let prevPoint = null;
-    let nextPoint = null;
+    let prevPoint: PointData | null = null;
+    let nextPoint: PointData | null = null;
     // Find the two points surrounding the target time
     for (let i = 0; i < this.pointsData.length; i++) {
       if (this.pointsData[i].totalMinutes <= targetTotalMinutes)
@@ -88,7 +128,7 @@ export class GraphRenderer {
     // Handle edge cases (before first point or after last point)
     if (!prevPoint && nextPoint) return nextPoint.heightNum;
     if (prevPoint && !nextPoint) return prevPoint.heightNum;
-    if (!prevPoint && !nextPoint) return null;
+    if (!prevPoint || !nextPoint) return null; // Modified guard
 
     // Interpolate
     const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
@@ -103,7 +143,7 @@ export class GraphRenderer {
   }
 
   // --- Coordinate Conversion Helper ---
-  getSVGCoordinates(evt) {
+  private getSVGCoordinates(evt: MouseEvent | TouchEvent): { x: number; y: number } | null {
     if (!this.svgDraw || !this.svgContainer) return null;
 
     const svg = this.svgContainer.querySelector('svg');
@@ -113,10 +153,10 @@ export class GraphRenderer {
     const pt = svg.createSVGPoint();
 
     // Get the screen coordinates from the event
-    if (evt.touches && evt.touches.length > 0) {
+    if (evt instanceof TouchEvent && evt.touches && evt.touches.length > 0) {
       pt.x = evt.touches[0].clientX;
       pt.y = evt.touches[0].clientY;
-    } else if (evt.clientX !== undefined && evt.clientY !== undefined) {
+    } else if (evt instanceof MouseEvent && evt.clientX !== undefined && evt.clientY !== undefined) {
       pt.x = evt.clientX;
       pt.y = evt.clientY;
     } else {
@@ -125,7 +165,9 @@ export class GraphRenderer {
 
     // Transform the screen coordinates to SVG coordinates
     try {
-      const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return null; // Guard against null CTM
+      const svgPoint = pt.matrixTransform(ctm.inverse());
       return { x: svgPoint.x, y: svgPoint.y };
     } catch (e) {
       console.error('Error transforming screen coordinates to SVG:', e);
@@ -134,7 +176,7 @@ export class GraphRenderer {
   }
 
   // --- Resize Observer Logic ---
-  _setupResizeObserver() {
+  private _setupResizeObserver(): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
@@ -146,7 +188,6 @@ export class GraphRenderer {
     }
 
     this.resizeObserver = new ResizeObserver(() => {
-      // Removed unused 'entries'
       window.requestAnimationFrame(() => {
         this._updateElementScale();
       });
@@ -154,7 +195,7 @@ export class GraphRenderer {
     this.resizeObserver.observe(this.svgContainer);
   }
 
-  _updateElementScale() {
+  private _updateElementScale(): void {
     if (
       !this.svgContainer ||
       !this.svgDraw ||
@@ -165,7 +206,8 @@ export class GraphRenderer {
 
     const svgRect = this.svgContainer.getBoundingClientRect();
     const viewBox = this.svgDraw.viewbox();
-    const viewBoxWidth = viewBox ? viewBox.width : 500;
+    // Use default if viewBox is somehow null/undefined
+    const viewBoxWidth = viewBox?.width ?? 500;
 
     if (svgRect.width <= 0 || viewBoxWidth <= 0) {
       return;
@@ -179,16 +221,20 @@ export class GraphRenderer {
 
     const inverseScale = 1 / scaleFactor;
 
+    // Filter out potentially disconnected elements
     this.elementsToKeepSize = this.elementsToKeepSize.filter(
       (element) =>
         element &&
-        element.node?.isConnected &&
-        typeof element.bbox === 'function'
+        element.node?.isConnected && // Check if node is connected
+        typeof (element as any).bbox === 'function' // Check if bbox method exists
     );
 
     this.elementsToKeepSize.forEach((element) => {
       try {
-        const bbox = element.bbox();
+        // Use 'any' assertion if bbox() is not recognized on the specific type
+        const bbox = (element as any).bbox();
+        if (!bbox) return; // Skip if bbox is null
+
         const cx = bbox.cx;
         const cy = bbox.cy;
 
@@ -201,7 +247,8 @@ export class GraphRenderer {
           return;
         }
 
-        element
+        // Use 'any' assertion for transform methods if needed
+        (element as any)
           .transform({})
           .translate(cx, cy)
           .scale(inverseScale)
@@ -213,22 +260,29 @@ export class GraphRenderer {
   }
 
   // --- Main Drawing Method ---
-  drawGraph(tideData, waterLevels, selectedDay) {
-    if (!this.svgDraw || !this.svgContainer) {
+  public drawGraph(
+    tideData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
+    waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | null,
+    selectedDay: string
+  ): void {
+    if (!this.svgDraw || !this.svgContainer || !this.hass) {
       return;
     }
 
     this.svgDraw.clear();
     this.elementsToKeepSize = [];
+    this.currentTimeDotElement = null; // Reset dot reference
+    this.currentTimeMarkerData = null; // Reset marker data
 
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
     const locale = this.hass.language || 'en';
 
     // --- 1. Check for Errors or Missing Data ---
-    if (!tideData || tideData.error || !tideData.response) {
-      const errorMessage = tideData?.error
-        ? `Tide Error: ${tideData.error}`
+    const tideResponse = tideData?.response;
+    if (!tideResponse || typeof tideResponse !== 'object' || (tideResponse as any).error) {
+      const errorMessage = (tideResponse as any)?.error
+        ? `Tide Error: ${(tideResponse as any).error}`
         : localizeCard('ui.card.marees_france.no_tide_data', this.hass);
       const errorText = this.svgDraw
         .text(errorMessage)
@@ -237,11 +291,13 @@ export class GraphRenderer {
       this.elementsToKeepSize.push(errorText);
       return;
     }
-    const tideResponse = tideData.response;
+    // Type assertion after checks
+    const typedTideResponse = tideResponse as GetTidesDataResponseData;
 
-    if (!waterLevels || waterLevels.error || !waterLevels.response) {
-      const errorMessage = waterLevels?.error
-        ? `Water Level Error: ${waterLevels.error}`
+    const waterLevelResponse = waterLevels?.response;
+    if (!waterLevelResponse || typeof waterLevelResponse !== 'object' || (waterLevelResponse as any).error) {
+      const errorMessage = (waterLevelResponse as any)?.error
+        ? `Water Level Error: ${(waterLevelResponse as any).error}`
         : localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
       const errorText = this.svgDraw
         .text(errorMessage)
@@ -250,8 +306,9 @@ export class GraphRenderer {
       this.elementsToKeepSize.push(errorText);
       return;
     }
-    const waterLevelResponse = waterLevels.response;
-    const levelsData = waterLevelResponse[selectedDay];
+     // Type assertion after checks
+    const typedWaterLevelResponse = waterLevelResponse as GetWaterLevelsResponseData;
+    const levelsData: WaterLevelTuple[] | undefined = typedWaterLevelResponse[selectedDay];
 
     // --- 2. Check for Water Level Data for the Selected Day ---
     if (!Array.isArray(levelsData) || levelsData.length === 0) {
@@ -278,17 +335,18 @@ export class GraphRenderer {
     let minHeight = Infinity;
     let maxHeight = -Infinity;
     this.pointsData = levelsData
-      .map((item) => {
+      .map((item: WaterLevelTuple): PointData | null => {
         const timeStr = item[0];
         const heightNum = parseFloat(item[1]);
-        if (isNaN(heightNum)) return null;
+        if (isNaN(heightNum) || !timeStr || !timeStr.includes(':')) return null; // Add check for timeStr format
         const [hours, minutes] = timeStr.split(':').map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return null; // Check parsing result
         const totalMinutes = hours * 60 + minutes;
         minHeight = Math.min(minHeight, heightNum);
         maxHeight = Math.max(maxHeight, heightNum);
         return { totalMinutes, heightNum };
       })
-      .filter((p) => p !== null);
+      .filter((p): p is PointData => p !== null); // Use type predicate
 
     // --- 3. Check if enough points to draw & Store Boundaries ---
     if (this.pointsData.length < 2) {
@@ -314,7 +372,7 @@ export class GraphRenderer {
     const yPadding = (maxHeight - minHeight) * 0.1 || 0.5;
     this.yDomainMin = Math.max(0, minHeight - yPadding);
     const yDomainMax = maxHeight + yPadding;
-    this.yRange = Math.max(1, yDomainMax - this.yDomainMin);
+    this.yRange = Math.max(1, yDomainMax - this.yDomainMin); // Ensure yRange is at least 1
 
     // --- Generate SVG Path Data Strings ---
     const pathData = this.pointsData
@@ -333,24 +391,26 @@ export class GraphRenderer {
     const fillPathData = `M ${firstPointX.toFixed(2)} ${xAxisY} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${xAxisY} Z`;
 
     // --- Calculate Ticks and Markers Data ---
-    const xTicks = [];
-    const xLabelStep = 480;
+    const xTicks: { x: number; label: string }[] = [];
+    const xLabelStep = 480; // minutes (8 hours)
     for (
       let totalMinutes = 0;
       totalMinutes <= 24 * 60;
       totalMinutes += xLabelStep
     ) {
-      const x = this._timeToX(totalMinutes === 1440 ? 1439.9 : totalMinutes);
+      // Ensure the last tick (24:00) is handled correctly
+      const effectiveMinutes = totalMinutes === 1440 ? 1439.99 : totalMinutes;
+      const x = this._timeToX(effectiveMinutes);
       const hour = Math.floor(totalMinutes / 60);
       const label =
         hour === 24 ? '00:00' : `${String(hour).padStart(2, '0')}:00`;
       xTicks.push({ x: x, label: label });
     }
 
-    const tideEventsForDay = tideResponse[selectedDay];
-    const tideMarkers = [];
+    const tideEventsForDay: TideEventTuple[] | undefined = typedTideResponse[selectedDay];
+    const tideMarkers: TideMarkerData[] = [];
     if (Array.isArray(tideEventsForDay)) {
-      tideEventsForDay.forEach((tideArr) => {
+      tideEventsForDay.forEach((tideArr: TideEventTuple) => {
         if (!Array.isArray(tideArr) || tideArr.length < 3) return;
         const typeStr = tideArr[0];
         const time = tideArr[1];
@@ -362,9 +422,10 @@ export class GraphRenderer {
         const isHigh = typeStr === 'tide.high';
         const isLow = typeStr === 'tide.low';
 
-        if ((!isHigh && !isLow) || !time || isNaN(height)) return;
+        if ((!isHigh && !isLow) || !time || isNaN(height) || !time.includes(':')) return;
 
         const [hours, minutes] = time.split(':').map(Number);
+         if (isNaN(hours) || isNaN(minutes)) return; // Check parsing result
         const totalMinutes = hours * 60 + minutes;
         const x = this._timeToX(totalMinutes);
         const y = this._heightToY(height);
@@ -382,9 +443,7 @@ export class GraphRenderer {
 
     // --- Current Time Marker Data (with formatted strings for tooltip) ---
     const now = new Date();
-    let currentTimeMarkerData = null;
-    let currentTimeStr = '';
-    let currentHeightStr = '';
+    let localCurrentTimeMarkerData: CurrentTimeMarkerData | null = null; // Use local var for drawing
     if (selectedDay === now.toISOString().slice(0, 10)) {
       const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
       if (
@@ -397,37 +456,31 @@ export class GraphRenderer {
         if (currentHeight !== null) {
           const currentX = this._timeToX(currentTotalMinutes);
           const currentY = this._heightToY(currentHeight);
-          currentTimeStr = now.toLocaleTimeString(locale, {
+          const currentTimeStr = now.toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
           });
-          currentHeightStr = currentHeight.toFixed(2);
+          const currentHeightStr = currentHeight.toFixed(2);
           // Store data for snapping logic
           this.currentTimeMarkerData = {
             x: currentX,
             y: currentY,
-            timeStr: currentTimeStr, // Store formatted string
-            heightStr: currentHeightStr, // Store formatted string
+            timeStr: currentTimeStr,
+            heightStr: currentHeightStr,
             totalMinutes: currentTotalMinutes,
             height: currentHeight,
           };
-          currentTimeMarkerData = this.currentTimeMarkerData; // Also assign to local var for drawing
-        } else {
-          this.currentTimeMarkerData = null; // Reset if no valid height
+          localCurrentTimeMarkerData = this.currentTimeMarkerData; // Assign to local var
         }
-      } else {
-        this.currentTimeMarkerData = null; // Reset if not today
       }
-    } else {
-      this.currentTimeMarkerData = null; // Reset if not today
     }
 
     // --- Drawing the Actual Graph ---
-    const draw = this.svgDraw;
+    const draw = this.svgDraw; // Already checked for null
     const axisColor = 'var(--secondary-text-color, grey)';
     const primaryTextColor = 'var(--primary-text-color, black)';
     const curveColor = 'var(--primary-color, blue)';
-    const arrowAndTextColor = 'var(--primary-text-color, white)';
+    const arrowAndTextColor = 'var(--primary-text-color, white)'; // This seems wrong, likely should be primary text color? Check CSS. Assuming black for now.
     const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)';
     const coefBoxBorderColor =
       'var(--ha-card-border-color, var(--divider-color, grey))';
@@ -455,18 +508,18 @@ export class GraphRenderer {
     const interactionGroup = draw
       .group()
       .attr('id', 'interaction-indicator')
-      .hide();
+      .hide() as G; // Type assertion
     const interactionDot = interactionGroup
       .circle(dotRadius * 2) // Use same radius as yellow dot
       .fill('var(--info-color, blue)')
-      .attr('pointer-events', 'none');
+      .attr('pointer-events', 'none') as Circle; // Type assertion
 
     // Transparent overlay for capturing events (drawn first)
     const interactionOverlay = draw
       .rect(this.graphWidth, this.graphHeight)
       .move(this.graphMargin.left, this.graphMargin.top)
       .fill('transparent')
-      .attr('cursor', 'crosshair'); // Indicate interactivity
+      .attr('cursor', 'crosshair') as Rect; // Type assertion
 
     // Bind interaction handlers once
     this._boundHandleInteractionMove = this._handleInteractionMove.bind(
@@ -482,29 +535,29 @@ export class GraphRenderer {
     // Add event listeners to the overlay
     interactionOverlay.node.addEventListener(
       'mousemove',
-      this._boundHandleInteractionMove
+      this._boundHandleInteractionMove as EventListener // Cast needed
     );
     interactionOverlay.node.addEventListener(
       'touchstart',
-      this._boundHandleInteractionMove,
+      this._boundHandleInteractionMove as EventListener, // Cast needed
       { passive: false }
     );
     interactionOverlay.node.addEventListener(
       'touchmove',
-      this._boundHandleInteractionMove,
+      this._boundHandleInteractionMove as EventListener, // Cast needed
       { passive: false }
     );
     interactionOverlay.node.addEventListener(
       'mouseleave',
-      this._boundHandleInteractionEnd
+      this._boundHandleInteractionEnd as EventListener // Cast needed
     );
     interactionOverlay.node.addEventListener(
       'touchend',
-      this._boundHandleInteractionEnd
+      this._boundHandleInteractionEnd as EventListener // Cast needed
     );
     interactionOverlay.node.addEventListener(
       'touchcancel',
-      this._boundHandleInteractionEnd
+      this._boundHandleInteractionEnd as EventListener // Cast needed
     );
 
     // Draw X Axis Labels
@@ -524,19 +577,22 @@ export class GraphRenderer {
     });
 
     // --- Draw Tide Markers ---
-    const markerElements = [];
+    // const markerElements: { element: G; bbox: any; isHigh: boolean; markerY: number }[] = []; // Store marker info if needed later
     tideMarkers.forEach((marker) => {
       // Coefficient Group
-      if (marker.isHigh && marker.coefficient) {
-        const coefGroup = draw.group();
+      if (marker.isHigh && marker.coefficient !== null) { // Check for null coefficient
+        const coefGroup = draw.group() as G;
         const coefText = String(marker.coefficient);
+        // Use a temporary text element to measure size accurately
         const tempText = draw
           .text(coefText)
           .font({ size: coefFontSize, weight: 'bold', anchor: 'middle' })
           .attr('dominant-baseline', 'central')
-          .opacity(0);
-        const textBBox = tempText.bbox();
-        tempText.remove();
+          .opacity(0); // Make it invisible
+        const textBBox = (tempText as any).bbox(); // Use assertion if bbox not typed
+        tempText.remove(); // Remove temporary element
+
+        if (!textBBox) return; // Skip if bbox calculation failed
 
         const boxWidth = textBBox.width + 2 * coefBoxPadding.x;
         const boxHeight = textBBox.height + 2 * coefBoxPadding.y;
@@ -578,71 +634,85 @@ export class GraphRenderer {
       // Arrow & Text Group
       const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.2;
       const textLineHeight = tideTimeFontSize * 1.1;
-      const visualPadding = 8;
-      const arrowGroup = draw.group();
+      const visualPadding = 8; // Padding between arrow and text
+      const arrowGroup = draw.group() as G;
 
-      let arrowPathData;
+      let arrowPathData: string;
       const arrowY = marker.y + arrowYOffset;
+      // Revert arrow path logic to match original JS (High tide points UP, Low tide points DOWN)
       if (marker.isHigh) {
+        // Pointing UP (Original JS logic for High Tide)
         arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x},${arrowY - arrowSize * 0.4} Z`;
       } else {
+        // Pointing DOWN (Original JS logic for Low Tide)
         arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x},${arrowY + arrowSize * 0.4} Z`;
       }
-      arrowGroup.path(arrowPathData).fill(arrowAndTextColor).stroke('none');
+      // Check arrowAndTextColor variable usage - assuming primaryTextColor for now
+      arrowGroup.path(arrowPathData).fill(primaryTextColor).stroke('none');
 
-      let timeTextY, heightTextY;
+      let timeTextY: number, heightTextY: number;
       const arrowTipOffset = arrowSize * 0.4;
-      const timeAscent = tideTimeFontSize * 0.8;
-      const heightDescent = tideHeightFontSize * 0.2;
+      const timeAscent = tideTimeFontSize * 0.8; // Approximate ascent
+      const heightDescent = tideHeightFontSize * 0.2; // Approximate descent
 
-      if (marker.isHigh) {
-        const arrowTipY = arrowY - arrowTipOffset;
+      // Revert to the exact calculations from the original JS file (docs/graph-renderer.js lines 598-606)
+      // const arrowTipOffset = arrowSize * 0.4; // Already declared above (line 653)
+      // const timeAscent = tideTimeFontSize * 0.8; // Already declared above (line 654)
+      // const heightDescent = tideHeightFontSize * 0.2; // Already declared above (line 655)
+
+      if (marker.isHigh) { // Arrow points down, text above
+        const arrowTipY = arrowY - arrowTipOffset; // Use variable declared above
+        // Exact JS calculation (line 600)
         timeTextY = arrowTipY + visualPadding + timeAscent - 10;
+        // Exact JS calculation (line 601)
         heightTextY = timeTextY + textLineHeight;
-      } else {
+      } else { // Arrow points up, text below
         const arrowTipY = arrowY + arrowTipOffset;
+        // Exact JS calculation (line 604)
         heightTextY = arrowTipY - visualPadding - heightDescent - 22;
+         // Exact JS calculation (line 605)
         timeTextY = heightTextY - textLineHeight;
       }
 
+      // Keep using the positioning method from the previous diff (which matches JS)
       arrowGroup
         .text(marker.time)
         .font({
-          fill: arrowAndTextColor,
+          fill: primaryTextColor, // Use primary text color
           size: tideTimeFontSize,
           weight: 'bold',
+          // anchor: 'middle' // text-anchor is preferred SVG attribute
         })
-        .attr('text-anchor', 'middle')
-        .cx(marker.x)
-        .y(timeTextY);
+        // .attr('dominant-baseline', 'central') // Remove baseline adjustment for consistency with JS approach
+        .attr('text-anchor', 'middle') // Use text-anchor like JS
+        .cx(marker.x) // Use cx like JS
+        .y(timeTextY); // Use calculated y like JS
 
       arrowGroup
         .text(`${marker.height.toFixed(1)}m`)
-        .font({ fill: arrowAndTextColor, size: tideHeightFontSize })
-        .attr('text-anchor', 'middle')
-        .cx(marker.x)
-        .y(heightTextY);
+        .font({
+            fill: primaryTextColor, // Use primary text color
+            size: tideHeightFontSize,
+            // anchor: 'middle' // text-anchor is preferred SVG attribute
+        })
+        // .attr('dominant-baseline', 'central') // Remove baseline adjustment for consistency with JS approach
+        .attr('text-anchor', 'middle') // Use text-anchor like JS
+        .cx(marker.x) // Use cx like JS
+        .y(heightTextY); // Use calculated y like JS
 
       this.elementsToKeepSize.push(arrowGroup);
-      markerElements.push({
-        element: arrowGroup,
-        bbox: arrowGroup.bbox(),
-        isHigh: marker.isHigh,
-        markerY: marker.y,
-      });
+      // markerElements.push({ element: arrowGroup, bbox: (arrowGroup as any).bbox(), isHigh: marker.isHigh, markerY: marker.y }); // Keep commented out
     });
 
     // --- Draw Static Current Time Marker (Yellow Dot) ---
-    this.currentTimeDotElement = null; // Reset reference
-    if (currentTimeMarkerData) {
+    if (localCurrentTimeMarkerData) {
       this.currentTimeDotElement = draw
         .circle(dotRadius * 2) // 12px diameter
-        .center(currentTimeMarkerData.x, currentTimeMarkerData.y)
+        .center(localCurrentTimeMarkerData.x, localCurrentTimeMarkerData.y)
         .fill('var(--tide-icon-color)') // Use the specific yellow color
-        .attr('pointer-events', 'none'); // Keep it non-interactive for mouse events
-
-      // Scaling will be handled by interaction handlers based on proximity
+        .attr('pointer-events', 'none') as Circle; // Type assertion
     }
+
     // Trigger scale update after drawing
     window.requestAnimationFrame(() => {
       this._updateElementScale();
@@ -650,7 +720,7 @@ export class GraphRenderer {
   }
 
   // --- Public method to explicitly refresh scaling ---
-  refreshDimensionsAndScale() {
+  public refreshDimensionsAndScale(): void {
     // Use rAF to ensure it runs after potential layout changes
     window.requestAnimationFrame(() => {
       // Add extra check for container existence before scaling
@@ -659,8 +729,13 @@ export class GraphRenderer {
       }
     });
   }
+
   // --- Interaction Handlers (Blue Dot) ---
-  _handleInteractionMove(interactionGroup, interactionDot, event) {
+  private _handleInteractionMove(
+      interactionGroup: G,
+      interactionDot: Circle,
+      event: MouseEvent | TouchEvent
+  ): void {
     // Prevent default scrolling on touch devices when interacting
     if (event.type === 'touchmove' || event.type === 'touchstart') {
       event.preventDefault();
@@ -698,36 +773,35 @@ export class GraphRenderer {
       interactionDot.center(finalX, finalY);
 
       // Determine if the interpolated position is close to the current time marker
-      // for styling purposes only (isSnapped flag).
       let isSnapped = false;
       const snapThreshold = 10; // Pixels in SVG coordinates for proximity check
-      // Check proximity for BOTH mouse and touch events
       if (this.currentTimeMarkerData) {
         const dx = finalX - this.currentTimeMarkerData.x;
         const dy = finalY - this.currentTimeMarkerData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < snapThreshold) {
-          isSnapped = true; // Close enough to yellow dot for styling/scaling
+          isSnapped = true;
         }
       }
 
       // Apply scaling based on snap status
       if (this.currentTimeDotElement) {
         const scaleValue = isSnapped ? 1.3 : 1.0;
-        this.currentTimeDotElement.transform({
+        // Use assertion if transform is not typed
+        (this.currentTimeDotElement as any).transform({
           scale: scaleValue,
           origin: 'center center',
         });
       }
 
       // Determine which data to show in the tooltip based on snap status
-      let tooltipX, tooltipY, tooltipTimeValue, tooltipHeightValue;
+      let tooltipX: number, tooltipY: number, tooltipTimeValue: number, tooltipHeightValue: number;
 
       if (isSnapped && this.currentTimeMarkerData) {
         // Use yellow dot's data when snapped
         tooltipX = this.currentTimeMarkerData.x;
         tooltipY = this.currentTimeMarkerData.y;
-        tooltipTimeValue = this.currentTimeMarkerData.totalMinutes; // Use raw minutes for consistency if needed, or formatted string
+        tooltipTimeValue = this.currentTimeMarkerData.totalMinutes;
         tooltipHeightValue = this.currentTimeMarkerData.height;
       } else {
         // Use interpolated data when not snapped
@@ -737,34 +811,32 @@ export class GraphRenderer {
         tooltipHeightValue = height;
       }
 
-      // Call the card's method to update the HTML tooltip, passing snap status and correct data
-      if (
-        this.card &&
-        typeof this.card._updateInteractionTooltip === 'function'
-      ) {
+      // Call the card's method to update the HTML tooltip
+      if (this.card) {
         this.card._updateInteractionTooltip(
-          tooltipX, // Use determined X for positioning tooltip
-          tooltipY, // Use determined Y for positioning tooltip
-          tooltipTimeValue, // Use determined time for content
-          tooltipHeightValue, // Use determined height for content
-          isSnapped // Pass the proximity flag for styling
+          tooltipX,
+          tooltipY,
+          tooltipTimeValue,
+          tooltipHeightValue,
+          isSnapped
         );
       }
     } else {
-      // Hide if interpolation fails (e.g., pointer is before/after the curve time range)
+      // Hide if interpolation fails
       this._handleInteractionEnd(interactionGroup);
     }
   }
 
-  _handleInteractionEnd(interactionGroup) {
+  private _handleInteractionEnd(interactionGroup: G): void {
     interactionGroup.hide();
     // Call the card's method to hide the HTML tooltip
-    if (this.card && typeof this.card._hideInteractionTooltip === 'function') {
+    if (this.card) {
       this.card._hideInteractionTooltip();
     }
     // Ensure yellow dot is reset to normal scale when interaction ends
     if (this.currentTimeDotElement) {
-      this.currentTimeDotElement.transform({
+       // Use assertion if transform is not typed
+      (this.currentTimeDotElement as any).transform({
         scale: 1.0,
         origin: 'center center',
       });
@@ -772,7 +844,7 @@ export class GraphRenderer {
   }
 
   // Method to clean up resources
-  destroy() {
+  public destroy(): void {
     // Remove interaction listeners if they were bound
     if (this._boundHandleInteractionMove && this.svgContainer) {
       const overlay = this.svgContainer.querySelector(
@@ -781,34 +853,32 @@ export class GraphRenderer {
       if (overlay) {
         overlay.removeEventListener(
           'mousemove',
-          this._boundHandleInteractionMove
+          this._boundHandleInteractionMove as EventListener
         );
         overlay.removeEventListener(
           'touchstart',
-          this._boundHandleInteractionMove
+          this._boundHandleInteractionMove as EventListener
         );
         overlay.removeEventListener(
           'touchmove',
-          this._boundHandleInteractionMove
+          this._boundHandleInteractionMove as EventListener
         );
         overlay.removeEventListener(
           'mouseleave',
-          this._boundHandleInteractionEnd
+          this._boundHandleInteractionEnd as EventListener
         );
         overlay.removeEventListener(
           'touchend',
-          this._boundHandleInteractionEnd
+          this._boundHandleInteractionEnd as EventListener
         );
         overlay.removeEventListener(
           'touchcancel',
-          this._boundHandleInteractionEnd
+          this._boundHandleInteractionEnd as EventListener
         );
       }
     }
     this._boundHandleInteractionMove = null;
     this._boundHandleInteractionEnd = null;
-
-    // Note: Listeners added directly to currentTimeDot are removed when the SVG is cleared/removed.
 
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
