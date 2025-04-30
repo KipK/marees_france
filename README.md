@@ -4,7 +4,7 @@
 
 **Display French tides from SHOM directly in Home Assistant, with a simple integration and a custom Lovelace card.**
 
-![Tides France Lovelace Card](./img/card.png)
+![Tides France Lovelace Card](./img/card-en.png)
 
 **Author**: [@KipK](https://github.com/KipK)
 
@@ -28,7 +28,7 @@
 1. Go to **Devices & Services → Add Integration**, search for **Tides France**.
 2. Select the **nearest port** from the list.
 
-![Integration Configuration](./img/integration-config.png)
+![Integration Configuration](./img/integration-config-en.png)
 
 Once configured, the entity will appear as:  
 `sensor.marees_france_[PORT_NAME]`
@@ -40,7 +40,7 @@ Once configured, the entity will appear as:
 A **custom Lovelace card** is provided with the integration!  
 Simply add the **Tides France card** to your dashboard.
 
-![Card Editor](./img/card-editor.png)
+![Card Editor](./img/card-editor-en.png)
 
 ---
 
