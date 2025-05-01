@@ -557,131 +557,145 @@ export class GraphRenderer {
     });
 
     // --- Draw Tide Markers ---
-    // const markerElements: { element: G; bbox: any; isHigh: boolean; markerY: number }[] = []; // Store marker info if needed later
     tideMarkers.forEach((marker) => {
-      // Coefficient Group
-      if (marker.isHigh && marker.coefficient !== null) { // Check for null coefficient
-        const coefGroup = draw.group() as G;
-        const coefText = String(marker.coefficient);
-        // Use a temporary text element to measure size accurately
-        const tempText = draw
-          .text(coefText)
-          .font({ size: coefFontSize, weight: 'bold', anchor: 'middle' })
-          .attr('dominant-baseline', 'central')
-          .opacity(0); // Make it invisible
-        const textBBox = tempText.bbox(); // tempText is Text, which has bbox()
-        tempText.remove(); // Remove temporary element
+      try { // Add try block for the entire marker
+        // Coefficient Group
+        if (marker.isHigh && marker.coefficient !== null) { // Check for null coefficient
+          try { // Add specific try-catch for coefficient box
+            const coefGroup = draw.group() as G;
+            const coefText = String(marker.coefficient);
+            // Use a temporary text element to measure size accurately
+            const tempText = draw
+              .text(coefText)
+              .font({ size: coefFontSize, weight: 'bold', anchor: 'middle' })
+              .attr('dominant-baseline', 'central')
+              .opacity(0); // Make it invisible
+            const textBBox = tempText.bbox(); // tempText is Text, which has bbox()
+            tempText.remove(); // Remove temporary element
 
-        if (!textBBox) return; // Skip if bbox calculation failed
+            if (!textBBox || isNaN(textBBox.width) || isNaN(textBBox.height) || isNaN(marker.x)) {
+              console.error("GraphRenderer: Invalid bbox or marker.x for coefficient marker", marker, textBBox);
+              return; // Skip this coefficient marker if bbox or x is invalid
+            }
 
-        const boxWidth = textBBox.width + 2 * coefBoxPadding.x;
-        const boxHeight = textBBox.height + 2 * coefBoxPadding.y;
-        const boxX = marker.x - boxWidth / 2;
-        const boxY = coefBoxTopMargin;
+            const boxWidth = textBBox.width + 2 * coefBoxPadding.x;
+            const boxHeight = textBBox.height + 2 * coefBoxPadding.y;
+            const boxX = marker.x - boxWidth / 2;
+            const boxY = coefBoxTopMargin;
 
-        coefGroup
-          .rect(boxWidth, boxHeight)
-          .attr({ x: boxX, y: boxY, rx: coefBoxRadius, ry: coefBoxRadius })
-          .fill(coefBoxBgColor)
-          .stroke({ color: coefBoxBorderColor, width: 1 })
-          .attr('vector-effect', 'non-scaling-stroke');
+            if (isNaN(boxX) || isNaN(boxY) || isNaN(boxWidth) || isNaN(boxHeight)) {
+               console.error("GraphRenderer: NaN detected in coefficient box dimensions/position", marker, textBBox);
+               return; // Skip drawing this box
+            }
 
-        const coefValue = marker.coefficient;
-        const coefColor =
-          coefValue >= 100 ? 'var(--warning-color)' : primaryTextColor;
-        coefGroup
-          .text(coefText)
-          .font({
-            fill: coefColor,
-            size: coefFontSize,
-            weight: 'bold',
-            anchor: 'middle',
-          })
-          .attr('dominant-baseline', 'central')
-          .attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
+            coefGroup
+              .rect(boxWidth, boxHeight)
+              .attr({ x: boxX, y: boxY, rx: coefBoxRadius, ry: coefBoxRadius })
+              .fill(coefBoxBgColor)
+              .stroke({ color: coefBoxBorderColor, width: 1 })
+              .attr('vector-effect', 'non-scaling-stroke');
 
-        const lineStartY = boxY + boxHeight;
-        const lineEndY = marker.y - coefLineToPeakGap;
-        if (lineEndY > lineStartY) {
-          coefGroup
-            .line(marker.x, lineStartY, marker.x, lineEndY)
-            .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' })
-            .attr('vector-effect', 'non-scaling-stroke');
+            const coefValue = marker.coefficient;
+            const coefColor =
+              coefValue >= 100 ? 'var(--warning-color)' : primaryTextColor;
+            coefGroup
+              .text(coefText)
+              .font({
+                fill: coefColor,
+                size: coefFontSize,
+                weight: 'bold',
+                anchor: 'middle',
+              })
+              .attr('dominant-baseline', 'central')
+              .attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
+
+            const lineStartY = boxY + boxHeight;
+            const lineEndY = marker.y - coefLineToPeakGap;
+
+            if (isNaN(lineStartY) || isNaN(lineEndY) || isNaN(marker.x)) {
+                console.error("GraphRenderer: NaN detected in coefficient line coordinates", marker);
+                // Don't draw the line, but the box/text might be okay
+            } else if (lineEndY > lineStartY) {
+              coefGroup
+                .line(marker.x, lineStartY, marker.x, lineEndY)
+                .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' })
+                .attr('vector-effect', 'non-scaling-stroke');
+            }
+            this.elementsToKeepSize.push(coefGroup);
+          } catch (coefError) {
+             console.error("GraphRenderer: Error drawing coefficient marker:", coefError, marker);
+             // Continue to draw arrow/text if possible
+          }
         }
-        this.elementsToKeepSize.push(coefGroup);
+
+        // Arrow & Text Group
+        try { // Add specific try-catch for arrow/text
+          const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.2;
+          const textLineHeight = tideTimeFontSize * 1.1;
+          const visualPadding = 8; // Padding between arrow and text
+          const arrowGroup = draw.group() as G;
+
+          let arrowPathData: string;
+          const arrowY = marker.y + arrowYOffset;
+          // Revert arrow path logic to match original JS (High tide points UP, Low tide points DOWN)
+          if (marker.isHigh) {
+            // Pointing UP (Original JS logic for High Tide)
+            arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x},${arrowY - arrowSize * 0.4} Z`;
+          } else {
+            // Pointing DOWN (Original JS logic for Low Tide)
+            arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x},${arrowY + arrowSize * 0.4} Z`;
+          }
+
+          if (isNaN(marker.x) || isNaN(arrowY)) {
+             console.error("GraphRenderer: NaN detected in arrow path coordinates", marker);
+             return; // Skip drawing arrow/text for this marker
+          }
+
+          arrowGroup.path(arrowPathData).fill(primaryTextColor).stroke('none');
+
+          let timeTextY: number, heightTextY: number;
+          const arrowTipOffset = arrowSize * 0.4;
+          const timeAscent = tideTimeFontSize * 0.8; // Approximate ascent
+          const heightDescent = tideHeightFontSize * 0.2; // Approximate descent
+
+          if (marker.isHigh) { // Arrow points up, text below
+            const arrowTipY = arrowY - arrowTipOffset;
+            timeTextY = arrowTipY + visualPadding + timeAscent - 10;
+            heightTextY = timeTextY + textLineHeight;
+          } else { // Arrow points down, text above
+            const arrowTipY = arrowY + arrowTipOffset;
+            heightTextY = arrowTipY - visualPadding - heightDescent - 22;
+            timeTextY = heightTextY - textLineHeight;
+          }
+
+          if (isNaN(timeTextY) || isNaN(heightTextY) || isNaN(marker.x)) {
+             console.error("GraphRenderer: NaN detected in text position calculation", marker);
+             return; // Skip drawing text for this marker
+          }
+
+          arrowGroup
+            .text(marker.time)
+            .font({ fill: primaryTextColor, size: tideTimeFontSize, weight: 'bold' })
+            .attr('text-anchor', 'middle')
+            .cx(marker.x)
+            .y(timeTextY);
+
+          arrowGroup // Changed from coefGroup to arrowGroup
+            .text(`${marker.height.toFixed(1)}m`)
+            .font({ fill: primaryTextColor, size: tideHeightFontSize })
+            .attr('text-anchor', 'middle')
+            .cx(marker.x)
+            .y(heightTextY);
+
+          this.elementsToKeepSize.push(arrowGroup);
+        } catch (arrowTextError) {
+           console.error("GraphRenderer: Error drawing arrow/text marker:", arrowTextError, marker);
+           // Continue to next marker
+        }
+      } catch (markerError) {
+        console.error("GraphRenderer: Error processing tide marker:", markerError, marker);
+        // Continue to the next marker
       }
-
-      // Arrow & Text Group
-      const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.2;
-      const textLineHeight = tideTimeFontSize * 1.1;
-      const visualPadding = 8; // Padding between arrow and text
-      const arrowGroup = draw.group() as G;
-
-      let arrowPathData: string;
-      const arrowY = marker.y + arrowYOffset;
-      // Revert arrow path logic to match original JS (High tide points UP, Low tide points DOWN)
-      if (marker.isHigh) {
-        // Pointing UP (Original JS logic for High Tide)
-        arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x},${arrowY - arrowSize * 0.4} Z`;
-      } else {
-        // Pointing DOWN (Original JS logic for Low Tide)
-        arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x},${arrowY + arrowSize * 0.4} Z`;
-      }
-      // Check arrowAndTextColor variable usage - assuming primaryTextColor for now
-      arrowGroup.path(arrowPathData).fill(primaryTextColor).stroke('none');
-
-      let timeTextY: number, heightTextY: number;
-      const arrowTipOffset = arrowSize * 0.4;
-      const timeAscent = tideTimeFontSize * 0.8; // Approximate ascent
-      const heightDescent = tideHeightFontSize * 0.2; // Approximate descent
-
-      // Revert to the exact calculations from the original JS file (docs/graph-renderer.js lines 598-606)
-      // const arrowTipOffset = arrowSize * 0.4; // Already declared above (line 653)
-      // const timeAscent = tideTimeFontSize * 0.8; // Already declared above (line 654)
-      // const heightDescent = tideHeightFontSize * 0.2; // Already declared above (line 655)
-
-      if (marker.isHigh) { // Arrow points down, text above
-        const arrowTipY = arrowY - arrowTipOffset; // Use variable declared above
-        // Exact JS calculation (line 600)
-        timeTextY = arrowTipY + visualPadding + timeAscent - 10;
-        // Exact JS calculation (line 601)
-        heightTextY = timeTextY + textLineHeight;
-      } else { // Arrow points up, text below
-        const arrowTipY = arrowY + arrowTipOffset;
-        // Exact JS calculation (line 604)
-        heightTextY = arrowTipY - visualPadding - heightDescent - 22;
-         // Exact JS calculation (line 605)
-        timeTextY = heightTextY - textLineHeight;
-      }
-
-      // Keep using the positioning method from the previous diff (which matches JS)
-      arrowGroup
-        .text(marker.time)
-        .font({
-          fill: primaryTextColor, // Use primary text color
-          size: tideTimeFontSize,
-          weight: 'bold',
-          // anchor: 'middle' // text-anchor is preferred SVG attribute
-        })
-        // .attr('dominant-baseline', 'central') // Remove baseline adjustment for consistency with JS approach
-        .attr('text-anchor', 'middle') // Use text-anchor like JS
-        .cx(marker.x) // Use cx like JS
-        .y(timeTextY); // Use calculated y like JS
-
-      arrowGroup
-        .text(`${marker.height.toFixed(1)}m`)
-        .font({
-            fill: primaryTextColor, // Use primary text color
-            size: tideHeightFontSize,
-            // anchor: 'middle' // text-anchor is preferred SVG attribute
-        })
-        // .attr('dominant-baseline', 'central') // Remove baseline adjustment for consistency with JS approach
-        .attr('text-anchor', 'middle') // Use text-anchor like JS
-        .cx(marker.x) // Use cx like JS
-        .y(heightTextY); // Use calculated y like JS
-
-      this.elementsToKeepSize.push(arrowGroup);
-      // markerElements.push({ element: arrowGroup, bbox: (arrowGroup as any).bbox(), isHigh: marker.isHigh, markerY: marker.y }); // Keep commented out
     });
 
     // --- Draw Static Current Time Marker (Yellow Dot) ---
