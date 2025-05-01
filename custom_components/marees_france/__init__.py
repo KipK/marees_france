@@ -408,6 +408,7 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
         if needs_save:
             await store.async_save(cache)
             _LOGGER.debug("Marées France: Saved pruned cache during service call")
+        # REVERT: Return the cached dictionary directly
         return cached_entry
 
     # 4. Cache miss - Fallback Fetch (should be rare with prefetching)
@@ -425,6 +426,7 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
     fetched_data = await _async_fetch_and_store_water_level(hass, store, cache, harbor_id, date_str) # Use harbor_id
 
     if fetched_data is not None:
+        # REVERT: Return the fetched dictionary directly
         return fetched_data
     else:
         # Error occurred during fetch, helper already logged it.
@@ -909,3 +911,32 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     _LOGGER.debug(
         "Marées France: Finished reloading Marées France entry: %s", entry.entry_id
     )
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle removal of a config entry."""
+    harbor_id = entry.data.get(CONF_HARBOR_ID)
+    if not harbor_id:
+        _LOGGER.error("Cannot remove cache for entry %s: Harbor ID not found in entry data.", entry.entry_id)
+        return
+
+    _LOGGER.info("Removing cached data for harbor %s (entry: %s)", harbor_id, entry.entry_id)
+
+    stores_to_clean = {
+        "tides": Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY),
+        "coefficients": Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY),
+        "water_levels": Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY),
+    }
+
+    for store_name, store_instance in stores_to_clean.items():
+        try:
+            cache_data = await store_instance.async_load() or {}
+            if harbor_id in cache_data:
+                del cache_data[harbor_id]
+                await store_instance.async_save(cache_data)
+                _LOGGER.debug("Removed %s cache data for harbor %s.", store_name, harbor_id)
+            else:
+                _LOGGER.debug("No %s cache data found for harbor %s to remove.", store_name, harbor_id)
+        except Exception as e:
+            _LOGGER.exception("Error removing %s cache data for harbor %s: %s", store_name, harbor_id, e)
+
+    _LOGGER.info("Finished removing cached data for harbor %s.", harbor_id)

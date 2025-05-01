@@ -116,9 +116,28 @@ async def _async_fetch_and_store_water_level(
         # Error already logged by the helper
         return None # Indicate failure
 
+    # --- Validate fetched data structure (expecting {"YYYY-MM-DD": [...]}) before saving ---
+    # Explicitly check each part of the expected structure.
+    if not isinstance(data, dict):
+        valid_structure = False
+    elif date_str not in data:
+        valid_structure = False
+    elif not isinstance(data[date_str], list):
+        valid_structure = False
+    else:
+        valid_structure = True # Structure is valid
+
+    if not valid_structure:
+        _LOGGER.error(
+            "Marées France Helper: Fetched water level data for %s on %s has unexpected structure or is missing the date key. Discarding. Data: %s",
+            harbor_name, date_str, data
+        )
+        return None # Indicate failure, do not save invalid data
+
     # Store in cache and save if fetch was successful
     try:
-        cache.setdefault(harbor_name, {})[date_str] = data
+        # --- Add detailed logging before save ---
+        cache.setdefault(harbor_name, {})[date_str] = data # Store the whole dictionary
         await store.async_save(cache)
         _LOGGER.debug(
             "Marées France Helper: Cached new water level data for %s on %s and saved cache",

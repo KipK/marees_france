@@ -91,7 +91,6 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
         """Validate cache for the harbor, repair if needed, return full cache and harbor cache."""
         harbor_cache = cache_full.get(self.harbor_id, {})
-        is_valid = True
         needs_repair = False
 
         if not isinstance(harbor_cache, dict):
@@ -106,15 +105,16 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # --- Specific Validation Logic ---
             if data_type == "water_levels":
                 # Water level data for a date should be a dict containing a 'data' list
+                # REVERT: Expect the value associated with the date key to be a dict containing the date key again
                 for date_key, daily_data in harbor_cache.items():
-                    if not isinstance(daily_data, list): # <-- Check if daily_data is a list
-                        _LOGGER.warning("Marées France Coordinator: Invalid %s cache data for harbor '%s', date '%s': Expected list, got %s.", data_type, self.harbor_id, date_key, type(daily_data).__name__)
+                    if not isinstance(daily_data, dict): # <-- Check if daily_data is a dict
+                        _LOGGER.warning("Marées France Coordinator: Invalid %s cache data for harbor '%s', date '%s': Expected dict, got %s.", data_type, self.harbor_id, date_key, type(daily_data).__name__)
                         is_valid = False
                         needs_repair = True
                         break
-                    # Optional further check: Ensure list is not empty and first item looks correct
-                    elif not daily_data or not isinstance(daily_data[0], list) or len(daily_data[0]) != 2:
-                         _LOGGER.warning("Marées France Coordinator: Invalid %s cache list format for harbor '%s', date '%s'. First item: %s", data_type, self.harbor_id, date_key, daily_data[0] if daily_data else "N/A")
+                    # Check for the date key within the dict and that its value is a list
+                    elif date_key not in daily_data or not isinstance(daily_data.get(date_key), list):
+                         _LOGGER.warning("Marées France Coordinator: Invalid %s cache structure for harbor '%s', date '%s': Missing or invalid inner list for date key.", data_type, self.harbor_id, date_key)
                          is_valid = False
                          needs_repair = True
                          break
@@ -393,8 +393,6 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         now_data = None
         next_data = None
         previous_data = None
-        next_spring_data = None
-        next_neap_data = None
 
         # --- Populate Next/Previous/Now ---
         if now_tide_index != -1: # Found a future tide
@@ -445,10 +443,10 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         water_levels = None # Initialize
         today_str_check = date.today().strftime(DATE_FORMAT) # Get today's date string key
 
+        # REVERT: Expect the raw data passed to be the dict {"YYYY-MM-DD": [...]}, extract list using date key
         if isinstance(water_level_raw_data, dict) and isinstance(water_level_raw_data.get(today_str_check), list):
-            # Directly access the list using today's date string as the key
             _LOGGER.debug("Marées France Coordinator: Extracting water levels using key '%s'.", today_str_check)
-            water_levels = water_level_raw_data[today_str_check]
+            water_levels = water_level_raw_data[today_str_check] # Access the list via the date key
         elif water_level_raw_data is not None:
              _LOGGER.warning("Marées France Coordinator: Received water level data, but it's not a dictionary or lacks the expected key '%s'. Data: %s", today_str_check, water_level_raw_data)
         # else: water_level_raw_data is None, already logged before calling parse
