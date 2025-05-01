@@ -107,13 +107,14 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if data_type == "water_levels":
                 # Water level data for a date should be a dict containing a 'data' list
                 for date_key, daily_data in harbor_cache.items():
-                    if not isinstance(daily_data, dict):
-                        _LOGGER.warning("Marées France Coordinator: Invalid %s cache data for harbor '%s', date '%s': Expected dict, got %s.", data_type, self.harbor_id, date_key, type(daily_data).__name__)
+                    if not isinstance(daily_data, list): # <-- Check if daily_data is a list
+                        _LOGGER.warning("Marées France Coordinator: Invalid %s cache data for harbor '%s', date '%s': Expected list, got %s.", data_type, self.harbor_id, date_key, type(daily_data).__name__)
                         is_valid = False
                         needs_repair = True
                         break
-                    elif "data" not in daily_data or not isinstance(daily_data.get("data"), list):
-                         _LOGGER.warning("Marées France Coordinator: Invalid %s cache structure for harbor '%s', date '%s': Missing or invalid 'data' list within dict.", data_type, self.harbor_id, date_key)
+                    # Optional further check: Ensure list is not empty and first item looks correct
+                    elif not daily_data or not isinstance(daily_data[0], list) or len(daily_data[0]) != 2:
+                         _LOGGER.warning("Marées France Coordinator: Invalid %s cache list format for harbor '%s', date '%s'. First item: %s", data_type, self.harbor_id, date_key, daily_data[0] if daily_data else "N/A")
                          is_valid = False
                          needs_repair = True
                          break
