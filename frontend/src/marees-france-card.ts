@@ -569,6 +569,33 @@ export class MareesFranceCard extends LitElement {
       const tooltip = this.shadowRoot?.getElementById('marees-html-tooltip');
       if (tooltip) tooltip.classList.toggle('snapped-tooltip', isSnapped);
       this._showHtmlTooltip(syntheticEvent, formattedTimeStr, formattedHeightStr);
+
+      // --- BEGIN: Calculate and set tooltip bottom Y for renderer ---
+      // Use the 'tooltip' and 'svg' variables declared earlier in the function scope
+      if (tooltip && svg && this._graphRenderer) { // Use existing tooltip (L569) and svg (L553)
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const ctmForTooltip = svg.getScreenCTM(); // Use existing svg (L553)
+        if (ctmForTooltip) {
+          const pt = svg.createSVGPoint();
+          // Use the tooltip's bottom-left screen coordinates
+          pt.x = tooltipRect.left;
+          pt.y = tooltipRect.bottom;
+          try {
+            const svgPoint = pt.matrixTransform(ctmForTooltip.inverse());
+            // Pass the calculated SVG Y coordinate to the renderer
+            this._graphRenderer.setTooltipBottomY(svgPoint.y);
+          } catch (inverseError) {
+             console.error('Marees Card: Error inverting CTM for tooltip Y:', inverseError);
+             // Optionally hide the line if calculation fails
+             this._graphRenderer.setTooltipBottomY(-1); // Or some indicator value
+          }
+        } else {
+           // Optionally hide the line if CTM is null
+           this._graphRenderer.setTooltipBottomY(-1);
+        }
+      }
+      // --- END: Calculate and set tooltip bottom Y for renderer ---
+
     } catch (transformError) {
       console.error('Marees Card: Error transforming SVG point for tooltip:', transformError);
       this._hideHtmlTooltip();

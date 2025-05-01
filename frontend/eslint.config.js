@@ -1,26 +1,33 @@
 import globals from "globals";
 import js from "@eslint/js";
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 import babelParser from "@babel/eslint-parser";
 import litPlugin from "eslint-plugin-lit";
 import * as wcPlugin from "eslint-plugin-wc"; // Use namespace import
 import prettierConfig from "eslint-config-prettier";
 
 export default [
-  js.configs.recommended, // Start with eslint recommended rules
+  // Global ignores
   {
-    // Global settings for all JS files
+    ignores: ["**/node_modules/", "**/dist/", "../custom_components/marees_france/frontend/"],
+  },
+
+  // Base JS configuration (including Babel for potential .js files)
+  js.configs.recommended,
+  {
+    files: ["**/*.js", "**/*.cjs"], // Apply Babel parser only to JS files
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
-        // Process browser globals to remove whitespace from keys
         ...Object.fromEntries(
           Object.entries(globals.browser).map(([key, value]) => [key.trim(), value])
         ),
       },
       parser: babelParser,
       parserOptions: {
-        requireConfigFile: false, // Necessary for @babel/eslint-parser standalone
+        requireConfigFile: false,
         babelOptions: {
           presets: ["@babel/preset-env"],
           plugins: [
@@ -32,25 +39,41 @@ export default [
     linterOptions: {
       reportUnusedDisableDirectives: true,
     },
-    ignores: ["**/node_modules/", "**/dist/", "../custom_components/marees_france/frontend/"], // Ignore node_modules, build output
   },
+
+  // TypeScript configuration
   {
-    // Settings specific to Lit elements (using recommended config)
-    files: ["src/**/*.js"], // Apply Lit rules only to source files
+    files: ["**/*.ts"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parser: tsParser, // Use TypeScript parser
+      parserOptions: {
+        project: "./tsconfig.json", // Link to your tsconfig
+      },
+      globals: {
+        ...Object.fromEntries(
+          Object.entries(globals.browser).map(([key, value]) => [key.trim(), value])
+        ),
+      },
+    },
     plugins: {
-      lit: litPlugin,
-    }
-  },
-  {
-    // Settings specific to Web Components (using recommended config)
-    files: ["src/**/*.js"], // Apply WC rules only to source files
-    plugins: {
-      wc: wcPlugin,
+      '@typescript-eslint': tsPlugin, // Enable TypeScript plugin
+      lit: litPlugin, // Keep Lit plugin for TS files
+      wc: wcPlugin,   // Keep WC plugin for TS files
     },
     rules: {
+      ...tsPlugin.configs.recommended.rules, // Apply TS recommended rules
+      ...litPlugin.configs.recommended.rules, // Apply Lit recommended rules
       ...wcPlugin.configs.recommended.rules, // Apply WC recommended rules
+      // Add any specific overrides here if needed
+      // e.g., '@typescript-eslint/no-explicit-any': 'warn',
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: true,
     },
   },
+
   // Apply Prettier config last to override other formatting rules
   prettierConfig,
 ];

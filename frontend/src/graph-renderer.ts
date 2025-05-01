@@ -46,6 +46,8 @@ export class GraphRenderer {
   private yRange: number | null = null;
   private currentTimeMarkerData: CurrentTimeMarkerData | null = null; // Store current time marker info
   private currentTimeDotElement: Circle | null = null; // Store reference to the yellow dot SVG element
+  private interactionLine: Line | null = null; // Store reference to the interaction vertical line
+  private tooltipBottomSvgY: number | null = null; // Store tooltip bottom Y in SVG coords
 
   // Bound event handlers
   private _boundHandleInteractionMove: ((event: MouseEvent | TouchEvent) => void) | null = null;
@@ -226,13 +228,13 @@ export class GraphRenderer {
       (element) =>
         element &&
         element.node?.isConnected && // Check if node is connected
-        typeof (element as any).bbox === 'function' // Check if bbox method exists
+        element instanceof SvgElement && typeof element.bbox === 'function' // Check if bbox method exists
     );
 
     this.elementsToKeepSize.forEach((element) => {
       try {
         // Use 'any' assertion if bbox() is not recognized on the specific type
-        const bbox = (element as any).bbox();
+        const bbox = (element as SvgElement).bbox();
         if (!bbox) return; // Skip if bbox is null
 
         const cx = bbox.cx;
@@ -248,7 +250,7 @@ export class GraphRenderer {
         }
 
         // Use 'any' assertion for transform methods if needed
-        (element as any)
+        (element as SvgElement)
           .transform({})
           .translate(cx, cy)
           .scale(inverseScale)
@@ -280,10 +282,18 @@ export class GraphRenderer {
 
     // --- 1. Check for Errors or Missing Data ---
     const tideResponse = tideData?.response;
-    if (!tideResponse || typeof tideResponse !== 'object' || (tideResponse as any).error) {
-      const errorMessage = (tideResponse as any)?.error
-        ? `Tide Error: ${(tideResponse as any).error}`
-        : localizeCard('ui.card.marees_france.no_tide_data', this.hass);
+    if (!tideResponse || typeof tideResponse !== 'object') {
+      // Handle null, undefined, or non-object responses
+      const errorMessage = localizeCard('ui.card.marees_france.no_tide_data', this.hass);
+      const errorText = this.svgDraw
+        .text(errorMessage)
+        .move(viewBoxWidth / 2, viewBoxHeight / 2)
+        .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+      this.elementsToKeepSize.push(errorText);
+      return;
+    } else if ('error' in tideResponse && tideResponse.error) {
+      // Handle responses that are objects but contain an error property
+      const errorMessage = `Tide Error: ${tideResponse.error}`;
       const errorText = this.svgDraw
         .text(errorMessage)
         .move(viewBoxWidth / 2, viewBoxHeight / 2)
@@ -295,10 +305,18 @@ export class GraphRenderer {
     const typedTideResponse = tideResponse as GetTidesDataResponseData;
 
     const waterLevelResponse = waterLevels?.response;
-    if (!waterLevelResponse || typeof waterLevelResponse !== 'object' || (waterLevelResponse as any).error) {
-      const errorMessage = (waterLevelResponse as any)?.error
-        ? `Water Level Error: ${(waterLevelResponse as any).error}`
-        : localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
+    if (!waterLevelResponse || typeof waterLevelResponse !== 'object') {
+       // Handle null, undefined, or non-object responses
+      const errorMessage = localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
+      const errorText = this.svgDraw
+        .text(errorMessage)
+        .move(viewBoxWidth / 2, viewBoxHeight / 2)
+        .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+      this.elementsToKeepSize.push(errorText);
+      return;
+    } else if ('error' in waterLevelResponse && waterLevelResponse.error) {
+      // Handle responses that are objects but contain an error property
+      const errorMessage = `Water Level Error: ${waterLevelResponse.error}`;
       const errorText = this.svgDraw
         .text(errorMessage)
         .move(viewBoxWidth / 2, viewBoxHeight / 2)
@@ -480,7 +498,7 @@ export class GraphRenderer {
     const axisColor = 'var(--secondary-text-color, grey)';
     const primaryTextColor = 'var(--primary-text-color, black)';
     const curveColor = 'var(--primary-color, blue)';
-    const arrowAndTextColor = 'var(--primary-text-color, white)'; // This seems wrong, likely should be primary text color? Check CSS. Assuming black for now.
+    // const arrowAndTextColor = 'var(--primary-text-color, white)'; // Removed unused variable
     const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)';
     const coefBoxBorderColor =
       'var(--ha-card-border-color, var(--divider-color, grey))';
@@ -508,7 +526,15 @@ export class GraphRenderer {
     const interactionGroup = draw
       .group()
       .attr('id', 'interaction-indicator')
-      .hide() as G; // Type assertion
+       .hide() as G; // Type assertion
+    // Add the vertical dotted line FIRST
+    this.interactionLine = interactionGroup
+      .line(0, 0, 0, 0) // Initial dummy coordinates
+      // Revert to primary text color
+      .stroke({ color: 'var(--primary-text-color, black)', width: 1, dasharray: '2,2' })
+      .attr('pointer-events', 'none')
+      .attr('vector-effect', 'non-scaling-stroke') as Line; // Type assertion
+    // Add the dot SECOND, so it's drawn on top
     const interactionDot = interactionGroup
       .circle(dotRadius * 2) // Use same radius as yellow dot
       .fill('var(--info-color, blue)')
@@ -589,7 +615,7 @@ export class GraphRenderer {
           .font({ size: coefFontSize, weight: 'bold', anchor: 'middle' })
           .attr('dominant-baseline', 'central')
           .opacity(0); // Make it invisible
-        const textBBox = (tempText as any).bbox(); // Use assertion if bbox not typed
+        const textBBox = tempText.bbox(); // tempText is Text, which has bbox()
         tempText.remove(); // Remove temporary element
 
         if (!textBBox) return; // Skip if bbox calculation failed
@@ -772,7 +798,7 @@ export class GraphRenderer {
       interactionGroup.show();
       interactionDot.center(finalX, finalY);
 
-      // Determine if the interpolated position is close to the current time marker
+      // Determine if the interpolated position is close to the current time marker (MUST be calculated first)
       let isSnapped = false;
       const snapThreshold = 10; // Pixels in SVG coordinates for proximity check
       if (this.currentTimeMarkerData) {
@@ -788,10 +814,35 @@ export class GraphRenderer {
       if (this.currentTimeDotElement) {
         const scaleValue = isSnapped ? 1.3 : 1.0;
         // Use assertion if transform is not typed
-        (this.currentTimeDotElement as any).transform({
+        this.currentTimeDotElement.transform({
           scale: scaleValue,
           origin: 'center center',
         });
+      }
+
+      // Update the vertical line position, considering snap status
+      if (this.interactionLine && this.tooltipBottomSvgY !== null) {
+        let lineStartX: number, lineStartY: number;
+
+        // Use yellow dot coords if snapped, otherwise use interpolated coords
+        if (isSnapped && this.currentTimeMarkerData) {
+          lineStartX = this.currentTimeMarkerData.x;
+          lineStartY = this.currentTimeMarkerData.y;
+        } else {
+          lineStartX = finalX;
+          lineStartY = finalY;
+        }
+
+        const lineEndX = lineStartX; // Line is vertical
+        const lineEndY = this.tooltipBottomSvgY; // End at tooltip bottom
+
+        // Ensure line doesn't go below the starting point if tooltip is lower
+        const plotY2 = Math.min(lineStartY, lineEndY);
+
+        this.interactionLine.plot(lineStartX, lineStartY, lineEndX, plotY2); // x1, y1, x2, y2
+      } else if (this.interactionLine) {
+        // Fallback or hide if tooltip Y not set? Hide for now.
+        this.interactionLine.plot(0,0,0,0); // Effectively hide
       }
 
       // Determine which data to show in the tooltip based on snap status
@@ -836,7 +887,7 @@ export class GraphRenderer {
     // Ensure yellow dot is reset to normal scale when interaction ends
     if (this.currentTimeDotElement) {
        // Use assertion if transform is not typed
-      (this.currentTimeDotElement as any).transform({
+      this.currentTimeDotElement.transform({
         scale: 1.0,
         origin: 'center center',
       });
@@ -876,7 +927,8 @@ export class GraphRenderer {
           this._boundHandleInteractionEnd as EventListener
         );
       }
-    }
+    
+    } // End of if (_boundHandleInteractionMove && svgContainer)
     this._boundHandleInteractionMove = null;
     this._boundHandleInteractionEnd = null;
 
@@ -892,6 +944,13 @@ export class GraphRenderer {
     this.svgContainer = null;
     this.card = null; // Remove reference to card
     this.currentTimeDotElement = null; // Clear reference
+    this.interactionLine = null; // Clear reference
+    this.tooltipBottomSvgY = null; // Clear reference
     // console.log("GraphRenderer destroyed.");
+  } // End of destroy method
+
+  // --- Public method for card to set tooltip position ---
+  public setTooltipBottomY(svgY: number): void {
+    this.tooltipBottomSvgY = svgY;
   }
-}
+} // End of GraphRenderer class
