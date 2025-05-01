@@ -12,7 +12,7 @@ jobs:
       - name: "Set version number"
         run: |
           yq -i -o json '.version="${{ github.ref_name }}"' \ 
-            "${{ github.workspace }}/custom_components/marees_france/manifest.json"
+            "${{ github.workspace }}/custom_components/marees_france/manifest.json" && \
           yq -i -o json '.version="${{ github.ref_name }}"' \
             "${{ github.workspace }}/frontend/package.json"
       - name: Commit & Push new version
