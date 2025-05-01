@@ -128,7 +128,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         except CannotConnect as err:
             _LOGGER.error("Migration failed for entry %s: Could not fetch harbor list: %s", config_entry.entry_id, err)
             return False
-        except Exception as err:
+        except Exception: # Removed unused 'as err'
              _LOGGER.exception("Migration failed for entry %s: Unexpected error fetching harbor list", config_entry.entry_id)
              return False
 
@@ -869,8 +869,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     while (rand_c_hour == rand_wl_hour and rand_c_min == rand_wl_min) or \
           (rand_c_hour == rand_t_hour and rand_c_min == rand_t_min):
          rand_c_min = random.randint(0, 59) # Reroll minute first
-         if rand_c_min == rand_wl_min and rand_c_hour == rand_wl_hour: continue # Avoid infinite loop if all slots taken in the hour
-         if rand_c_min == rand_t_min and rand_c_hour == rand_t_hour: continue
+         # Avoid infinite loop if all slots taken in the hour
+         if rand_c_min == rand_wl_min and rand_c_hour == rand_wl_hour:
+             continue
+         if rand_c_min == rand_t_min and rand_c_hour == rand_t_hour:
+             continue
     _LOGGER.info("Marées France: Scheduled daily coefficients prefetch check at %02d:%02d", rand_c_hour, rand_c_min)
     listeners.append(async_track_time_change(
         hass, _daily_coefficients_prefetch_job, hour=rand_c_hour, minute=rand_c_min, second=0

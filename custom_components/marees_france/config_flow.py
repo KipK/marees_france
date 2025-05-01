@@ -3,25 +3,22 @@
 from __future__ import annotations
 
 # Standard library imports
-import asyncio
 import logging
 from typing import Any
 
 # Third-party imports
-import aiohttp
 import voluptuous as vol
 
 # Home Assistant core imports
 from homeassistant import config_entries # Import config_entries
 from homeassistant.config_entries import (
-    ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
 )
-from homeassistant.core import HomeAssistant, callback # Add HomeAssistant import
+# from homeassistant.core import HomeAssistant, callback # Add HomeAssistant import - Removed unused
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
+# import homeassistant.helpers.config_validation as cv - Removed unused
 
 # Local application/library specific imports
 # Import fetch_harbors from __init__.py
@@ -31,7 +28,7 @@ from .const import (
     CONF_HARBOR_NAME,
     DEFAULT_HARBOR,
     DOMAIN,
-    HARBORSURL,
+    # HARBORSURL, - Removed unused
     HEADERS,
     INTEGRATION_NAME,
 )
