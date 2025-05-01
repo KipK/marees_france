@@ -540,52 +540,6 @@ export class GraphRenderer {
       .fill('var(--info-color, blue)')
       .attr('pointer-events', 'none') as Circle; // Type assertion
 
-    // Transparent overlay for capturing events (drawn first)
-    const interactionOverlay = draw
-      .rect(this.graphWidth, this.graphHeight)
-      .move(this.graphMargin.left, this.graphMargin.top)
-      .fill('transparent')
-      .attr('cursor', 'crosshair') as Rect; // Type assertion
-
-    // Bind interaction handlers once
-    this._boundHandleInteractionMove = this._handleInteractionMove.bind(
-      this,
-      interactionGroup,
-      interactionDot
-    );
-    this._boundHandleInteractionEnd = this._handleInteractionEnd.bind(
-      this,
-      interactionGroup
-    );
-
-    // Add event listeners to the overlay
-    interactionOverlay.node.addEventListener(
-      'mousemove',
-      this._boundHandleInteractionMove as EventListener // Cast needed
-    );
-    interactionOverlay.node.addEventListener(
-      'touchstart',
-      this._boundHandleInteractionMove as EventListener, // Cast needed
-      { passive: false }
-    );
-    interactionOverlay.node.addEventListener(
-      'touchmove',
-      this._boundHandleInteractionMove as EventListener, // Cast needed
-      { passive: false }
-    );
-    interactionOverlay.node.addEventListener(
-      'mouseleave',
-      this._boundHandleInteractionEnd as EventListener // Cast needed
-    );
-    interactionOverlay.node.addEventListener(
-      'touchend',
-      this._boundHandleInteractionEnd as EventListener // Cast needed
-    );
-    interactionOverlay.node.addEventListener(
-      'touchcancel',
-      this._boundHandleInteractionEnd as EventListener // Cast needed
-    );
-
     // Draw X Axis Labels
     xTicks.forEach((tick) => {
       if (tick.label) {
@@ -738,6 +692,56 @@ export class GraphRenderer {
         .fill('var(--tide-icon-color)') // Use the specific yellow color
         .attr('pointer-events', 'none') as Circle; // Type assertion
     }
+
+    // --- Interaction Overlay (Draw LAST to be on top) ---
+    const interactionOverlay = draw
+      .rect(this.graphWidth, this.graphHeight)
+      .move(this.graphMargin.left, this.graphMargin.top)
+      .fill('transparent')
+      .attr('cursor', 'crosshair') as Rect; // Type assertion
+
+    // Bind interaction handlers once (if not already bound elsewhere, though binding here is fine)
+    if (!this._boundHandleInteractionMove) {
+        this._boundHandleInteractionMove = this._handleInteractionMove.bind(
+          this,
+          interactionGroup,
+          interactionDot
+        );
+    }
+    if (!this._boundHandleInteractionEnd) {
+        this._boundHandleInteractionEnd = this._handleInteractionEnd.bind(
+          this,
+          interactionGroup
+        );
+    }
+
+    // Add event listeners to the overlay
+    interactionOverlay.node.addEventListener(
+      'mousemove',
+      this._boundHandleInteractionMove as EventListener // Cast needed
+    );
+    interactionOverlay.node.addEventListener(
+      'touchstart',
+      this._boundHandleInteractionMove as EventListener, // Cast needed
+      { passive: false }
+    );
+    interactionOverlay.node.addEventListener(
+      'touchmove',
+      this._boundHandleInteractionMove as EventListener, // Cast needed
+      { passive: false }
+    );
+    interactionOverlay.node.addEventListener(
+      'mouseleave',
+      this._boundHandleInteractionEnd as EventListener // Cast needed
+    );
+    interactionOverlay.node.addEventListener(
+      'touchend',
+      this._boundHandleInteractionEnd as EventListener // Cast needed
+    );
+    interactionOverlay.node.addEventListener(
+      'touchcancel',
+      this._boundHandleInteractionEnd as EventListener // Cast needed
+    );
 
     // Trigger scale update after drawing
     window.requestAnimationFrame(() => {

@@ -1107,10 +1107,10 @@ export class MareesFranceCard extends LitElement {
       }
       .chart-tooltip.snapped-tooltip {
         border-color: var(--tide-icon-color); /* Yellow border */
-        color: var(--tide-icon-color); /* Yellow text */
+        color: var(--primary-text-color); /* Use primary text color */
       }
       .chart-tooltip.snapped-tooltip strong {
-        color: var(--tide-icon-color); /* Ensure bold text is also yellow */
+        color: var(--primary-text-color); /* Ensure bold text is also primary */
       }
 
       /* Dialog Styles [MODIFIED FOR GRID] */
