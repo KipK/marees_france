@@ -427,7 +427,8 @@ async def async_handle_get_tides_data(call: ServiceCall) -> ServiceResponse:
 
     if not harbor_data:
          _LOGGER.warning("Marées France: No cached tide data found for harbor '%s' (device: %s) in service call.", harbor_id, device_id)
-         return {} # Return empty dict
+         # Return a structured error response
+         return {"error": "no_cached_data", "message": f"No cached tide data found for harbor '{harbor_id}'"}
 
     _LOGGER.debug("Marées France: Returning cached tide data for harbor '%s' (device: %s) via service call.", harbor_id, device_id)
     return harbor_data

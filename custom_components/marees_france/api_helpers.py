@@ -20,6 +20,7 @@ from .const import (
     TIDESURL_TEMPLATE,
     COEFF_URL_TEMPLATE,
     DATE_FORMAT,
+    API_REQUEST_DELAY, # Add the new constant
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ async def _async_fetch_with_retry(
     initial_delay = 5 # seconds
 
     # Task 2: Always wait 1 second before making a request
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(API_REQUEST_DELAY) # Use the constant
     _LOGGER.debug("Marées France Helper: Preparing to fetch %s for %s from %s", data_type, harbor_id, url)
 
     for attempt in range(max_retries):

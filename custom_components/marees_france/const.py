@@ -46,6 +46,8 @@ HEADERS: Final = {
     "Referer": "https://maree.shom.fr/",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
 }
+# Delay between API requests (in seconds)
+API_REQUEST_DELAY: Final = 0.2
 
 # Attributes
 ATTR_DATA: Final = "data"
