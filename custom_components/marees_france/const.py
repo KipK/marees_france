@@ -92,6 +92,7 @@ DATETIME_FORMAT: Final = f"{DATE_FORMAT} {TIME_FORMAT}"
 SERVICE_GET_WATER_LEVELS: Final = "get_water_levels"
 SERVICE_GET_TIDES_DATA: Final = "get_tides_data"
 SERVICE_GET_COEFFICIENTS_DATA: Final = "get_coefficients_data"
+SERVICE_REINITIALIZE_HARBOR_DATA: Final = "reinitialize_harbor_data" # New service
 
 # frontend modules
 JSMODULES = [

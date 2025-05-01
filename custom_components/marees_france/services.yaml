@@ -93,3 +93,14 @@ get_coefficients_data:
         "2025-04-26": ["95"],
         "2025-04-27": ["87", "78"]
       }
+reinitialize_harbor_data:
+  name: Reinitialize Harbor Data
+  description: Clears the cached tide and water level data for a specific harbor device and triggers an immediate refresh from the SHOM API. Use this if you suspect the cached data is stale or incorrect.
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to reinitialize data for.
+      required: true
+      selector:
+        device:
+          integration: marees_france # Filter by integration

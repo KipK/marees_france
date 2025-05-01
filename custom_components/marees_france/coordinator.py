@@ -38,11 +38,7 @@ from .const import (
     STATE_HIGH_TIDE,
     STATE_LOW_TIDE,
     TIDE_HIGH,
-    TIDE_LOW,
-    HEADERS, # Needed for fetch helper
-    WATERLEVELS_STORAGE_KEY, # Needed for fetch helper store access
-    WATERLEVELS_STORAGE_VERSION, # Needed for fetch helper store access
-    WATERLEVELS_URL_TEMPLATE, # Needed for fetch helper URL
+    TIDE_LOW
 )
 # Import ALL helper functions from the new api_helpers module
 from .api_helpers import (

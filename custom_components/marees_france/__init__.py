@@ -23,28 +23,23 @@ import homeassistant.helpers.device_registry as dr # Add device registry import
 # Local application/library specific imports
 from .const import (
     ATTR_DATE,
-    ATTR_HARBOR_NAME,
     COEFF_STORAGE_KEY, # Import storage keys
     COEFF_STORAGE_VERSION,
-    COEFF_URL_TEMPLATE, # Add coefficient URL template
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME, # Add CONF_HARBOR_NAME (needed for migration)
     DATE_FORMAT, # Add DATE_FORMAT
     DOMAIN,
     HARBORSURL, # Add HARBORSURL (needed for fetch_harbors)
     HEADERS, # Ensure HEADERS is imported (needed for fetch_harbors)
-    NEAP_TIDE_THRESHOLD, # Add Neap threshold
     PLATFORMS,
     SERVICE_GET_COEFFICIENTS_DATA, # Add new service name
     SERVICE_GET_TIDES_DATA, # Add new service name
     SERVICE_GET_WATER_LEVELS,
-    SPRING_TIDE_THRESHOLD, # Add Spring threshold
+    SERVICE_REINITIALIZE_HARBOR_DATA, # Import new service constant
     TIDES_STORAGE_KEY,
     TIDES_STORAGE_VERSION,
-    TIDESURL_TEMPLATE, # Add TIDESURL_TEMPLATE
     WATERLEVELS_STORAGE_KEY,
     WATERLEVELS_STORAGE_VERSION,
-    WATERLEVELS_URL_TEMPLATE,
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration # Import frontend helper here
@@ -181,9 +176,123 @@ SERVICE_GET_COEFFICIENTS_DATA_SCHEMA = vol.Schema({ # Schema for new service
     vol.Optional(ATTR_DATE): vol.Match(r"^\d{4}-\d{2}-\d{2}$"), # Optional date YYYY-MM-DD
     vol.Optional("days"): cv.positive_int, # Optional number of days
 })
+SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA = vol.Schema({ # Schema for new service
+    vol.Required("device_id"): cv.string,
+})
 
 
 # --- Helper functions moved to api_helpers.py ---
+
+
+# --- Service Handler for Reinitialization (New) ---
+
+async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
+    """Handle the service call to reinitialize data for a specific harbor."""
+    device_id = call.data["device_id"]
+    hass = call.hass
+
+    # --- Resolve Harbor ID ---
+    dev_reg = dr.async_get(hass)
+    device_entry = dev_reg.async_get(device_id)
+    if not device_entry or not device_entry.config_entries:
+        _LOGGER.error("Reinitialize Service: Device %s not found or not linked to Marées France.", device_id)
+        raise HomeAssistantError(f"Device {device_id} not found or not linked to Marées France.")
+    config_entry_id = next(iter(device_entry.config_entries))
+    config_entry = hass.config_entries.async_get_entry(config_entry_id)
+    if not config_entry or config_entry.domain != DOMAIN:
+         _LOGGER.error("Reinitialize Service: Config entry %s not found or not for %s.", config_entry_id, DOMAIN)
+         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+    harbor_id = config_entry.data[CONF_HARBOR_ID]
+
+    _LOGGER.info("Reinitialize Service: Starting data reinitialization for device %s (harbor: %s)", device_id, harbor_id)
+
+    # --- Load Stores ---
+    tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY)
+    coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY)
+    water_level_store = Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
+
+    # --- Clear Cache Entries ---
+    caches_cleared = []
+    try:
+        # Tides
+        tides_cache_full = await tides_store.async_load() or {}
+        if harbor_id in tides_cache_full:
+            del tides_cache_full[harbor_id]
+            await tides_store.async_save(tides_cache_full)
+            caches_cleared.append("tides")
+            _LOGGER.debug("Reinitialize Service: Cleared tides cache for %s", harbor_id)
+
+        # Coefficients
+        coeff_cache_full = await coeff_store.async_load() or {}
+        if harbor_id in coeff_cache_full:
+            del coeff_cache_full[harbor_id]
+            await coeff_store.async_save(coeff_cache_full)
+            caches_cleared.append("coefficients")
+            _LOGGER.debug("Reinitialize Service: Cleared coefficients cache for %s", harbor_id)
+
+        # Water Levels
+        water_level_cache_full = await water_level_store.async_load() or {}
+        if harbor_id in water_level_cache_full:
+            del water_level_cache_full[harbor_id]
+            await water_level_store.async_save(water_level_cache_full)
+            caches_cleared.append("water levels")
+            _LOGGER.debug("Reinitialize Service: Cleared water levels cache for %s", harbor_id)
+
+        if caches_cleared:
+            _LOGGER.info("Reinitialize Service: Successfully cleared cache(s) for %s: %s", harbor_id, ", ".join(caches_cleared))
+        else:
+            _LOGGER.info("Reinitialize Service: No cache entries found to clear for %s", harbor_id)
+
+    except Exception as e:
+        _LOGGER.exception("Reinitialize Service: Error clearing cache for %s", harbor_id)
+        raise HomeAssistantError(f"Error clearing cache for {harbor_id}: {e}") from e
+
+    # --- Trigger Immediate Refetch ---
+    _LOGGER.info("Reinitialize Service: Triggering immediate data refetch for %s", harbor_id)
+    fetch_errors = []
+    try:
+        # Reload caches *after* clearing, before passing to fetch helpers
+        tides_cache_full = await tides_store.async_load() or {}
+        coeff_cache_full = await coeff_store.async_load() or {}
+        water_level_cache_full = await water_level_store.async_load() or {}
+
+        # Fetch Tides (Yesterday + 7 days = 8 days total)
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        yesterday_str = yesterday.strftime(DATE_FORMAT)
+        fetch_duration = 8
+        if not await _async_fetch_and_store_tides(hass, tides_store, tides_cache_full, harbor_id, yesterday_str, fetch_duration):
+            fetch_errors.append("tides")
+
+        # Fetch Coefficients (1st of current month + 365 days)
+        first_day_of_current_month = today.replace(day=1)
+        coeff_fetch_days = 365
+        if not await _async_fetch_and_store_coefficients(hass, coeff_store, coeff_cache_full, harbor_id, first_day_of_current_month, coeff_fetch_days):
+            fetch_errors.append("coefficients")
+
+        # Fetch Water Levels (Today only)
+        today_str = today.strftime(DATE_FORMAT)
+        if not await _async_fetch_and_store_water_level(hass, water_level_store, water_level_cache_full, harbor_id, today_str):
+            fetch_errors.append("water levels")
+
+    except Exception as e:
+        _LOGGER.exception("Reinitialize Service: Unexpected error during data refetch for %s", harbor_id)
+        raise HomeAssistantError(f"Unexpected error during data refetch for {harbor_id}: {e}") from e
+
+    if fetch_errors:
+        _LOGGER.error("Reinitialize Service: Failed to refetch the following data for %s: %s", harbor_id, ", ".join(fetch_errors))
+        raise HomeAssistantError(f"Failed to refetch data for {harbor_id}: {', '.join(fetch_errors)}")
+
+    _LOGGER.info("Reinitialize Service: Successfully completed data reinitialization and refetch for %s", harbor_id)
+
+    # --- Optionally trigger coordinator update ---
+    # Find the coordinator instance and request a refresh
+    coordinator: MareesFranceUpdateCoordinator | None = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    if coordinator:
+        _LOGGER.info("Reinitialize Service: Requesting immediate coordinator update for %s", harbor_id)
+        await coordinator.async_request_refresh()
+    else:
+         _LOGGER.warning("Reinitialize Service: Could not find coordinator instance for %s to trigger refresh.", harbor_id)
 
 
 # --- Water Level Prefetch ---
@@ -701,6 +810,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=SERVICE_GET_COEFFICIENTS_DATA_SCHEMA, supports_response=SupportsResponse.ONLY,
         )
         _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_COEFFICIENTS_DATA)
+
+    # Reinitialize Harbor Data Service (New)
+    if not hass.services.has_service(DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA):
+        hass.services.async_register(
+            DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA, async_handle_reinitialize_harbor_data,
+            schema=SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA, supports_response=SupportsResponse.NONE, # No response needed
+        )
+        _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA)
 
 
     # --- Prefetch Scheduling ---
