@@ -1,10 +1,10 @@
 import { translations } from './constants';
-import { HassObject } from './types'; // Import the HassObject type
+import { HomeAssistant } from './types'; // Import the HomeAssistant type
 
 // --- Custom Localization Function ---
 export function localizeCard(
   key: string,
-  hass: HassObject | undefined | null, // Type the hass object
+  hass: HomeAssistant | undefined | null, // Type the hass object
   ...args: (string | number)[] // Type the rest arguments
 ): string { // Add return type
   const lang = hass?.language || 'en';
@@ -13,13 +13,25 @@ export function localizeCard(
 
   try {
     // Use type assertion for the accumulator 'o' to handle nested structure
-    // Use type assertion for the accumulator 'o' and check final type
-    const potentialTranslation = key
-      .split('.')
-      .reduce((o, i) => (o && typeof o === 'object' ? (o as any)[i] : undefined), langTranslations);
+    // Use a loop for safer type handling when traversing nested objects
+    let currentLevel: unknown = langTranslations; // Start with the whole object
+    const keys = key.split('.');
 
-    if (typeof potentialTranslation === 'string') {
-      translated = potentialTranslation;
+    for (const k of keys) {
+      // Check if currentLevel is an indexable object and has the key
+      if (currentLevel && typeof currentLevel === 'object' && !Array.isArray(currentLevel) && Object.prototype.hasOwnProperty.call(currentLevel, k)) {
+        // Safely access the next level
+        currentLevel = (currentLevel as Record<string, unknown>)[k];
+      } else {
+        // If not an object or key doesn't exist, stop the lookup
+        currentLevel = undefined;
+        break;
+      }
+    }
+
+    // Check if the final result is a string
+    if (typeof currentLevel === 'string') {
+      translated = currentLevel;
     } else {
       // If not a string (undefined, object, etc.), fall back to the key
       translated = key;

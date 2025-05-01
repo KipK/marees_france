@@ -1,7 +1,7 @@
 import { LitElement, html, css, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localizeCard } from './localize';
-import { HassObject, MareesFranceCardConfig } from './types';
+import { HomeAssistant, MareesFranceCardConfig } from './types';
 
 // Define the structure for the schema items used in ha-form
 // This is a basic structure; official HA types might be more comprehensive
@@ -10,7 +10,7 @@ interface HaFormSchemaEntry {
   label: string;
   selector: object; // e.g., { boolean: {} }, { device: { ... } }, { text: {} }
   required?: boolean;
-  default?: any;
+  default?: unknown;
   context?: object;
 }
 
@@ -44,7 +44,7 @@ const fireEvent = <T>(
 
 @customElement('marees-france-card-editor')
 export class MareesFranceCardEditor extends LitElement {
-  @property({ attribute: false }) hass?: HassObject; // Use optional chaining for safety
+  @property({ attribute: false }) hass?: HomeAssistant; // Use optional chaining for safety
 
   // Use @state decorator for internal configuration state
   @state() private _config?: MareesFranceCardConfig;

@@ -2,28 +2,42 @@
 // Minimal definitions to allow compilation. Replace with official types if a stable source becomes available.
 export interface LovelaceCardConfig {
   type: string;
-  view_layout?: any;
-  [key: string]: any; // Allow other properties
+  view_layout?: unknown; // Use unknown instead of any
+  [key: string]: unknown; // Allow other properties, use unknown
+}
+
+// Basic type for a Home Assistant state object
+export interface StateObject {
+  entity_id: string;
+  state: string;
+  attributes: { [key: string]: unknown }; // Attributes can be anything
+  last_changed: string;
+  last_updated: string;
+  context: { id: string; parent_id: string | null; user_id: string | null };
+  // Allow other potential properties
+  [key: string]: unknown;
 }
 
 export interface HomeAssistant {
   language: string;
-  localize: (key: string, ...args: any[]) => string;
-  config: any;
-  themes: any;
-  states: { [entityId: string]: any };
-  services: { [domain: string]: { [service: string]: any } };
+  localize: (key: string, ...args: unknown[]) => string; // Use unknown[] for args
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: any; // Keep any for complex config
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  themes: any; // Keep any for themes
+  states: { [entityId: string]: StateObject }; // Use StateObject
+  services: { [domain: string]: { [service: string]: unknown } }; // Use unknown for service defs
   user?: { is_admin?: boolean; name?: string };
   devices?: { [deviceId: string]: { name: string; /* other properties */ } };
-  entities?: { [entityId: string]: any };
-  callService: (domain: string, service: string, serviceData?: object, target?: object, blocking?: boolean, return_response?: boolean) => Promise<any>;
+  entities?: { [entityId: string]: unknown }; // Use unknown for entities
+  callService: (domain: string, service: string, serviceData?: object, target?: object, blocking?: boolean, return_response?: boolean) => Promise<unknown>; // Use Promise<unknown>
   callApi: <T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: object) => Promise<T>;
-  formatEntityState: (stateObj: any, state?: string) => string;
-  formatEntityAttributeValue: (stateObj: any, attribute: string, value?: any) => string;
-  formatEntityAttributeName: (stateObj: any, attribute: string) => string;
+  formatEntityState: (stateObj: StateObject, state?: string) => string; // Use StateObject
+  formatEntityAttributeValue: (stateObj: StateObject, attribute: string, value?: unknown) => string; // Use StateObject and unknown
+  formatEntityAttributeName: (stateObj: StateObject, attribute: string) => string; // Use StateObject
   // Add other commonly used hass properties/methods if needed
   editMode?: boolean; // For card editor context
-  [key: string]: any; // Allow other properties
+  [key: string]: unknown; // Allow other properties, use unknown
 }
 
 // --- Configuration ---
@@ -35,10 +49,7 @@ export interface MareesFranceCardConfig extends LovelaceCardConfig {
 }
 
 // --- Home Assistant Object Subset ---
-// Use the base HomeAssistant type defined above
-export interface HassObject extends HomeAssistant {
-  // No additional properties needed here for now as they are covered in the base HomeAssistant interface
-}
+// Removed HassObject interface as it was empty and redundant. Use HomeAssistant directly.
 
 // --- Service Call Response Wrapper ---
 // Generic wrapper for the structure returned by hass.callService with return_response: true

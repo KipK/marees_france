@@ -1,7 +1,7 @@
 import { SVG, Svg, Element as SvgElement, Circle, G, Rect, Text, Path, Line } from '@svgdotjs/svg.js'; // Use types from the library itself if available
 import { localizeCard } from './localize';
 import {
-  HassObject,
+  HomeAssistant,
   ServiceResponseWrapper,
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
@@ -15,7 +15,7 @@ import {
 
 // Placeholder type for the main card - replace with actual import later
 interface MareesFranceCard {
-  hass?: HassObject | null;
+  hass?: HomeAssistant | null;
   _updateInteractionTooltip(
     svgX: number,
     svgY: number,
@@ -29,7 +29,7 @@ interface MareesFranceCard {
 export class GraphRenderer {
   private card: MareesFranceCard | null; // Reference to the main card component instance
   private svgContainer: HTMLDivElement | null;
-  private hass: HassObject | null;
+  private hass: HomeAssistant | null;
   private svgDraw: Svg | null = null;
   private resizeObserver: ResizeObserver | null = null;
   // Use a more specific type if possible, otherwise SvgElement or any
@@ -57,7 +57,7 @@ export class GraphRenderer {
   constructor(
     cardInstance: MareesFranceCard,
     svgContainer: HTMLDivElement,
-    hass: HassObject | null
+    hass: HomeAssistant | null
   ) {
     this.card = cardInstance;
     this.svgContainer = svgContainer;

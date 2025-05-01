@@ -4,7 +4,7 @@ import { localizeCard } from './localize'; // Assuming .ts extension resolution 
 import { getWeekdayShort3Letters, getNextTideStatus } from './utils'; // Assuming .ts extension resolution works
 import { GraphRenderer } from './graph-renderer'; // Assuming .ts extension resolution works
 import {
-  HassObject,
+  HomeAssistant,
   MareesFranceCardConfig,
   ServiceResponseWrapper,
   GetTidesDataResponseData,
@@ -38,7 +38,7 @@ interface SyntheticPositionEvent {
 @customElement('marees-france-card')
 export class MareesFranceCard extends LitElement {
   // --- Properties ---
-  @property({ attribute: false }) hass!: HassObject; // Non-null assertion: Assume hass is always provided by HA
+  @property({ attribute: false }) hass!: HomeAssistant; // Non-null assertion: Assume hass is always provided by HA
   @property({ attribute: false }) config!: MareesFranceCardConfig; // Non-null assertion: Assume config is set via setConfig
 
   // --- State Properties ---
@@ -245,9 +245,9 @@ export class MareesFranceCard extends LitElement {
         console.error('Marees Card: Invalid data from get_water_levels:', response);
         this._waterLevels = { error: typeof errorMsg === 'string' ? errorMsg : 'Invalid data structure' };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Marees Card: Error calling get_water_levels:', error);
-      this._waterLevels = { error: typeof error?.message === 'string' ? error.message : 'Service call failed' };
+      this._waterLevels = { error: error instanceof Error ? error.message : 'Service call failed' };
     } finally {
       this._isLoadingWater = false;
       this._updateInitialLoadingFlag();
@@ -278,9 +278,9 @@ export class MareesFranceCard extends LitElement {
         console.error('Marees Card: Invalid data from get_tides_data:', response);
         this._tideData = { error: typeof errorMsg === 'string' ? errorMsg : 'Invalid data structure' };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Marees Card: Error calling get_tides_data:', error);
-      this._tideData = { error: typeof error?.message === 'string' ? error.message : 'Service call failed' };
+      this._tideData = { error: error instanceof Error ? error.message : 'Service call failed' };
     } finally {
       this._isLoadingTides = false;
       this._updateInitialLoadingFlag();
@@ -321,9 +321,9 @@ export class MareesFranceCard extends LitElement {
         console.error('Marees Card: Invalid data from get_coefficients_data:', response);
         this._coefficientsData = { error: typeof errorMsg === 'string' ? errorMsg : 'Invalid data structure' };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Marees Card: Error calling get_coefficients_data:', error);
-      this._coefficientsData = { error: typeof error?.message === 'string' ? error.message : 'Service call failed' };
+      this._coefficientsData = { error: error instanceof Error ? error.message : 'Service call failed' };
     } finally {
       this._isLoadingCoefficients = false;
       this._updateInitialLoadingFlag();
