@@ -80,6 +80,16 @@
             }
         }
     },
+    "reinitialize_harbor_data": {
+      "name": "Reinitialize Harbor Data",
+      "description": "Clears cached data (tides, coefficients, water levels) for a specific harbor and triggers an immediate refetch of the data.",
+      "fields": {
+        "device_id": {
+          "name": "Harbor Device",
+          "description": "The Marées France harbor device whose data should be reinitialized."
+        }
+      }
+    },
 "entity": {
         "sensor": {
             "now_tide": {

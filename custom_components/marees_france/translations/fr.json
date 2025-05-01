@@ -163,6 +163,16 @@
             "description": "Le nombre de jours (incluant la date de début) pour lesquels récupérer les coefficients."
           }
         }
+      },
+      "reinitialize_harbor_data": {
+        "name": "Réinitialiser les données du port",
+        "description": "Efface les données mises en cache (marées, coefficients, hauteurs d'eau) pour un port spécifique et déclenche une nouvelle récupération immédiate des données.",
+        "fields": {
+          "device_id": {
+            "name": "Port",
+            "description": "Le port Marées France dont les données doivent être réinitialisées."
+          }
+        }
       }
     }
 }
