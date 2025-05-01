@@ -425,12 +425,29 @@ async def async_handle_get_tides_data(call: ServiceCall) -> ServiceResponse:
     # Get data using the harbor_id from the config entry
     harbor_data = cache.get(harbor_id, {})
 
-    if not harbor_data:
-         _LOGGER.warning("Marées France: No cached tide data found for harbor '%s' (device: %s) in service call.", harbor_id, device_id)
-         # Return a structured error response
-         return {"error": "no_cached_data", "message": f"No cached tide data found for harbor '{harbor_id}'"}
+    # --- Cache Validation ---
+    data_valid = True
+    if not isinstance(harbor_data, dict):
+        data_valid = False
+        _LOGGER.warning("Marées France: Invalid cache format for harbor '%s' (device: %s): Expected dict, got %s.", harbor_id, device_id, type(harbor_data).__name__)
+    elif not harbor_data:
+        # Empty dict is considered a cache miss for this check
+        data_valid = False
+        _LOGGER.warning("Marées France: No cached tide data found for harbor '%s' (device: %s) in service call (empty cache entry).", harbor_id, device_id)
+    else:
+        # Basic check: Ensure values are lists (daily tide events)
+        for date_key, daily_tides in harbor_data.items():
+            if not isinstance(daily_tides, list):
+                data_valid = False
+                _LOGGER.warning("Marées France: Invalid cache data for harbor '%s', date '%s' (device: %s): Expected list, got %s.", harbor_id, date_key, device_id, type(daily_tides).__name__)
+                break # Stop checking on first invalid entry
 
-    _LOGGER.debug("Marées France: Returning cached tide data for harbor '%s' (device: %s) via service call.", harbor_id, device_id)
+    if not data_valid:
+         # Treat invalid/empty cache data as a cache miss
+         return {"error": "invalid_or_missing_cache", "message": f"Invalid or missing cached tide data found for harbor '{harbor_id}'"}
+    # --- End Cache Validation ---
+
+    _LOGGER.debug("Marées France: Returning valid cached tide data for harbor '%s' (device: %s) via service call.", harbor_id, device_id)
     return harbor_data
 
 
