@@ -14,7 +14,7 @@ jobs:
           yq -i -o json '.version="${{ github.ref_name }}"' \
             "${{ github.workspace }}/custom_components/marees_france/manifest.json" && \
           yq -i -o json '.version="${{ github.ref_name }}"' \
-            "${{ github.workspace }}/frontend/package.json" && \
+            "${{ github.workspace }}/frontend/package.json"
       - name: Commit & Push new version
         uses: actions-js/push@master
         with:
