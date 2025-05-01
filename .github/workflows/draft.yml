@@ -12,6 +12,7 @@ jobs:
       - name: "Set version number"
         run: |
           yq -i -o json '.version="${{ github.ref_name }}"' \
+          yq -i -o=json '.version = "${{ github.ref_name }}"' frontend/src/manifest.json 
             "${{ github.workspace }}/custom_components/marees_france/manifest.json"
       - name: Commit & Push new version
         uses: actions-js/push@master
