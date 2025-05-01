@@ -1,5 +1,5 @@
 import {
-  HassObject,
+  HomeAssistant,
   ServiceResponseWrapper,
   GetTidesDataResponseData,
   ParsedTideEvent,
@@ -36,7 +36,7 @@ export function getWeekdayShort3Letters(
 // Adapts to the new service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
 export function getNextTideStatus(
   tideServiceData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
-  hass: HassObject | null
+  hass: HomeAssistant | null
 ): NextTideStatus | null { // Return type can be null if prerequisites fail
   // Check if the main data object and the 'response' property exist
   if (
