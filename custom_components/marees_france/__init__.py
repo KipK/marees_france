@@ -4,17 +4,26 @@ from __future__ import annotations
 
 import logging # Ensure logging is imported first
 import asyncio
-import aiohttp
-import voluptuous as vol
 from datetime import date, timedelta # Add timedelta import
 import random # Add random import
 from typing import Any # Add Any import
 
+# Third-party imports
+import aiohttp
+import voluptuous as vol
+
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, CoreState, EVENT_HOMEASSISTANT_STARTED # Add CoreState, EVENT_HOMEASSISTANT_STARTED, Add SupportsResponse here
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    CoreState,
+    EVENT_HOMEASSISTANT_STARTED,
+)
 from homeassistant.exceptions import HomeAssistantError # Import HomeAssistantError
-from homeassistant.helpers.aiohttp_client import async_get_clientsession # Import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change # Add time tracker import
 from homeassistant.helpers.storage import Store # Add Store import
 import homeassistant.helpers.config_validation as cv # Import cv
@@ -53,7 +62,8 @@ from .api_helpers import (
 # Let HA discover config_flow automatically
 
 # Import the standard frontend registration helper
-# from homeassistant.components.frontend import async_register_frontend_module # Removed problematic import
+# from homeassistant.components.frontend import async_register_frontend_module
+# Removed problematic import
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,7 +95,10 @@ async def fetch_harbors(
             if properties and "cst" in properties and "toponyme" in properties:
                 harbor_id = properties["cst"]
                 harbor_name = properties["toponyme"]
-                harbors[harbor_id] = {"display": f"{harbor_name} ({harbor_id})", "name": harbor_name}
+                harbors[harbor_id] = {
+                    "display": f"{harbor_name} ({harbor_id})",
+                    "name": harbor_name
+                }
 
         if not harbors:
             _LOGGER.error("No harbors found in the response.")
@@ -111,14 +124,19 @@ async def fetch_harbors(
 # --- Config Entry Migration (Moved from config_flow) ---
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
-    _LOGGER.debug("Migrating config entry %s from version %s", config_entry.entry_id, config_entry.version)
+    _LOGGER.debug(
+        "Migrating config entry %s from version %s",
+        config_entry.entry_id, config_entry.version
+    )
 
     if config_entry.version == 1:
         new_data = {**config_entry.data}
         harbor_id = new_data.get(CONF_HARBOR_ID)
 
         if not harbor_id:
-            _LOGGER.error("Cannot migrate config entry %s: Missing harbor_id", config_entry.entry_id)
+            _LOGGER.error(
+                "Cannot migrate config entry %s: Missing harbor_id", config_entry.entry_id
+            )
             return False
 
         try:
@@ -126,26 +144,35 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             # Call the local fetch_harbors function
             all_harbors = await fetch_harbors(websession)
         except CannotConnect as err:
-            _LOGGER.error("Migration failed for entry %s: Could not fetch harbor list: %s", config_entry.entry_id, err)
+            _LOGGER.error(
+                "Migration failed for entry %s: Could not fetch harbor list: %s",
+                config_entry.entry_id, err
+            )
             return False
         except Exception: # Removed unused 'as err'
-             _LOGGER.exception("Migration failed for entry %s: Unexpected error fetching harbor list", config_entry.entry_id)
-             return False
+            _LOGGER.exception(
+                "Migration failed for entry %s: Unexpected error fetching harbor list",
+                config_entry.entry_id
+            )
+            return False
 
         harbor_details = all_harbors.get(harbor_id)
         if not harbor_details or "name" not in harbor_details:
-             _LOGGER.error(
-                 "Migration failed for entry %s: Harbor ID '%s' not found in fetched list or missing 'name'",
-                 config_entry.entry_id,
-                 harbor_id
-             )
-             return False
+            _LOGGER.error(
+                "Migration failed for entry %s: Harbor ID '%s' not found "
+                "in fetched list or missing 'name'",
+                config_entry.entry_id,
+                harbor_id
+            )
+            return False
 
         harbor_name = harbor_details["name"]
         new_data[CONF_HARBOR_NAME] = harbor_name
 
         # Update entry version and data
-        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2) # Explicitly set version=2
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, version=2
+        ) # Explicitly set version=2
         _LOGGER.info(
             "Successfully migrated config entry %s to version 2, added harbor_name: %s",
             config_entry.entry_id,
@@ -155,7 +182,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     # Handle potential future major version downgrades (optional but good practice)
     elif config_entry.version > 2:
         _LOGGER.error(
-            "Cannot migrate config entry %s: Config entry version %s is newer than integration version 2",
+            "Cannot migrate config entry %s: Config entry version %s is newer than "
+            "integration version 2",
             config_entry.entry_id,
             config_entry.version
         )
@@ -195,21 +223,34 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
     dev_reg = dr.async_get(hass)
     device_entry = dev_reg.async_get(device_id)
     if not device_entry or not device_entry.config_entries:
-        _LOGGER.error("Reinitialize Service: Device %s not found or not linked to Marées France.", device_id)
+        _LOGGER.error(
+            "Reinitialize Service: Device %s not found or not linked to Marées France.",
+            device_id
+        )
         raise HomeAssistantError(f"Device {device_id} not found or not linked to Marées France.")
     config_entry_id = next(iter(device_entry.config_entries))
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
-         _LOGGER.error("Reinitialize Service: Config entry %s not found or not for %s.", config_entry_id, DOMAIN)
-         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+        _LOGGER.error(
+            "Reinitialize Service: Config entry %s not found or not for %s.",
+            config_entry_id, DOMAIN
+        )
+        raise HomeAssistantError(
+            f"Config entry {config_entry_id} not found or not for {DOMAIN}"
+        )
     harbor_id = config_entry.data[CONF_HARBOR_ID]
 
-    _LOGGER.info("Reinitialize Service: Starting data reinitialization for device %s (harbor: %s)", device_id, harbor_id)
+    _LOGGER.info(
+        "Reinitialize Service: Starting data reinitialization for device %s (harbor: %s)",
+        device_id, harbor_id
+    )
 
     # --- Load Stores ---
     tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY)
     coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY)
-    water_level_store = Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
+    water_level_store = Store[dict[str, dict[str, Any]]](
+        hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
+    )
 
     # --- Clear Cache Entries ---
     caches_cleared = []
@@ -239,7 +280,10 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             _LOGGER.debug("Reinitialize Service: Cleared water levels cache for %s", harbor_id)
 
         if caches_cleared:
-            _LOGGER.info("Reinitialize Service: Successfully cleared cache(s) for %s: %s", harbor_id, ", ".join(caches_cleared))
+            _LOGGER.info(
+                "Reinitialize Service: Successfully cleared cache(s) for %s: %s",
+                harbor_id, ", ".join(caches_cleared)
+            )
         else:
             _LOGGER.info("Reinitialize Service: No cache entries found to clear for %s", harbor_id)
 
@@ -261,38 +305,65 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         yesterday = today - timedelta(days=1)
         yesterday_str = yesterday.strftime(DATE_FORMAT)
         fetch_duration = 8
-        if not await _async_fetch_and_store_tides(hass, tides_store, tides_cache_full, harbor_id, yesterday_str, fetch_duration):
+        if not await _async_fetch_and_store_tides(
+            hass, tides_store, tides_cache_full, harbor_id, yesterday_str, fetch_duration
+        ):
             fetch_errors.append("tides")
 
         # Fetch Coefficients (1st of current month + 365 days)
         first_day_of_current_month = today.replace(day=1)
         coeff_fetch_days = 365
-        if not await _async_fetch_and_store_coefficients(hass, coeff_store, coeff_cache_full, harbor_id, first_day_of_current_month, coeff_fetch_days):
+        if not await _async_fetch_and_store_coefficients(
+            hass, coeff_store, coeff_cache_full, harbor_id,
+            first_day_of_current_month, coeff_fetch_days
+        ):
             fetch_errors.append("coefficients")
 
         # Fetch Water Levels (Today only)
         today_str = today.strftime(DATE_FORMAT)
-        if not await _async_fetch_and_store_water_level(hass, water_level_store, water_level_cache_full, harbor_id, today_str):
+        if not await _async_fetch_and_store_water_level(
+            hass, water_level_store, water_level_cache_full, harbor_id, today_str
+        ):
             fetch_errors.append("water levels")
 
     except Exception as e:
-        _LOGGER.exception("Reinitialize Service: Unexpected error during data refetch for %s", harbor_id)
-        raise HomeAssistantError(f"Unexpected error during data refetch for {harbor_id}: {e}") from e
+        _LOGGER.exception(
+            "Reinitialize Service: Unexpected error during data refetch for %s", harbor_id
+        )
+        raise HomeAssistantError(
+            f"Unexpected error during data refetch for {harbor_id}: {e}"
+        ) from e
 
     if fetch_errors:
-        _LOGGER.error("Reinitialize Service: Failed to refetch the following data for %s: %s", harbor_id, ", ".join(fetch_errors))
-        raise HomeAssistantError(f"Failed to refetch data for {harbor_id}: {', '.join(fetch_errors)}")
+        _LOGGER.error(
+            "Reinitialize Service: Failed to refetch the following data for %s: %s",
+            harbor_id, ", ".join(fetch_errors)
+        )
+        raise HomeAssistantError(
+            f"Failed to refetch data for {harbor_id}: {', '.join(fetch_errors)}"
+        )
 
-    _LOGGER.info("Reinitialize Service: Successfully completed data reinitialization and refetch for %s", harbor_id)
+    _LOGGER.info(
+        "Reinitialize Service: Successfully completed data reinitialization and refetch for %s",
+        harbor_id
+    )
 
     # --- Optionally trigger coordinator update ---
     # Find the coordinator instance and request a refresh
-    coordinator: MareesFranceUpdateCoordinator | None = hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    coordinator: MareesFranceUpdateCoordinator | None = (
+        hass.data.get(DOMAIN, {}).get(config_entry.entry_id)
+    )
     if coordinator:
-        _LOGGER.info("Reinitialize Service: Requesting immediate coordinator update for %s", harbor_id)
+        _LOGGER.info(
+            "Reinitialize Service: Requesting immediate coordinator update for %s",
+            harbor_id
+        )
         await coordinator.async_request_refresh()
     else:
-         _LOGGER.warning("Reinitialize Service: Could not find coordinator instance for %s to trigger refresh.", harbor_id)
+        _LOGGER.warning(
+            "Reinitialize Service: Could not find coordinator instance for %s "
+            "to trigger refresh.", harbor_id
+        )
 
 
 # --- Water Level Prefetch ---
@@ -303,7 +374,9 @@ async def async_check_and_prefetch_water_levels(
 ) -> None:
     """Check cache for the next 8 days and prefetch missing water level data."""
     harbor_name = entry.data[CONF_HARBOR_ID] # Use harbor name/ID from config entry
-    _LOGGER.info("Starting water level prefetch check for harbor: %s", harbor_name) # Changed to INFO
+    _LOGGER.info(
+        "Starting water level prefetch check for harbor: %s", harbor_name
+    ) # Changed to INFO
     cache = await store.async_load() or {}
     today = date.today()
     missing_dates = []
@@ -352,17 +425,22 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
     if not device_entry:
         raise HomeAssistantError(f"Device not found: {device_id}")
     if not device_entry.config_entries:
-         raise HomeAssistantError(f"Device {device_id} not associated with a config entry")
+        raise HomeAssistantError(f"Device {device_id} not associated with a config entry")
     # Assuming the first config entry is the correct one for this integration's device
     config_entry_id = next(iter(device_entry.config_entries))
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
-         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+        raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
     harbor_id = config_entry.data[CONF_HARBOR_ID] # This is the harbor name/ID used in cache/API
 
-    _LOGGER.debug("Service call get_water_levels for device %s (harbor: %s), date: %s", device_id, harbor_id, date_str)
+    _LOGGER.debug(
+        "Service call get_water_levels for device %s (harbor: %s), date: %s",
+        device_id, harbor_id, date_str
+    )
 
-    store = Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
+    store = Store[dict[str, dict[str, Any]]](
+        hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
+    )
 
     # 1. Load cache
     cache = await store.async_load() or {}
@@ -423,16 +501,18 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
         _LOGGER.debug("Marées France: Saved pruned cache before fallback fetch")
 
     # Call the helper to fetch and store
-    fetched_data = await _async_fetch_and_store_water_level(hass, store, cache, harbor_id, date_str) # Use harbor_id
+    fetched_data = await _async_fetch_and_store_water_level(
+        hass, store, cache, harbor_id, date_str
+    ) # Use harbor_id
 
-    if fetched_data is not None:
-        # REVERT: Return the fetched dictionary directly
-        return fetched_data
-    else:
+    if fetched_data is None:
         # Error occurred during fetch, helper already logged it.
         raise HomeAssistantError(
-            f"Marées France: Failed to fetch water levels for {harbor_id} on {date_str} after cache miss." # Use harbor_id
+            f"Marées France: Failed to fetch water levels for {harbor_id} "
+            f"on {date_str} after cache miss." # Use harbor_id
         )
+    # REVERT: Return the fetched dictionary directly
+    return fetched_data
 
 
 # --- Tide Data Prefetch ---
@@ -457,16 +537,25 @@ async def async_check_and_prefetch_tides(
         check_date = today + timedelta(days=i)
         check_date_str = check_date.strftime(DATE_FORMAT)
         if check_date_str not in cache.get(harbor_id, {}):
-            _LOGGER.info("Marées France: Missing tide data for %s on %s. Triggering full %d-day fetch.", harbor_id, check_date_str, fetch_duration)
+            _LOGGER.info(
+                "Marées France: Missing tide data for %s on %s. "
+                "Triggering full %d-day fetch.",
+                harbor_id, check_date_str, fetch_duration
+            )
             needs_fetch = True
             break # No need to check further dates if one is missing
 
     if needs_fetch:
         # Pass the current cache to the fetch function so it can be updated directly
         # Explicitly pass the required duration
-        fetch_successful = await _async_fetch_and_store_tides(hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration)
+        fetch_successful = await _async_fetch_and_store_tides(
+            hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration
+        )
         if fetch_successful:
-            _LOGGER.info("Marées France: Successfully prefetched %d days of tide data for %s starting %s.", fetch_duration, harbor_id, yesterday_str)
+            _LOGGER.info(
+                "Marées France: Successfully prefetched %d days of tide data for %s "
+                "starting %s.", fetch_duration, harbor_id, yesterday_str
+            )
             # Cache was saved by the helper, but set needs_save for pruning check below
             needs_save = True # Mark that changes (fetch) happened
         else:
@@ -474,7 +563,10 @@ async def async_check_and_prefetch_tides(
             # Don't proceed with pruning if fetch failed, might lose last good data
             return
     else:
-         _LOGGER.info("Marées France: Tide data cache is up to date for %s (yesterday to today+%d).", harbor_id, fetch_duration - 1)
+        _LOGGER.info(
+            "Marées France: Tide data cache is up to date for %s "
+            "(yesterday to today+%d).", harbor_id, fetch_duration - 1
+        )
 
 
     # Prune cache: remove dates before yesterday for this harbor
@@ -489,12 +581,18 @@ async def async_check_and_prefetch_tides(
                     needs_save = True # Mark that changes (pruning) happened
                     pruned_count += 1
             except ValueError: # Handle potential invalid date strings in cache
-                 del cache[harbor_id][d_str]
-                 needs_save = True
-                 pruned_count += 1
-                 _LOGGER.warning("Marées France: Removed tide cache entry with invalid date key: %s for %s", d_str, harbor_id)
+                del cache[harbor_id][d_str]
+                needs_save = True
+                pruned_count += 1
+                _LOGGER.warning(
+                    "Marées France: Removed tide cache entry with invalid date key: "
+                    "%s for %s", d_str, harbor_id
+                )
         if pruned_count > 0:
-             _LOGGER.info("Marées France: Pruned %d old tide data entries for %s.", pruned_count, harbor_id)
+            _LOGGER.info(
+                "Marées France: Pruned %d old tide data entries for %s.",
+                pruned_count, harbor_id
+            )
         # Remove harbor entry if empty after pruning
         if not cache[harbor_id]:
             del cache[harbor_id]
@@ -521,11 +619,11 @@ async def async_handle_get_tides_data(call: ServiceCall) -> ServiceResponse:
     if not device_entry:
         raise HomeAssistantError(f"Device not found: {device_id}")
     if not device_entry.config_entries:
-         raise HomeAssistantError(f"Device {device_id} not associated with a config entry")
+        raise HomeAssistantError(f"Device {device_id} not associated with a config entry")
     config_entry_id = next(iter(device_entry.config_entries))
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
-         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+        raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
     harbor_id = config_entry.data[CONF_HARBOR_ID] # This is the harbor name/ID used in cache
 
     _LOGGER.debug("Service call get_tides_data for device %s (harbor: %s)", device_id, harbor_id)
@@ -540,25 +638,43 @@ async def async_handle_get_tides_data(call: ServiceCall) -> ServiceResponse:
     data_valid = True
     if not isinstance(harbor_data, dict):
         data_valid = False
-        _LOGGER.warning("Marées France: Invalid cache format for harbor '%s' (device: %s): Expected dict, got %s.", harbor_id, device_id, type(harbor_data).__name__)
+        _LOGGER.warning(
+            "Marées France: Invalid cache format for harbor '%s' (device: %s): "
+            "Expected dict, got %s.",
+            harbor_id, device_id, type(harbor_data).__name__
+        )
     elif not harbor_data:
         # Empty dict is considered a cache miss for this check
         data_valid = False
-        _LOGGER.warning("Marées France: No cached tide data found for harbor '%s' (device: %s) in service call (empty cache entry).", harbor_id, device_id)
+        _LOGGER.warning(
+            "Marées France: No cached tide data found for harbor '%s' (device: %s) "
+            "in service call (empty cache entry).", harbor_id, device_id
+        )
     else:
         # Basic check: Ensure values are lists (daily tide events)
         for date_key, daily_tides in harbor_data.items():
             if not isinstance(daily_tides, list):
                 data_valid = False
-                _LOGGER.warning("Marées France: Invalid cache data for harbor '%s', date '%s' (device: %s): Expected list, got %s.", harbor_id, date_key, device_id, type(daily_tides).__name__)
+                _LOGGER.warning(
+                    "Marées France: Invalid cache data for harbor '%s', date '%s' "
+                    "(device: %s): Expected list, got %s.",
+                    harbor_id, date_key, device_id, type(daily_tides).__name__
+                )
                 break # Stop checking on first invalid entry
 
     if not data_valid:
          # Treat invalid/empty cache data as a cache miss
-         return {"error": "invalid_or_missing_cache", "message": f"Invalid or missing cached tide data found for harbor '{harbor_id}'"}
+       # Treat invalid/empty cache data as a cache miss
+        return {
+            "error": "invalid_or_missing_cache",
+            "message": f"Invalid or missing cached tide data found for harbor '{harbor_id}'"
+        }
     # --- End Cache Validation ---
 
-    _LOGGER.debug("Marées France: Returning valid cached tide data for harbor '%s' (device: %s) via service call.", harbor_id, device_id)
+    _LOGGER.debug(
+        "Marées France: Returning valid cached tide data for harbor '%s' "
+        "(device: %s) via service call.", harbor_id, device_id
+    )
     return harbor_data
 
 
@@ -570,7 +686,10 @@ async def async_check_and_prefetch_coefficients(
 ) -> None:
     """Check coefficient cache (today to today+364), prefetch missing, and prune old."""
     harbor_id = entry.data[CONF_HARBOR_ID]
-    _LOGGER.info("Marées France: Starting coefficient data prefetch check for harbor: %s", harbor_id)
+    _LOGGER.info(
+        "Marées France: Starting coefficient data prefetch check for harbor: %s",
+        harbor_id
+    )
     cache = await store.async_load() or {}
     today = date.today()
     needs_save = False
@@ -586,17 +705,25 @@ async def async_check_and_prefetch_coefficients(
                 d_date = date.fromisoformat(d_str)
                 # Prune if the date's year is before the current year,
                 # or if the year is the same but the month is before the current month.
-                if d_date.year < today.year or (d_date.year == today.year and d_date.month < today.month):
+                if d_date.year < today.year or (
+                    d_date.year == today.year and d_date.month < today.month
+                ):
                     del cache[harbor_id][d_str]
                     needs_save = True
                     pruned_count += 1
             except ValueError: # Handle potential invalid date strings in cache
-                 del cache[harbor_id][d_str]
-                 needs_save = True
-                 pruned_count += 1
-                 _LOGGER.warning("Marées France: Removed coefficient cache entry with invalid date key: %s for %s", d_str, harbor_id)
+                del cache[harbor_id][d_str]
+                needs_save = True
+                pruned_count += 1
+                _LOGGER.warning(
+                    "Marées France: Removed coefficient cache entry with invalid "
+                    "date key: %s for %s", d_str, harbor_id
+                )
         if pruned_count > 0:
-             _LOGGER.info("Marées France: Pruned %d old coefficient data entries for %s.", pruned_count, harbor_id)
+            _LOGGER.info(
+                "Marées France: Pruned %d old coefficient data entries for %s.",
+                pruned_count, harbor_id
+            )
         # Remove harbor entry if empty after pruning
         if not cache[harbor_id]:
             del cache[harbor_id]
@@ -608,7 +735,9 @@ async def async_check_and_prefetch_coefficients(
     # Define the required range: 365 days starting from the 1st of the current month
     first_day_of_current_month = today.replace(day=1)
     required_start_date = first_day_of_current_month
-    required_end_date = required_start_date + timedelta(days=364) # 365 days total including start date
+    required_end_date = required_start_date + timedelta(
+        days=364
+    ) # 365 days total including start date
 
     # Check from the required start date up to the required end date
     current_check_date = required_start_date
@@ -619,9 +748,14 @@ async def async_check_and_prefetch_coefficients(
                 first_missing_date = current_check_date
             # Keep checking until the end of the required window to find the full range to fetch
         elif first_missing_date is not None:
-            # We found data *after* finding a missing date. This shouldn't happen with contiguous fetching.
+            # We found data *after* finding a missing date.
+            # This shouldn't happen with contiguous fetching.
             # Log a warning and fetch from the first missing date anyway.
-             _LOGGER.warning("Marées France: Found cached coefficient data for %s after missing date %s. Inconsistency detected.", check_date_str, first_missing_date.strftime(DATE_FORMAT))
+            _LOGGER.warning(
+                "Marées France: Found cached coefficient data for %s after missing "
+                "date %s. Inconsistency detected.",
+                check_date_str, first_missing_date.strftime(DATE_FORMAT)
+            )
              # Continue checking to ensure we fetch up to the required end date if needed
         current_check_date += timedelta(days=1)
 
@@ -629,29 +763,50 @@ async def async_check_and_prefetch_coefficients(
         fetch_start_date = first_missing_date
         # Calculate days needed: from first missing date up to the required end date
         fetch_days = (required_end_date - fetch_start_date).days + 1
-        _LOGGER.info("Marées France: Missing coefficient data for %s starting %s (up to %s). Need to fetch %d days.", harbor_id, fetch_start_date.strftime(DATE_FORMAT), required_end_date.strftime(DATE_FORMAT), fetch_days)
+        _LOGGER.info(
+            "Marées France: Missing coefficient data for %s starting %s (up to %s). "
+            "Need to fetch %d days.",
+            harbor_id, fetch_start_date.strftime(DATE_FORMAT),
+            required_end_date.strftime(DATE_FORMAT), fetch_days
+        )
 
-        fetch_successful = await _async_fetch_and_store_coefficients(hass, store, cache, harbor_id, fetch_start_date, fetch_days)
+        fetch_successful = await _async_fetch_and_store_coefficients(
+            hass, store, cache, harbor_id, fetch_start_date, fetch_days
+        )
         if fetch_successful:
-            _LOGGER.info("Marées France: Successfully prefetched %d days of coefficient data for %s starting %s.", fetch_days, harbor_id, fetch_start_date.strftime(DATE_FORMAT))
+            _LOGGER.info(
+                "Marées France: Successfully prefetched %d days of coefficient data "
+                "for %s starting %s.",
+                fetch_days, harbor_id, fetch_start_date.strftime(DATE_FORMAT)
+            )
             # Cache was saved by the helper
             needs_save = False # Reset needs_save as fetch helper saved it
         else:
             _LOGGER.error("Marées France: Failed to prefetch coefficient data for %s.", harbor_id)
             # Don't save if fetch failed, keep potentially pruned state from before fetch attempt
             if needs_save:
-                 await store.async_save(cache)
-                 _LOGGER.debug("Marées France: Saved pruned coefficients cache for %s after failed fetch.", harbor_id)
+                await store.async_save(cache)
+                _LOGGER.debug(
+                    "Marées France: Saved pruned coefficients cache for %s "
+                    "after failed fetch.", harbor_id
+                )
             return # Exit prefetch check
     else:
-         _LOGGER.info("Marées France: Coefficient data cache is up to date for %s (from %s to %s).", harbor_id, required_start_date.strftime(DATE_FORMAT), required_end_date.strftime(DATE_FORMAT))
+        _LOGGER.info(
+            "Marées France: Coefficient data cache is up to date for %s (from %s to %s).",
+            harbor_id, required_start_date.strftime(DATE_FORMAT),
+            required_end_date.strftime(DATE_FORMAT)
+        )
 
     # Save if only pruning occurred
     if needs_save:
         await store.async_save(cache)
         _LOGGER.debug("Marées France: Saved pruned coefficients cache for %s", harbor_id)
 
-    _LOGGER.info("Marées France: Finished coefficient data prefetch check for harbor: %s", harbor_id)
+    _LOGGER.info(
+        "Marées France: Finished coefficient data prefetch check for harbor: %s",
+        harbor_id
+    )
 
 
 # Specific Tide Date Prefetch Helper removed as logic is now handled by coordinator
@@ -672,11 +827,14 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
     config_entry_id = next(iter(device_entry.config_entries))
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
-         raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
+        raise HomeAssistantError(f"Config entry {config_entry_id} not found or not for {DOMAIN}")
     harbor_id = config_entry.data[CONF_HARBOR_ID]
 
-    _LOGGER.debug("Service call get_coefficients_data for device %s (harbor: %s), date: %s, days: %s",
-                  device_id, harbor_id, req_date_str, req_days)
+    _LOGGER.debug(
+        "Service call get_coefficients_data for device %s (harbor: %s), "
+        "date: %s, days: %s",
+        device_id, harbor_id, req_date_str, req_days
+    )
 
     # Load cache
     coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY)
@@ -684,8 +842,11 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
     harbor_cache = cache.get(harbor_id, {})
 
     if not harbor_cache:
-         _LOGGER.warning("Marées France: No cached coefficient data found for harbor '%s' (device: %s).", harbor_id, device_id)
-         return {} # Return empty dict
+        _LOGGER.warning(
+            "Marées France: No cached coefficient data found for harbor '%s' "
+            "(device: %s).", harbor_id, device_id
+        )
+        return {} # Return empty dict
 
     # Determine date range and filter data
     results = {}
@@ -695,7 +856,9 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
         try:
             start_date = date.fromisoformat(req_date_str)
         except ValueError:
-            raise HomeAssistantError(f"Invalid date format: {req_date_str}. Use YYYY-MM-DD.")
+            raise HomeAssistantError(
+                f"Invalid date format: {req_date_str}. Use YYYY-MM-DD."
+            ) from None
         if req_days:
             # Date and days provided
             end_date = start_date + timedelta(days=req_days - 1)
@@ -708,7 +871,10 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
         end_date = start_date + timedelta(days=req_days - 1)
     else:
         # Neither provided, return all cached data (keys are dates)
-        _LOGGER.debug("Marées France: Returning all cached coefficient data for harbor '%s'.", harbor_id)
+        _LOGGER.debug(
+            "Marées France: Returning all cached coefficient data for harbor '%s'.",
+            harbor_id
+        )
         return harbor_cache # Return the full harbor cache directly
 
     # Filter data for the calculated range
@@ -734,7 +900,7 @@ async def async_register_frontend_modules_when_ready(hass: HomeAssistant):
     _LOGGER.debug("Marées France: Registered Marées France frontend module.")
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     """Set up the Marées France component."""
     # Defer frontend registration until HA is started
     async def _setup_frontend(_event=None):
@@ -757,9 +923,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("Marées France: Setting up Marées France entry: %s", entry.entry_id)
 
     # --- Store Setup ---
-    water_level_store = Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY)
-    tides_store = Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY) # Tides store
-    coeff_store = Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY) # Add Coeff store
+    water_level_store = Store[dict[str, dict[str, Any]]](
+        hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
+    )
+    tides_store = Store[dict[str, dict[str, Any]]](
+        hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY
+    ) # Tides store
+    coeff_store = Store[dict[str, dict[str, Any]]](
+        hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY
+    ) # Add Coeff store
 
     # --- Coordinator Setup (Now uses Tides, Coeff, and Water Level Stores) ---
     # Pass all three stores to the coordinator
@@ -811,15 +983,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             DOMAIN, SERVICE_GET_COEFFICIENTS_DATA, async_handle_get_coefficients_data,
             schema=SERVICE_GET_COEFFICIENTS_DATA_SCHEMA, supports_response=SupportsResponse.ONLY,
         )
-        _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_COEFFICIENTS_DATA)
+        _LOGGER.debug(
+            "Marées France: Registered service: %s.%s",
+            DOMAIN, SERVICE_GET_COEFFICIENTS_DATA
+        )
 
     # Reinitialize Harbor Data Service (New)
     if not hass.services.has_service(DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA):
         hass.services.async_register(
             DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA, async_handle_reinitialize_harbor_data,
-            schema=SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA, supports_response=SupportsResponse.NONE, # No response needed
+            schema=SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA,
+            supports_response=SupportsResponse.NONE, # No response needed
         )
-        _LOGGER.debug("Marées France: Registered service: %s.%s", DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA)
+        _LOGGER.debug(
+            "Marées France: Registered service: %s.%s",
+            DOMAIN, SERVICE_REINITIALIZE_HARBOR_DATA
+        )
 
 
     # --- Prefetch Scheduling ---
@@ -831,7 +1010,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await async_check_and_prefetch_water_levels(hass, entry, water_level_store)
     rand_wl_hour = random.randint(1, 5)
     rand_wl_min = random.randint(0, 59)
-    _LOGGER.info("Marées France: Scheduled daily water level prefetch check at %02d:%02d", rand_wl_hour, rand_wl_min)
+    _LOGGER.info(
+        "Marées France: Scheduled daily water level prefetch check at %02d:%02d",
+        rand_wl_hour, rand_wl_min
+    )
     listeners.append(async_track_time_change(
         hass, _daily_water_level_prefetch_job, hour=rand_wl_hour, minute=rand_wl_min, second=0
     ))
@@ -845,8 +1027,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Ensure different minute if hour is the same
     rand_t_min = random.randint(0, 59)
     while rand_t_hour == rand_wl_hour and rand_t_min == rand_wl_min:
-         rand_t_min = random.randint(0, 59)
-    _LOGGER.info("Marées France: Scheduled daily tides prefetch check at %02d:%02d", rand_t_hour, rand_t_min)
+        rand_t_min = random.randint(0, 59)
+    _LOGGER.info(
+        "Marées France: Scheduled daily tides prefetch check at %02d:%02d",
+        rand_t_hour, rand_t_min
+    )
     listeners.append(async_track_time_change(
         hass, _daily_tides_prefetch_job, hour=rand_t_hour, minute=rand_t_min, second=0
     ))
@@ -861,20 +1046,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.debug("Marées France: Coefficients check done.")
             # No need to trigger specific tide prefetch here anymore
         except Exception:
-            _LOGGER.exception("Marées France: Error during scheduled coefficient prefetch job for %s", entry.data.get(CONF_HARBOR_ID))
+            _LOGGER.exception(
+                "Marées France: Error during scheduled coefficient prefetch job for %s",
+                entry.data.get(CONF_HARBOR_ID)
+            )
 
     rand_c_hour = random.randint(1, 5)
     rand_c_min = random.randint(0, 59)
     # Ensure different time from others
     while (rand_c_hour == rand_wl_hour and rand_c_min == rand_wl_min) or \
           (rand_c_hour == rand_t_hour and rand_c_min == rand_t_min):
-         rand_c_min = random.randint(0, 59) # Reroll minute first
+        rand_c_min = random.randint(0, 59) # Reroll minute first
          # Avoid infinite loop if all slots taken in the hour
-         if rand_c_min == rand_wl_min and rand_c_hour == rand_wl_hour:
-             continue
-         if rand_c_min == rand_t_min and rand_c_hour == rand_t_hour:
-             continue
-    _LOGGER.info("Marées France: Scheduled daily coefficients prefetch check at %02d:%02d", rand_c_hour, rand_c_min)
+       # Avoid infinite loop if all slots taken in the hour
+        if rand_c_min == rand_wl_min and rand_c_hour == rand_wl_hour:
+            continue
+        if rand_c_min == rand_t_min and rand_c_hour == rand_t_hour:
+            continue
+    _LOGGER.info(
+        "Marées France: Scheduled daily coefficients prefetch check at %02d:%02d",
+        rand_c_hour, rand_c_min
+    )
     listeners.append(async_track_time_change(
         hass, _daily_coefficients_prefetch_job, hour=rand_c_hour, minute=rand_c_min, second=0
     ))
@@ -919,15 +1111,22 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle removal of a config entry."""
     harbor_id = entry.data.get(CONF_HARBOR_ID)
     if not harbor_id:
-        _LOGGER.error("Cannot remove cache for entry %s: Harbor ID not found in entry data.", entry.entry_id)
+        _LOGGER.error(
+            "Cannot remove cache for entry %s: Harbor ID not found in entry data.",
+            entry.entry_id
+        )
         return
 
     _LOGGER.info("Removing cached data for harbor %s (entry: %s)", harbor_id, entry.entry_id)
 
     stores_to_clean = {
         "tides": Store[dict[str, dict[str, Any]]](hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY),
-        "coefficients": Store[dict[str, dict[str, Any]]](hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY),
-        "water_levels": Store[dict[str, dict[str, Any]]](hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY),
+        "coefficients": Store[dict[str, dict[str, Any]]](
+            hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY
+        ),
+        "water_levels": Store[dict[str, dict[str, Any]]](
+            hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
+        ),
     }
 
     for store_name, store_instance in stores_to_clean.items():
@@ -938,8 +1137,14 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 await store_instance.async_save(cache_data)
                 _LOGGER.debug("Removed %s cache data for harbor %s.", store_name, harbor_id)
             else:
-                _LOGGER.debug("No %s cache data found for harbor %s to remove.", store_name, harbor_id)
+                _LOGGER.debug(
+                    "No %s cache data found for harbor %s to remove.",
+                    store_name, harbor_id
+                )
         except Exception as e:
-            _LOGGER.exception("Error removing %s cache data for harbor %s: %s", store_name, harbor_id, e)
+            _LOGGER.exception(
+                "Error removing %s cache data for harbor %s: %s",
+                store_name, harbor_id, e
+            )
 
     _LOGGER.info("Finished removing cached data for harbor %s.", harbor_id)

@@ -1,8 +1,7 @@
-import logging
-
-"""Constants for the Marées France integration."""
+"""Constants for the Marees France integration."""
 
 import json
+import logging
 from pathlib import Path
 from typing import Final
 
@@ -35,16 +34,33 @@ CONF_HARBOR_NAME: Final = "harbor_name"
 DEFAULT_HARBOR: Final = "PORNICHET"
 
 # API URLs
-HARBORSURL: Final = "https://services.data.shom.fr/x13f1b4faeszdyinv9zqxmx1/wfs?service=WFS&version=1.0.0&srsName=EPSG:3857&request=GetFeature&typeName=SPM_PORTS_WFS:liste_ports_spm_h2m&outputFormat=application/json"
-TIDESURL_TEMPLATE: Final = "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?harborName={harbor_id}&date={date}&utc=standard&correlation=1"
-WATERLEVELS_URL_TEMPLATE: Final = "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/wl?harborName={harbor_name}&duration=1&date={date}&utc=standard&nbWaterLevels=288"
-COEFF_URL_TEMPLATE: Final = "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/coeff?harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1"
+HARBORSURL: Final = (
+    "https://services.data.shom.fr/x13f1b4faeszdyinv9zqxmx1/wfs?"
+    "service=WFS&version=1.0.0&srsName=EPSG:3857&request=GetFeature"
+    "&typeName=SPM_PORTS_WFS:liste_ports_spm_h2m&outputFormat=application/json"
+)
+TIDESURL_TEMPLATE: Final = (
+    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?"
+    "harborName={harbor_id}&date={date}&utc=standard&correlation=1"
+)
+WATERLEVELS_URL_TEMPLATE: Final = (
+    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/wl?"
+    "harborName={harbor_name}&duration=1&date={date}&utc=standard&nbWaterLevels=288"
+)
+COEFF_URL_TEMPLATE: Final = (
+    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/coeff?"
+    "harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1"
+)
 
 # API Headers
 # Using a common Chrome User-Agent as requested
 HEADERS: Final = {
     "Referer": "https://maree.shom.fr/",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/109.0.0.0 Safari/537.36"
+    ),
 }
 # Delay between API requests (in seconds)
 API_REQUEST_DELAY: Final = 0.2
@@ -101,7 +117,7 @@ JSMODULES = [
         "filename": "marees-france-card.js",
         "version": INTEGRATION_VERSION,
     },
-    { 
+    {
         "name": "Editeur Carte Marées France",
         "filename": "marees-france-card-editor.js",
         "version": INTEGRATION_VERSION,

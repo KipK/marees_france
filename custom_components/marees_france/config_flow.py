@@ -29,7 +29,6 @@ from .const import (
     DEFAULT_HARBOR,
     DOMAIN,
     # HARBORSURL, - Removed unused
-    HEADERS,
     INTEGRATION_NAME,
 )
 

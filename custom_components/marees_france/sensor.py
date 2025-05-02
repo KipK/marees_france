@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     # SensorEntityDescription, # No longer needed for individual sensors
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION # Import standard attribution constant
+# Removed unused import comment
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -112,9 +112,13 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         if self.available:
-             _LOGGER.debug("Updating sensor state for %s", self.unique_id)
+            _LOGGER.debug("Updating sensor state for %s", self.unique_id)
         else:
-             _LOGGER.debug("Sensor %s is unavailable, coordinator data: %s", self.unique_id, self.coordinator.data)
+            _LOGGER.debug(
+                "Sensor %s is unavailable, coordinator data: %s",
+                self.unique_id,
+                self.coordinator.data,
+            )
         super()._handle_coordinator_update()
 
 
@@ -203,7 +207,9 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     @property
     def _sensor_data(self) -> dict[str, Any] | None:
         """Helper to get the specific data block for this sensor."""
-        return self.coordinator.data.get(f"{self._sensor_key}_data") if self.coordinator.data else None
+        if self.coordinator.data:
+            return self.coordinator.data.get(f"{self._sensor_key}_data")
+        return None
 
     @property
     def native_value(self) -> datetime | None:
@@ -220,7 +226,11 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
             # Return datetime object as required by TIMESTAMP device class
             return dt_util.parse_datetime(event_time_str)
         except ValueError:
-            _LOGGER.warning("Could not parse event time for '%s' sensor: %s", self._sensor_key, event_time_str)
+            _LOGGER.warning(
+                "Could not parse event time for '%s' sensor: %s",
+                self._sensor_key,
+                event_time_str,
+            )
             return None
 
     @property
@@ -234,12 +244,20 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
 
 class MareesFranceNextSensor(MareesFranceTimestampSensor):
     """Representation of the next tide sensor."""
-    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         super().__init__(coordinator, config_entry, "next", "next_tide")
 
 class MareesFrancePreviousSensor(MareesFranceTimestampSensor):
     """Representation of the previous tide sensor."""
-    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         super().__init__(coordinator, config_entry, "previous", "previous_tide")
 
 class MareesFranceNextSpringTideSensor(MareesFranceBaseSensor):
@@ -247,7 +265,11 @@ class MareesFranceNextSpringTideSensor(MareesFranceBaseSensor):
     _attr_translation_key = "next_spring_tide"
     _attr_icon = "mdi:calendar-arrow-right" # Or mdi:waves-arrow-up
 
-    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         """Initialize the next spring tide sensor."""
         # Use "next_spring" as the base key for unique_id
         super().__init__(coordinator, config_entry, "next_spring")
@@ -284,7 +306,11 @@ class MareesFranceNextNeapTideSensor(MareesFranceBaseSensor):
     _attr_translation_key = "next_neap_tide"
     _attr_icon = "mdi:calendar-arrow-right" # Or mdi:waves-arrow-down
 
-    def __init__(self, coordinator: MareesFranceUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         """Initialize the next neap tide sensor."""
         # Use "next_neap" as the base key for unique_id
         super().__init__(coordinator, config_entry, "next_neap")

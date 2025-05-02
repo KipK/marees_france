@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.components.lovelace import LovelaceData
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 
@@ -20,7 +19,7 @@ class JSModuleRegistration:
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialise."""
         self.hass = hass
-        self.lovelace: LovelaceData = self.hass.data.get("lovelace")
+        self.lovelace = self.hass.data.get("lovelace")
 
     async def async_register(self):
         """Register view_assist path."""
@@ -43,12 +42,13 @@ class JSModuleRegistration:
     async def _async_wait_for_lovelace_resources(self) -> None:
         """Wait for lovelace resources to have loaded."""
 
-        async def _check_lovelace_resources_loaded(now):
+        async def _check_lovelace_resources_loaded(_now):
             if self.lovelace.resources.loaded:
                 await self._async_register_modules()
             else:
                 _LOGGER.debug(
-                    "Unable to install resources because Lovelace resources have not yet loaded.  Trying again in 5 seconds"
+                    "Unable to install resources because Lovelace resources "
+                    "have not yet loaded. Trying again in 5 seconds"
                 )
                 async_call_later(self.hass, 5, _check_lovelace_resources_loaded)
 
