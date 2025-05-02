@@ -1,7 +1,7 @@
 {
   "domain": "marees_france",
   "name": "Marées France",
-  "version": "v1.1.2-beta1",
+  "version": "v1.1.2",
   "documentation": "https://github.com/KipK/marees_france",
   "issue_tracker": "https://github.com/KipK/marees_france/issues",
   "codeowners": [
