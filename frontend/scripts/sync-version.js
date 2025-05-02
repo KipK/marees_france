@@ -1,6 +1,7 @@
 /* eslint-env node */
 import fs from 'fs';
 import path from 'path';
+import process from 'node:process'; // Import process explicitly
 import { fileURLToPath } from 'url';
 
 // Calculate paths relative to the script location

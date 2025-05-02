@@ -85,5 +85,8 @@ export default [
         ...globals.node, // Add Node.js globals
       },
     },
+    rules: {
+      "no-process-exit": "off", // Allow process.exit in this specific script
+    },
   },
 ];
