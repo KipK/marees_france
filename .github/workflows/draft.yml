@@ -9,16 +9,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2	
-      - name: "Set version number"
+      - name: "Set version number from trigger's tag"
         run: |
           yq -i -o json '.version="${{ github.ref_name }}"' \
-            "${{ github.workspace }}/custom_components/marees_france/manifest.json" && \
-          yq -i -o json '.version="${{ github.ref_name }}"' \
-            "${{ github.workspace }}/frontend/package.json"
-      - name: Commit & Push new version
-        uses: actions-js/push@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+            "${{ github.workspace }}/custom_components/marees_france/manifest.json"
       - name: Build frontend
         run:  cd frontend && npm install && npm run lint && npm run build
       - name: Create ZIP archive

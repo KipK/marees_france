@@ -76,4 +76,14 @@ export default [
 
   // Apply Prettier config last to override other formatting rules
   prettierConfig,
+
+  // Specific config for Node.js scripts
+  {
+    files: ["frontend/scripts/sync-version.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node, // Add Node.js globals
+      },
+    },
+  },
 ];
