@@ -235,7 +235,7 @@ export class MareesFranceCard extends LitElement {
       const response = await this.hass.callService(
         'marees_france', 'get_water_levels',
         { device_id: this.config.device_id, date: this._selectedDay },
-        undefined, false, true
+        undefined, true // Ensure return_response is correctly passed
       ) as ServiceResponseWrapper<GetWaterLevelsResponseData>;
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
@@ -268,7 +268,7 @@ export class MareesFranceCard extends LitElement {
       const response = await this.hass.callService(
         'marees_france', 'get_tides_data',
         { device_id: this.config.device_id },
-        undefined, false, true
+        undefined, true // Ensure return_response is correctly passed
       ) as ServiceResponseWrapper<GetTidesDataResponseData>;
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
@@ -305,7 +305,7 @@ export class MareesFranceCard extends LitElement {
       const response = await this.hass.callService(
         'marees_france', 'get_coefficients_data',
         { device_id: this.config.device_id, date: startDateStr, days: 365 },
-        undefined, false, true
+        undefined, true // Ensure return_response is correctly passed
       ) as ServiceResponseWrapper<GetCoefficientsDataResponseData>;
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
