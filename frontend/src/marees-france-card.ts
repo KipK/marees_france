@@ -11,6 +11,8 @@ import {
   GetWaterLevelsResponseData,
   GetCoefficientsDataResponseData,
   NextTideStatus,
+  ServiceCallRequest, // Added for the new helper
+  ServiceCallResponse, // Added for the new helper
 } from './types'; // Assuming .ts extension resolution works
 
 // Define types for calendar day info used in render
@@ -220,8 +222,76 @@ export class MareesFranceCard extends LitElement {
     }
   }
 
+  /**
+   * Calls the specified Marées France service and returns response data.
+   * The service is called via a script, as there is currently no way to return service
+   * response data from a call to "hass.callService()" for services that require it.
+   */
+  private async _callServiceWithResponse<T>(
+    serviceName: string,
+    // Ensure serviceData includes device_id when calling this helper
+    serviceDataWithDeviceId: Record<string, unknown>
+  ): Promise<ServiceResponseWrapper<T>> {
+    if (!this.hass) {
+      throw new Error("Home Assistant object (hass) is not available.");
+    }
+
+    // serviceDataWithDeviceId should already contain device_id
+    const serviceRequest: ServiceCallRequest = {
+      domain: 'marees_france',
+      service: serviceName,
+      serviceData: serviceDataWithDeviceId,
+      // Target for execute_script can be empty or specific if script itself needs targeting,
+      // but the service *inside* the script gets its target from its own data.
+      target: {}
+    };
+
+    try {
+      const conn = 'conn' in this.hass.connection ? this.hass.connection.conn : this.hass.connection;
+      const serviceResponse = await conn.sendMessagePromise<ServiceCallResponse<T>>({
+        type: "execute_script",
+        sequence: [{
+          "service": `${serviceRequest.domain}.${serviceRequest.service}`,
+          "data": serviceRequest.serviceData,
+          "target": serviceRequest.target,
+          "response_variable": "service_result"
+        },
+        {
+          "stop": "done",
+          "response_variable": "service_result"
+        }]
+      });
+
+      // serviceResponse is of type ServiceCallResponse<T> from types.ts,
+      // where serviceResponse.response is of type T (the actual data).
+      // The _callServiceWithResponse method must return a ServiceResponseWrapper<T>,
+      // which has the structure { response: T | { error: string } }.
+      if (typeof serviceResponse.response !== 'undefined') {
+        return { response: serviceResponse.response };
+      } else {
+        // This case handles if sendMessagePromise resolves but serviceResponse.response is undefined.
+        console.error(`Marees Card: Service ${serviceName} executed but returned undefined response data:`, serviceResponse);
+        throw new Error(`Service ${serviceName} executed but returned undefined response data`);
+      }
+
+    } catch (error: unknown) {
+        console.error(`Marees Card: Error calling ${serviceName} via script:`, error);
+        // Rethrow or handle as appropriate for your error strategy
+        // It's important to ensure the calling function can catch this
+        if (error instanceof Error) {
+            // Check if it's an HA-style error object with a code
+            const haError = error as Error & { code?: string | number };
+            if (haError.code) {
+                throw new Error(`${haError.message} (Code: ${haError.code})`);
+            }
+            throw haError; // rethrow original error if not HA-style
+        }
+        throw new Error(`Unknown error calling ${serviceName}`);
+    }
+  }
+
+
   private async _fetchWaterLevels(): Promise<void> {
-    // Ensure loading state is set at the start of the specific fetch
     this._isLoadingWater = true;
 
     if (!this.hass || !this.config?.device_id || !this._selectedDay) {
@@ -232,11 +302,13 @@ export class MareesFranceCard extends LitElement {
     }
 
     try {
-      const response = await this.hass.callService(
-        'marees_france', 'get_water_levels',
-        { device_id: this.config.device_id, date: this._selectedDay },
-        undefined, true // Ensure return_response is correctly passed
-      ) as ServiceResponseWrapper<GetWaterLevelsResponseData>;
+      const response = await this._callServiceWithResponse<GetWaterLevelsResponseData>(
+        'get_water_levels',
+        {
+          device_id: this.config.device_id,
+          date: this._selectedDay
+        }
+      );
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
         this._waterLevels = response;
@@ -265,11 +337,12 @@ export class MareesFranceCard extends LitElement {
     }
 
     try {
-      const response = await this.hass.callService(
-        'marees_france', 'get_tides_data',
-        { device_id: this.config.device_id },
-        undefined, true // Ensure return_response is correctly passed
-      ) as ServiceResponseWrapper<GetTidesDataResponseData>;
+      const response = await this._callServiceWithResponse<GetTidesDataResponseData>(
+        'get_tides_data',
+        {
+          device_id: this.config.device_id
+        }
+      );
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
         this._tideData = response;
@@ -302,16 +375,17 @@ export class MareesFranceCard extends LitElement {
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startDateStr = firstDayOfMonth.toISOString().slice(0, 10);
 
-      const response = await this.hass.callService(
-        'marees_france', 'get_coefficients_data',
-        { device_id: this.config.device_id, date: startDateStr, days: 365 },
-        undefined, true // Ensure return_response is correctly passed
-      ) as ServiceResponseWrapper<GetCoefficientsDataResponseData>;
+      const response = await this._callServiceWithResponse<GetCoefficientsDataResponseData>(
+        'get_coefficients_data',
+        {
+          device_id: this.config.device_id,
+          date: startDateStr, days: 365
+        }
+      );
 
       if (response?.response && typeof response.response === 'object' && !response.response.error) {
         if (Object.keys(response.response).length === 0) {
              console.warn('Marees Card: Received empty coefficient data.');
-             // Store empty response, downstream logic handles this
              this._coefficientsData = response;
         } else {
             this._coefficientsData = response;

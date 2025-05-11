@@ -18,7 +18,13 @@ export interface StateObject {
   [key: string]: unknown;
 }
 
+// Minimal interface for the HA Connection object
+export interface Connection {
+  sendMessagePromise: <T>(message: unknown) => Promise<T>;
+  // Add other connection methods if needed
+}
 export interface HomeAssistant {
+  connection: Connection | { conn: Connection }; // Added connection property
   language: string;
   localize: (key: string, ...args: unknown[]) => string; // Use unknown[] for args
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +62,31 @@ export interface MareesFranceCardConfig extends LovelaceCardConfig {
 export interface ServiceResponseWrapper<T> {
   response: T | { error?: string }; // Data is nested under 'response'
   // Potentially add context if needed
+}
+// --- Service Call Request and Response for sendMessagePromise ---
+// Based on the structure used for hass.connection.sendMessagePromise with execute_script
+export interface ServiceCallRequest {
+  domain: string;
+  service: string;
+  serviceData?: Record<string, unknown>;
+  target?: {
+    entity_id?: string | string[];
+    device_id?: string | string[];
+    area_id?: string | string[];
+  };
+}
+
+export interface ServiceCallResponse<T = Record<string, unknown>> {
+  success: boolean;
+  response: T; // The actual data is directly here when using response_variable with execute_script
+  context: {
+    id: string;
+    parent_id?: string | null;
+    user_id?: string | null;
+    [key: string]: unknown; // Allow other properties in context
+  };
+  // Allow other top-level properties if any
+  [key: string]: unknown;
 }
 
 // --- Raw Data Structures from Services ---
