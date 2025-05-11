@@ -115,7 +115,11 @@ data:
 
 ## 🛠️ Development
 
-###Frontend Build
+### Setup
+
+Use setup.sh or setup.ps1 to install required dependencies
+
+### Frontend Build
 
 To compile the Lovelace card:
 
@@ -130,7 +134,15 @@ The build will be output to:
 
 ---
 
-# 🎯 Notes
+### Documentation build
+
+To generate documentation:
+
+```bash
+npm run docs
+```
+
+## 🎯 Notes
 
 - Data source: **SHOM** (Service Hydrographique et Océanographique de la Marine).
 - Fully compatible with **Home Assistant** via **HACS**.

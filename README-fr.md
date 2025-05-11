@@ -116,6 +116,10 @@ data:
 
 ## 🛠️ Développement
 
+### Setup
+
+Utilisez setup.sh (linux) ou setup.ps1 (win) pour installer les dépendances nécessaires
+
 ### Compilation du Frontend
 
 Pour compiler la carte Lovelace :
@@ -129,9 +133,18 @@ npm run build
 Le build sera généré dans :  
 `custom_components/marees_info/frontend`
 
+
+### Documentation build
+
+Pour générer la documentation:
+
+```bash
+npm run docs
+```
+
 ---
 
-# 🎯 Notes
+## 🎯 Notes
 
 - Source des données : **SHOM** (Service Hydrographique et Océanographique de la Marine).
 - Entièrement compatible avec **Home Assistant** via **HACS**.
