@@ -13,26 +13,29 @@ import {
   CurrentTimeMarkerData,
 } from './types.js';
 
-// Placeholder type for the main card - replace with actual import later
-interface MareesFranceCard {
-  hass?: HomeAssistant | null;
-  _updateInteractionTooltip(
+// Interface for the object responsible for handling tooltip updates
+export interface TooltipDelegate {
+  updateInteractionTooltip(
     svgX: number,
     svgY: number,
     timeMinutes: number,
     height: number,
-    isSnapped: boolean
+    isSnapped?: boolean // Optional, as it was in the original card method
   ): void;
-  _hideInteractionTooltip(): void;
+  hideInteractionTooltip(): void;
 }
 
+/**
+ * Handles the rendering of the SVG graph, including tide curves, markers, and interaction elements.
+ * It uses svg.js for drawing and manages scaling of elements on resize.
+ */
 export class GraphRenderer {
-  private card: MareesFranceCard | null; // Reference to the main card component instance
+  private tooltipDelegate: TooltipDelegate | null; // Reference to the tooltip handling delegate
   private svgContainer: HTMLDivElement | null;
   private hass: HomeAssistant | null;
   private svgDraw: Svg | null = null;
   private resizeObserver: ResizeObserver | null = null;
-  // Use a more specific type if possible, otherwise SvgElement or any
+  // Array of SVG elements (like text, groups) that need to maintain their apparent size when the SVG viewbox scales.
   private elementsToKeepSize: Array<SvgElement | G | Text | Path | Line> = [];
 
   // Graph properties
@@ -54,12 +57,18 @@ export class GraphRenderer {
   private _boundHandleInteractionEnd: ((event: MouseEvent | TouchEvent) => void) | null = null;
 
 
+  /**
+   * Constructs a new GraphRenderer instance.
+   * @param tooltipDelegate An object conforming to TooltipDelegate, responsible for showing/hiding HTML tooltips.
+   * @param svgContainer The HTMLDivElement where the SVG graph will be rendered.
+   * @param hass The HomeAssistant object, used for localization and accessing theme variables.
+   */
   constructor(
-    cardInstance: MareesFranceCard,
+    tooltipDelegate: TooltipDelegate,
     svgContainer: HTMLDivElement,
     hass: HomeAssistant | null
   ) {
-    this.card = cardInstance;
+    this.tooltipDelegate = tooltipDelegate;
     this.svgContainer = svgContainer;
     this.hass = hass;
 
@@ -85,7 +94,7 @@ export class GraphRenderer {
 
   // --- Coordinate/Interpolation Helper Methods ---
   private _timeToX(totalMinutes: number): number {
-    if (!this.graphMargin || this.graphWidth === null) return 0; // Guard
+    if (!this.graphMargin || this.graphWidth === null) return 0;
     return this.graphMargin.left + (totalMinutes / (24 * 60)) * this.graphWidth;
   }
 
@@ -96,7 +105,7 @@ export class GraphRenderer {
       this.yDomainMin === null ||
       !this.yRange
     )
-      return 0; // Guard
+      return 0;
     return (
       this.graphMargin.top +
       this.graphHeight -
@@ -105,8 +114,7 @@ export class GraphRenderer {
   }
 
   private _xToTotalMinutes(x: number): number {
-    if (!this.graphMargin || this.graphWidth === null || this.graphWidth <= 0)
-      return 0; // Guard
+    if (!this.graphMargin || this.graphWidth === null || this.graphWidth <= 0) return 0;
     const clampedX = Math.max(
       this.graphMargin.left,
       Math.min(this.graphMargin.left + this.graphWidth, x)
@@ -115,7 +123,7 @@ export class GraphRenderer {
   }
 
   private _interpolateHeight(targetTotalMinutes: number): number | null {
-    if (!this.pointsData || this.pointsData.length < 2) return null; // Guard, check pointsData exists
+    if (!this.pointsData || this.pointsData.length < 2) return null;
     let prevPoint: PointData | null = null;
     let nextPoint: PointData | null = null;
     // Find the two points surrounding the target time
@@ -130,7 +138,7 @@ export class GraphRenderer {
     // Handle edge cases (before first point or after last point)
     if (!prevPoint && nextPoint) return nextPoint.heightNum;
     if (prevPoint && !nextPoint) return prevPoint.heightNum;
-    if (!prevPoint || !nextPoint) return null; // Modified guard
+    if (!prevPoint || !nextPoint) return null;
 
     // Interpolate
     const timeDiff = nextPoint.totalMinutes - prevPoint.totalMinutes;
@@ -168,7 +176,7 @@ export class GraphRenderer {
     // Transform the screen coordinates to SVG coordinates
     try {
       const ctm = svg.getScreenCTM();
-      if (!ctm) return null; // Guard against null CTM
+      if (!ctm) return null;
       const svgPoint = pt.matrixTransform(ctm.inverse());
       return { x: svgPoint.x, y: svgPoint.y };
     } catch (e) {
@@ -235,7 +243,7 @@ export class GraphRenderer {
       try {
         // Use 'any' assertion if bbox() is not recognized on the specific type
         const bbox = (element as SvgElement).bbox();
-        if (!bbox) return; // Skip if bbox is null
+        if (!bbox) return;
 
         const cx = bbox.cx;
         const cy = bbox.cy;
@@ -261,7 +269,13 @@ export class GraphRenderer {
     });
   }
 
-  // --- Main Drawing Method ---
+  /**
+   * Clears and redraws the entire SVG graph based on the provided data.
+   * This includes the tide curve, tide event markers, current time marker, and interaction layer.
+   * @param tideData Data for tide events (high/low tides, coefficients).
+   * @param waterLevels Data for water levels throughout the day.
+   * @param selectedDay The currently selected day string (YYYY-MM-DD) for which to draw the graph.
+   */
   public drawGraph(
     tideData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
     waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | null,
@@ -498,7 +512,6 @@ export class GraphRenderer {
     const axisColor = 'var(--secondary-text-color, grey)';
     const primaryTextColor = 'var(--primary-text-color, black)';
     const curveColor = 'var(--primary-color, blue)';
-    // const arrowAndTextColor = 'var(--primary-text-color, white)'; // Removed unused variable
     const coefBoxBgColor = 'var(--secondary-background-color, #f0f0f0)';
     const coefBoxBorderColor =
       'var(--ha-card-border-color, var(--divider-color, grey))';
@@ -763,7 +776,10 @@ export class GraphRenderer {
     });
   }
 
-  // --- Public method to explicitly refresh scaling ---
+  /**
+   * Explicitly triggers a refresh of element scaling.
+   * Useful if the container size changes outside of a normal resize event.
+   */
   public refreshDimensionsAndScale(): void {
     // Use rAF to ensure it runs after potential layout changes
     window.requestAnimationFrame(() => {
@@ -880,9 +896,9 @@ export class GraphRenderer {
         tooltipHeightValue = height;
       }
 
-      // Call the card's method to update the HTML tooltip
-      if (this.card) {
-        this.card._updateInteractionTooltip(
+      // Call the delegate's method to update the HTML tooltip
+      if (this.tooltipDelegate) {
+        this.tooltipDelegate.updateInteractionTooltip(
           tooltipX,
           tooltipY,
           tooltipTimeValue,
@@ -898,9 +914,9 @@ export class GraphRenderer {
 
   private _handleInteractionEnd(interactionGroup: G): void {
     interactionGroup.hide();
-    // Call the card's method to hide the HTML tooltip
-    if (this.card) {
-      this.card._hideInteractionTooltip();
+    // Call the delegate's method to hide the HTML tooltip
+    if (this.tooltipDelegate) {
+      this.tooltipDelegate.hideInteractionTooltip();
     }
     // Ensure yellow dot is reset to normal scale when interaction ends
     if (this.currentTimeDotElement) {
@@ -912,7 +928,11 @@ export class GraphRenderer {
     }
   }
 
-  // Method to clean up resources
+  /**
+   * Cleans up all resources used by the GraphRenderer.
+   * This includes removing event listeners, disconnecting observers, and removing the SVG element.
+   * Should be called when the card is disconnected or the renderer is no longer needed.
+   */
   public destroy(): void {
     // Remove interaction listeners if they were bound
     if (this._boundHandleInteractionMove && this.svgContainer) {
@@ -960,14 +980,18 @@ export class GraphRenderer {
     }
     this.elementsToKeepSize = [];
     this.svgContainer = null;
-    this.card = null; // Remove reference to card
+    this.tooltipDelegate = null; // Remove reference to delegate
     this.currentTimeDotElement = null; // Clear reference
     this.interactionLine = null; // Clear reference
     this.tooltipBottomSvgY = null; // Clear reference
-    // console.log("GraphRenderer destroyed.");
   } // End of destroy method
 
-  // --- Public method for card to set tooltip position ---
+  /**
+   * Allows the tooltip delegate (GraphInteractionManager) to inform the renderer
+   * about the bottom Y-coordinate of the HTML tooltip in SVG space.
+   * This is used to draw the vertical interaction line correctly up to the tooltip.
+   * @param svgY The Y-coordinate of the tooltip's bottom edge in SVG coordinate space.
+   */
   public setTooltipBottomY(svgY: number): void {
     this.tooltipBottomSvgY = svgY;
   }

@@ -1,12 +1,21 @@
 import { translations } from './constants';
 import { HomeAssistant } from './types'; // Import the HomeAssistant type
 
-// --- Custom Localization Function ---
+/**
+ * Custom localization function for the card.
+ * Retrieves translations from the `translations` constant based on the current language
+ * (or falls back to English) and replaces placeholders.
+ *
+ * @param key The localization key (e.g., 'ui.card.marees_france.error_device_required').
+ * @param hass The HomeAssistant object, used to determine the current language.
+ * @param args A list of placeholder-value pairs. For example, `localize('Hello {name}', hass, 'name', 'World')`.
+ * @returns The localized string, or the original key if no translation is found.
+ */
 export function localizeCard(
   key: string,
-  hass: HomeAssistant | undefined | null, // Type the hass object
-  ...args: (string | number)[] // Type the rest arguments
-): string { // Add return type
+  hass: HomeAssistant | undefined | null,
+  ...args: (string | number)[]
+): string {
   const lang = hass?.language || 'en';
   const langTranslations = translations[lang] || translations.en; // Fallback to English
   let translated: string = key; // Default to key, explicitly typed

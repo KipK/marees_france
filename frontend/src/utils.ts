@@ -7,7 +7,13 @@ import {
   TideEventTuple,
 } from './types.js';
 
-// Helper function to get localized weekday abbreviation (3 letters)
+/**
+ * Helper function to get localized weekday abbreviation (3 letters).
+ * Ensures the abbreviation is 3 letters long and handles locale differences.
+ * @param dayIndex The day index (0 = Monday, 1 = Tuesday, ..., 6 = Sunday).
+ * @param locale The locale string (e.g., 'en-US', 'fr-FR').
+ * @returns A 3-letter weekday abbreviation.
+ */
 export function getWeekdayShort3Letters(
   dayIndex: number,
   locale: string
@@ -32,12 +38,20 @@ export function getWeekdayShort3Letters(
   return abbr;
 }
 
-// Returns data needed for the next tide peak display
-// Adapts to the new service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
+/**
+ * Calculates and returns the status for the next tide peak display.
+ * It processes tide data for today and the next two days to determine the upcoming tide,
+ * current trend (rising/falling), and the relevant coefficient.
+ * Adapts to the service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
+ *
+ * @param tideServiceData The raw tide data from the service, wrapped in a response structure.
+ * @param hass The HomeAssistant object, used for localization or other HA context if needed.
+ * @returns An object containing information about the next tide, or null if data is insufficient.
+ */
 export function getNextTideStatus(
   tideServiceData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
   hass: HomeAssistant | null
-): NextTideStatus | null { // Return type can be null if prerequisites fail
+): NextTideStatus | null {
   // Check if the main data object and the 'response' property exist
   if (
     !tideServiceData ||

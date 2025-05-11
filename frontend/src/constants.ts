@@ -1,12 +1,16 @@
-// Define the structure for editor translations
-interface EditorTranslationKeys {
+/**
+ * Defines the structure for translation keys specific to the card editor UI.
+ */
+export interface EditorTranslationKeys {
   show_header: string;
   device_label: string;
   title: string;
 }
 
-// Define the structure for card translations
-interface CardTranslationKeys {
+/**
+ * Defines the structure for translation keys specific to the main card UI.
+ */
+export interface CardTranslationKeys {
   default_title: string;
   missing_configuration: string;
   error_entity_required: string;
@@ -42,8 +46,11 @@ interface CardTranslationKeys {
   editor: EditorTranslationKeys;
 }
 
-// Define the overall translation structure type
-interface TranslationStructure {
+/**
+ * Defines the overall structure for all translations, organized by language.
+ * Follows the Home Assistant frontend translation structure.
+ */
+export interface TranslationStructure {
   [lang: string]: {
     ui: {
       card: {
@@ -53,7 +60,11 @@ interface TranslationStructure {
   };
 }
 
-// --- Embedded Translations ---
+/**
+ * Embedded translations for the card, supporting English ('en') and French ('fr').
+ * Each language follows the structure defined by `CardTranslationKeys` and `EditorTranslationKeys`,
+ * nested under `ui.card.marees_france`.
+ */
 export const translations: TranslationStructure = {
   en: {
     ui: {

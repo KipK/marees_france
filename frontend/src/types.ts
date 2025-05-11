@@ -48,6 +48,9 @@ export interface HomeAssistant {
 
 // --- Configuration ---
 // Use our own definition extending the minimal base
+/**
+ * Specific configuration for the Marees France card.
+ */
 export interface MareesFranceCardConfig extends LovelaceCardConfig {
   device_id: string;
   show_header?: boolean;
@@ -59,12 +62,21 @@ export interface MareesFranceCardConfig extends LovelaceCardConfig {
 
 // --- Service Call Response Wrapper ---
 // Generic wrapper for the structure returned by hass.callService with return_response: true
+/**
+ * Generic wrapper for service responses when `response_variable` is used
+ * with `hass.callService` or similar script execution that nests the actual response.
+ * The actual data from the service is expected under the `response` property.
+ */
 export interface ServiceResponseWrapper<T> {
   response: T | { error?: string }; // Data is nested under 'response'
   // Potentially add context if needed
 }
 // --- Service Call Request and Response for sendMessagePromise ---
 // Based on the structure used for hass.connection.sendMessagePromise with execute_script
+/**
+ * Defines the structure for a service call request,
+ * particularly when using `hass.connection.sendMessagePromise` with `execute_script`.
+ */
 export interface ServiceCallRequest {
   domain: string;
   service: string;
@@ -76,6 +88,11 @@ export interface ServiceCallRequest {
   };
 }
 
+/**
+ * Defines the expected structure of a response from `hass.connection.sendMessagePromise`
+ * when using `execute_script` with a `response_variable`.
+ * The `response` property holds the actual data returned by the service.
+ */
 export interface ServiceCallResponse<T = Record<string, unknown>> {
   success: boolean;
   response: T; // The actual data is directly here when using response_variable with execute_script
@@ -90,25 +107,31 @@ export interface ServiceCallResponse<T = Record<string, unknown>> {
 }
 
 // --- Raw Data Structures from Services ---
-// ["tide.high" | "tide.low", "HH:MM", "H.HH", "CC" | "---"]
+/** Represents a raw tide event as an array: [type, time, height, coefficient] */
 export type TideEventTuple = [string, string, string, string];
-// ["HH:MM", "H.HH"]
+/** Represents a raw water level entry as an array: [time, height] */
 export type WaterLevelTuple = [string, string];
 
-// Structure within the 'response' object for get_tides_data
-// { "YYYY-MM-DD": [ TideEventTuple, ... ], ... }
+/**
+ * Expected data structure within the `response` object from the `get_tides_data` service.
+ * Maps date strings (YYYY-MM-DD) to arrays of TideEventTuples.
+ */
 export interface GetTidesDataResponseData {
   [date: string]: TideEventTuple[];
 }
 
-// Structure within the 'response' object for get_water_levels
-// { "YYYY-MM-DD": [ WaterLevelTuple, ... ], ... }
+/**
+ * Expected data structure within the `response` object from the `get_water_levels` service.
+ * Maps date strings (YYYY-MM-DD) to arrays of WaterLevelTuples.
+ */
 export interface GetWaterLevelsResponseData {
   [date: string]: WaterLevelTuple[];
 }
 
-// Structure within the 'response' object for get_coefficients_data
-// { "YYYY-MM-DD": [ "CC", "CC" ], ... }
+/**
+ * Expected data structure within the `response` object from the `get_coefficients_data` service.
+ * Maps date strings (YYYY-MM-DD) to arrays of coefficient strings.
+ */
 export interface GetCoefficientsDataResponseData {
   [date: string]: string[];
 }
