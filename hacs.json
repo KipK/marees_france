@@ -1,6 +1,6 @@
 {
     "name": "Marées France",
-    "homeassistant": "2023.0.0b0",
+    "homeassistant": "2024.0.0",
     "zip_release": true,
     "filename": "marees_france.zip",
     "render_readme": true
