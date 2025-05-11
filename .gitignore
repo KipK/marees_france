@@ -1,8 +1,8 @@
 venv
 plans
-docs
 .pytest_cache
 .venv
 *.bak
+__pycache__/
 /node_modules
 /frontend/node_modules/

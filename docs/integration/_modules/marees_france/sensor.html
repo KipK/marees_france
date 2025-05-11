@@ -1,0 +1,586 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>marees_france.sensor &mdash; Marées France Integration  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Marées France Integration
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../init.html">__init__ Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_tides"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_tides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_remove_entry"><code class="docutils literal notranslate"><span class="pre">async_remove_entry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sensor.html">sensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.extra_state_attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.icon"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.icon</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../coordinator.html">coordinator Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_flow.html">config_flow Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.InvalidAuth"><code class="docutils literal notranslate"><span class="pre">InvalidAuth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.VERSION"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.VERSION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.async_step_user"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.async_step_user()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_helpers.html">api_helpers Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../const.html">const Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Marées France Integration</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../marees_france.html">marees_france</a></li>
+      <li class="breadcrumb-item active">marees_france.sensor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for marees_france.sensor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Sensor platform for Marées France integration.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.components.sensor</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SensorDeviceClass</span><span class="p">,</span>
+    <span class="n">SensorEntity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.config_entries</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">callback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.device_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.entity_platform</span><span class="w"> </span><span class="kn">import</span> <span class="n">AddEntitiesCallback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.update_coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoordinatorEntity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">dt</span> <span class="k">as</span> <span class="n">dt_util</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ATTR_COEFFICIENT</span><span class="p">,</span>
+    <span class="n">ATTR_CURRENT_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_FINISHED_TIME</span><span class="p">,</span>
+    <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_STARTING_TIME</span><span class="p">,</span>
+    <span class="n">ATTR_TIDE_TREND</span><span class="p">,</span>
+    <span class="n">ATTRIBUTION</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_ID</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_NAME</span><span class="p">,</span>
+    <span class="n">DOMAIN</span><span class="p">,</span>
+    <span class="n">MANUFACTURER</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">MareesFranceUpdateCoordinator</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="async_setup_entry">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.async_setup_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_setup_entry</span><span class="p">(</span>
+    <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="n">async_add_entities</span><span class="p">:</span> <span class="n">AddEntitiesCallback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up the Marées France sensor entities from a config entry.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry.</span>
+<span class="sd">        async_add_entities: Callback to add entities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">DOMAIN</span><span class="p">][</span><span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">]</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">sensors_to_add</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">MareesFranceNowSensor</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+        <span class="n">MareesFranceNextSensor</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+        <span class="n">MareesFrancePreviousSensor</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+        <span class="n">MareesFranceNextSpringTideSensor</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+        <span class="n">MareesFranceNextNeapTideSensor</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">async_add_entities</span><span class="p">(</span><span class="n">sensors_to_add</span><span class="p">,</span> <span class="n">update_before_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Added 5 Marées France sensors for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MareesFranceBaseSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceBaseSensor</span><span class="p">(</span><span class="n">CoordinatorEntity</span><span class="p">[</span><span class="n">MareesFranceUpdateCoordinator</span><span class="p">],</span> <span class="n">SensorEntity</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Marées France sensors.</span>
+
+<span class="sd">    Provides common attributes and functionality for all sensors derived from it,</span>
+<span class="sd">    such as device information, unique ID generation, and availability logic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_attr_attribution</span> <span class="o">=</span> <span class="n">ATTRIBUTION</span>
+    <span class="n">_attr_has_entity_name</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># Uses the name defined by `translation_key`.</span>
+
+<div class="viewcode-block" id="MareesFranceBaseSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+        <span class="n">sensor_key_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the base sensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            coordinator: The data update coordinator.</span>
+<span class="sd">            config_entry: The config entry.</span>
+<span class="sd">            sensor_key_suffix: A suffix to make the sensor&#39;s unique ID and data key distinct</span>
+<span class="sd">                               (e.g., &quot;now&quot;, &quot;next_tide&quot;, &quot;next_spring_tide&quot;).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_entry</span> <span class="o">=</span> <span class="n">config_entry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CONF_HARBOR_NAME</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span> <span class="o">=</span> <span class="n">sensor_key_suffix</span> <span class="c1"># Used for unique ID and data access</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_unique_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_device_info</span> <span class="o">=</span> <span class="n">DeviceInfo</span><span class="p">(</span>
+            <span class="n">identifiers</span><span class="o">=</span><span class="p">{(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)},</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_harbor_name</span><span class="p">,</span>
+            <span class="n">manufacturer</span><span class="o">=</span><span class="n">MANUFACTURER</span><span class="p">,</span>
+            <span class="n">entry_type</span><span class="o">=</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="c1"># Using &quot;service&quot; as it&#39;s data from an external service</span>
+            <span class="n">configuration_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># No specific URL for device configuration</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initialized base sensor with unique_id: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if coordinator has data and the specific sensor data exists.</span>
+
+<span class="sd">        This checks the general coordinator availability and then verifies that the</span>
+<span class="sd">        specific data block for this sensor (e.g., &quot;now_data&quot;, &quot;next_data&quot;)</span>
+<span class="sd">        is present in the coordinator&#39;s data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">available</span> <span class="c1"># Checks coordinator.last_update_success and coordinator.data</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="c1"># Check for the specific data key related to this sensor type</span>
+            <span class="c1"># For &quot;now&quot;, &quot;next&quot;, &quot;previous&quot; sensors, data is under &quot;now_data&quot;, &quot;next_data&quot;, etc.</span>
+            <span class="c1"># For &quot;next_spring_date&quot;, &quot;next_neap_date&quot;, data is directly under those keys.</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="si">}</span><span class="s2">_data&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="s2">&quot;next&quot;</span><span class="p">,</span> <span class="s2">&quot;previous&quot;</span><span class="p">]</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span> <span class="c1"># For date sensors</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@callback</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_coordinator_update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle updated data from the coordinator.</span>
+
+<span class="sd">        This method is called by the CoordinatorEntity base class when new data</span>
+<span class="sd">        is available. It logs the update and then calls the parent&#39;s update handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Updating sensor state for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Sensor </span><span class="si">%s</span><span class="s2"> is unavailable. Coordinator data: </span><span class="si">%s</span><span class="s2">. Coordinator last_update_success: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">last_update_success</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_handle_coordinator_update</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="MareesFranceNowSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceNowSensor</span><span class="p">(</span><span class="n">MareesFranceBaseSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor representing the current tide status (e.g., rising, falling).</span>
+
+<span class="sd">    The state of this sensor indicates the current trend of the tide.</span>
+<span class="sd">    Attributes include current water height, coefficient, and start/end times</span>
+<span class="sd">    and heights of the current tidal period.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="s2">&quot;now_tide&quot;</span>
+
+<div class="viewcode-block" id="MareesFranceNowSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the &#39;current tide&#39; sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="s2">&quot;now&quot;</span><span class="p">)</span> <span class="c1"># &quot;now&quot; is the sensor_key_suffix</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sensor_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper to get the &#39;now_data&#39; block from the coordinator.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;now_data&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">native_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the state of the sensor (current tide trend: &#39;rising&#39; or &#39;falling&#39;).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ATTR_TIDE_TREND</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extra_state_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return attributes like current height, coefficient, start/end times and heights.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="n">ATTR_TIDE_TREND</span><span class="p">,</span> <span class="n">ATTR_CURRENT_HEIGHT</span><span class="p">,</span> <span class="n">ATTR_COEFFICIENT</span><span class="p">,</span>
+                <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">,</span> <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">,</span>
+                <span class="n">ATTR_STARTING_TIME</span><span class="p">,</span> <span class="n">ATTR_FINISHED_TIME</span>
+            <span class="p">]:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">return</span> <span class="n">attrs</span> <span class="k">if</span> <span class="n">attrs</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">icon</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an icon based on the tide trend.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="p">:</span>
+            <span class="n">trend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ATTR_TIDE_TREND</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trend</span> <span class="o">==</span> <span class="s2">&quot;rising&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;mdi:transfer-up&quot;</span>
+            <span class="k">if</span> <span class="n">trend</span> <span class="o">==</span> <span class="s2">&quot;falling&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;mdi:transfer-down&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;mdi:waves&quot;</span> <span class="c1"># Default icon</span></div>
+
+
+
+<div class="viewcode-block" id="MareesFranceTimestampSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceTimestampSensor</span><span class="p">(</span><span class="n">MareesFranceBaseSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base sensor for tide events represented as a timestamp.</span>
+
+<span class="sd">    Used for &quot;Next Tide&quot; and &quot;Previous Tide&quot; sensors. The state is the</span>
+<span class="sd">    timestamp of the tide event. Attributes include the type of tide (high/low),</span>
+<span class="sd">    height, and coefficient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_attr_device_class</span> <span class="o">=</span> <span class="n">SensorDeviceClass</span><span class="o">.</span><span class="n">TIMESTAMP</span>
+
+<div class="viewcode-block" id="MareesFranceTimestampSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+        <span class="n">sensor_key_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="c1"># e.g., &quot;next&quot;, &quot;previous&quot;</span>
+        <span class="n">translation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>   <span class="c1"># For entity name</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the timestamp-based tide sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="n">sensor_key_suffix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="n">translation_key</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sensor_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper to get the specific data block (e.g., &#39;next_data&#39;) from coordinator.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="si">}</span><span class="s2">_data&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">native_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the timestamp of the tide event (UTC datetime object).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="p">:</span>
+            <span class="c1"># The state is the time of the event itself (ATTR_FINISHED_TIME from coordinator)</span>
+            <span class="n">event_time_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ATTR_FINISHED_TIME</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">event_time_str</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">dt_util</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">event_time_str</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Could not parse event time for &#39;</span><span class="si">%s</span><span class="s2">&#39; sensor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="p">,</span> <span class="n">event_time_str</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extra_state_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return attributes like tide type, height, coefficient.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_data</span> <span class="c1"># The whole block is relevant</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="MareesFranceNextSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceNextSensor</span><span class="p">(</span><span class="n">MareesFranceTimestampSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor representing the next tide event.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="MareesFranceNextSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the &#39;next tide&#39; sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="s2">&quot;next&quot;</span><span class="p">,</span> <span class="s2">&quot;next_tide&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="MareesFrancePreviousSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFrancePreviousSensor</span><span class="p">(</span><span class="n">MareesFranceTimestampSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor representing the previous tide event.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="MareesFrancePreviousSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the &#39;previous tide&#39; sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="s2">&quot;previous&quot;</span><span class="p">,</span> <span class="s2">&quot;previous_tide&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="MareesFranceNextSpecialTideSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceNextSpecialTideSensor</span><span class="p">(</span><span class="n">MareesFranceBaseSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base sensor for next spring/neap tide dates.</span>
+
+<span class="sd">    The state is the date of the next special tide (spring or neap).</span>
+<span class="sd">    The coefficient is an attribute.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_attr_icon</span> <span class="o">=</span> <span class="s2">&quot;mdi:calendar-arrow-right&quot;</span> <span class="c1"># Generic icon for future date</span>
+
+<div class="viewcode-block" id="MareesFranceNextSpecialTideSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+        <span class="n">sensor_key_suffix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="c1"># &quot;next_spring_date&quot; or &quot;next_neap_date&quot;</span>
+        <span class="n">translation_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the special tide date sensor.&quot;&quot;&quot;</span>
+        <span class="c1"># The sensor_key_suffix here directly matches the key in coordinator.data</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="n">sensor_key_suffix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="n">translation_key</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if coordinator has data and the specific date exists.&quot;&quot;&quot;</span>
+        <span class="c1"># Overrides base availability to check for the direct key (e.g., &quot;next_spring_date&quot;)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CoordinatorEntity</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">available</span> <span class="c1"># Check coordinator health</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">native_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the date string of the next special tide.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+            <span class="c1"># The value is the date object, which HA will format as a string.</span>
+            <span class="n">date_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">date_obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">if</span> <span class="n">date_obj</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extra_state_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the coefficient as an attribute.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+            <span class="c1"># Determine attribute key based on sensor type</span>
+            <span class="n">coeff_key</span> <span class="o">=</span> <span class="s2">&quot;next_spring_coeff&quot;</span> <span class="k">if</span> <span class="s2">&quot;spring&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sensor_key_suffix</span> <span class="k">else</span> <span class="s2">&quot;next_neap_coeff&quot;</span>
+            <span class="n">coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">coeff_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">coeff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="n">ATTR_COEFFICIENT</span><span class="p">:</span> <span class="n">coeff</span><span class="p">}</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MareesFranceNextSpringTideSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceNextSpringTideSensor</span><span class="p">(</span><span class="n">MareesFranceNextSpecialTideSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor for the date and coefficient of the next spring tide.&quot;&quot;&quot;</span>
+    <span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="s2">&quot;next_spring_tide&quot;</span>
+    <span class="c1"># Consider a more specific icon if desired, e.g., mdi:waves-arrow-up</span>
+
+<div class="viewcode-block" id="MareesFranceNextSpringTideSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the next spring tide sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="s2">&quot;next_spring_date&quot;</span><span class="p">,</span> <span class="s2">&quot;next_spring_tide&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="MareesFranceNextNeapTideSensor">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceNextNeapTideSensor</span><span class="p">(</span><span class="n">MareesFranceNextSpecialTideSensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor for the date and coefficient of the next neap tide.&quot;&quot;&quot;</span>
+    <span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="s2">&quot;next_neap_tide&quot;</span>
+    <span class="c1"># Consider a more specific icon if desired, e.g., mdi:waves-arrow-down</span>
+
+<div class="viewcode-block" id="MareesFranceNextNeapTideSensor.__init__">
+<a class="viewcode-back" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the next neap tide sensor.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">,</span> <span class="s2">&quot;next_neap_date&quot;</span><span class="p">,</span> <span class="s2">&quot;next_neap_tide&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, The Marées France Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

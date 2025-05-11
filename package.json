@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "docs:integration": "sphinx-build -b html tools/sphinx-docs docs/integration -W --keep-going -a -E",
+    "docs:frontend": "cd frontend && npm run docs && cd ..",
+    "docs" : "npm run docs:integration && npm run docs:frontend"
+  },
   "devDependencies": {
     "tsx": "^4.19.4"
   }

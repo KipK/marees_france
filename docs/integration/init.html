@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>__init__ Module &mdash; Marées France Integration  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sensor Module" href="sensor.html" />
+    <link rel="prev" title="Welcome to Marées France Integration’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Marées France Integration
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">__init__ Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_check_and_prefetch_tides"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_tides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marees_france.async_remove_entry"><code class="docutils literal notranslate"><span class="pre">async_remove_entry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sensor.html">sensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceBaseSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceBaseSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNowSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNowSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNowSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.extra_state_attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNowSensor.icon"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.icon</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceTimestampSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceTimestampSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceTimestampSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFrancePreviousSensor"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="coordinator.html">coordinator Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_flow.html">config_flow Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_flow.html#marees_france.config_flow.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_flow.html#marees_france.config_flow.InvalidAuth"><code class="docutils literal notranslate"><span class="pre">InvalidAuth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_flow.html#marees_france.config_flow.MareesFranceConfigFlow"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.VERSION"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.VERSION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.async_step_user"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.async_step_user()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_helpers.html">api_helpers Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="const.html">const Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Marées France Integration</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">__init__ Module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/init.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-marees_france">
+<span id="init-module"></span><h1>__init__ Module<a class="headerlink" href="#module-marees_france" title="Link to this heading"></a></h1>
+<p>Marées France integration.</p>
+<p>This component provides tide, coefficient, and water level information for French harbors.
+It sets up sensors, services, and handles data fetching and caching.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="marees_france.CannotConnect">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">CannotConnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><span class="pre">object</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">translation_domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">translation_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">translation_placeholders</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marees_france.html#CannotConnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.CannotConnect" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">HomeAssistantError</span></code></p>
+<p>Error to indicate a failure to connect to the SHOM API.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.fetch_harbors">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">fetch_harbors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">websession</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ClientSession</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/marees_france.html#fetch_harbors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.fetch_harbors" title="Link to this definition"></a></dt>
+<dd><p>Fetch the list of harbors from the SHOM API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>websession</strong> – The aiohttp client session to use for the request.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary of harbors, where keys are harbor IDs and values are
+dictionaries containing ‘display’ (formatted name) and ‘name’ (harbor name).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#marees_france.CannotConnect" title="marees_france.CannotConnect"><strong>CannotConnect</strong></a> – If there’s an issue fetching or parsing the harbor list.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_migrate_entry">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_migrate_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_migrate_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_migrate_entry" title="Link to this definition"></a></dt>
+<dd><p>Migrate an old config entry to the current version.</p>
+<p>Currently supports migration from version 1 to version 2, which involves
+fetching and adding the harbor name based on the harbor ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>config_entry</strong> – The config entry to migrate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if migration was successful or not needed, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_handle_reinitialize_harbor_data">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_handle_reinitialize_harbor_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ServiceCall</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_handle_reinitialize_harbor_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_handle_reinitialize_harbor_data" title="Link to this definition"></a></dt>
+<dd><p>Handle the service call to reinitialize data for a specific harbor.</p>
+<p>This service clears cached data (tides, coefficients, water levels) for the
+specified harbor and triggers an immediate refetch of all data. It also
+requests an update from the coordinator if available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>call</strong> – The service call object, containing ‘device_id’.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>HomeAssistantError</strong> – If the device or config entry is not found, or if
+    there’s an error during cache clearing or data refetch.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_check_and_prefetch_water_levels">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_check_and_prefetch_water_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Store</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_check_and_prefetch_water_levels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_check_and_prefetch_water_levels" title="Link to this definition"></a></dt>
+<dd><p>Check cache for the next 8 days and prefetch missing water level data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry for the harbor.</p></li>
+<li><p><strong>store</strong> – The store object for water level data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_handle_get_water_levels">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_handle_get_water_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ServiceCall</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ServiceResponse</span></span></span><a class="reference internal" href="_modules/marees_france.html#async_handle_get_water_levels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_handle_get_water_levels" title="Link to this definition"></a></dt>
+<dd><p>Handle the service call to get water levels for a device, using caching.</p>
+<p>Retrieves water level data for a specific device and date. It uses a local
+cache, prunes old entries, and falls back to fetching from the API if data
+is not cached (though prefetching aims to minimize this).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>call</strong> – The service call object, containing ‘device_id’ and ‘date’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the water level data for the requested date,
+or an error structure if data cannot be retrieved.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HomeAssistantError</strong> – If the device, config entry is not found, or if
+    there’s an error fetching data after a cache miss.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_check_and_prefetch_tides">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_check_and_prefetch_tides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Store</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_check_and_prefetch_tides"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_check_and_prefetch_tides" title="Link to this definition"></a></dt>
+<dd><p>Check tide cache (yesterday to today+7 days) and prefetch if needed.</p>
+<p>Also prunes old data (before yesterday) from the cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry for the harbor.</p></li>
+<li><p><strong>store</strong> – The store object for tide data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_handle_get_tides_data">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_handle_get_tides_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ServiceCall</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ServiceResponse</span></span></span><a class="reference internal" href="_modules/marees_france.html#async_handle_get_tides_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_handle_get_tides_data" title="Link to this definition"></a></dt>
+<dd><p>Handle the service call to get all cached tides data for a device.</p>
+<p>Retrieves all currently cached tide data for the specified device’s harbor.
+Performs basic validation on the cache structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>call</strong> – The service call object, containing ‘device_id’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary where keys are dates (YYYY-MM-DD) and values are lists of
+tide events for that date. Returns an error structure if cache is
+invalid or missing.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HomeAssistantError</strong> – If the device or config entry is not found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_check_and_prefetch_coefficients">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_check_and_prefetch_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Store</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_check_and_prefetch_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_check_and_prefetch_coefficients" title="Link to this definition"></a></dt>
+<dd><p>Check coefficient cache, prefetch missing data, and prune old entries.</p>
+<p>The cache aims to store 365 days of coefficient data starting from the
+1st of the current month. Old data (previous years/months) is pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry for the harbor.</p></li>
+<li><p><strong>store</strong> – The store object for coefficient data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_handle_get_coefficients_data">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_handle_get_coefficients_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ServiceCall</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ServiceResponse</span></span></span><a class="reference internal" href="_modules/marees_france.html#async_handle_get_coefficients_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_handle_get_coefficients_data" title="Link to this definition"></a></dt>
+<dd><p>Handle the service call to get cached coefficient data for a device.</p>
+<p>Retrieves coefficient data based on the provided ‘device_id’, optional
+‘date’ (YYYY-MM-DD), and optional ‘days’.
+- If no date/days: returns all cached data for the harbor.
+- If date only: returns data for that specific date.
+- If days only: returns data for ‘days’ starting from today.
+- If date and days: returns data for ‘days’ starting from ‘date’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>call</strong> – The service call object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary where keys are dates (YYYY-MM-DD) and values are coefficient
+data for that date. Returns an empty dictionary if no data is found.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HomeAssistantError</strong> – If the device/config entry is not found or date format is invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_register_frontend_modules_when_ready">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_register_frontend_modules_when_ready</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marees_france.html#async_register_frontend_modules_when_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_register_frontend_modules_when_ready" title="Link to this definition"></a></dt>
+<dd><p>Register frontend modules once Home Assistant has fully started.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hass</strong> – The Home Assistant instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_setup">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_setup" title="Link to this definition"></a></dt>
+<dd><p>Set up the Marées France component.</p>
+<p>This function is called by Home Assistant during the setup phase.
+It schedules the registration of frontend modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>_config</strong> – The component configuration (not used).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True, indicating successful setup.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_setup_entry">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_setup_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_setup_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_setup_entry" title="Link to this definition"></a></dt>
+<dd><p>Set up Marées France from a config entry.</p>
+<p>This function is called by Home Assistant when a config entry is added or
+reloaded. It initializes data stores, sets up the data update coordinator,
+prefetches initial data, forwards setup to platforms (e.g., sensor),
+registers services, and schedules daily prefetch jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry being set up.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the setup was successful, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_unload_entry">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_unload_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_unload_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_unload_entry" title="Link to this definition"></a></dt>
+<dd><p>Unload a config entry.</p>
+<p>This function is called by Home Assistant when a config entry is being
+unloaded (e.g., during a reload or removal). It unloads associated
+platforms and removes the coordinator instance from hass.data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry being unloaded.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the unload was successful, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_reload_entry">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_reload_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_reload_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_reload_entry" title="Link to this definition"></a></dt>
+<dd><p>Reload a config entry.</p>
+<p>This is typically called when the entry’s options are updated. It unloads
+and then sets up the entry again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry to reload.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="marees_france.async_remove_entry">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marees_france.</span></span><span class="sig-name descname"><span class="pre">async_remove_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HomeAssistant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ConfigEntry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/marees_france.html#async_remove_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marees_france.async_remove_entry" title="Link to this definition"></a></dt>
+<dd><p>Handle removal of a config entry.</p>
+<p>This function is called by Home Assistant when a config entry is being
+removed. It cleans up any persistent data associated with the entry,
+such as cached tide, coefficient, and water level data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hass</strong> – The Home Assistant instance.</p></li>
+<li><p><strong>entry</strong> – The config entry being removed.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Marées France Integration’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sensor.html" class="btn btn-neutral float-right" title="sensor Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, The Marées France Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

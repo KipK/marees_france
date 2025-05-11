@@ -18,6 +18,9 @@ module.exports = {
     // Add '.ts' to resolved extensions
     extensions: ['.js', '.ts'],
   },
+  optimization: {
+    usedExports: true, // needed for tree shaking
+  },
   module: {
     rules: [
       // Add rule for TypeScript files

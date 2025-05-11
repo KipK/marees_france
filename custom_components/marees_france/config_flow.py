@@ -2,33 +2,22 @@
 
 from __future__ import annotations
 
-# Standard library imports
 import logging
 from typing import Any
 
-# Third-party imports
 import voluptuous as vol
 
-# Home Assistant core imports
-from homeassistant import config_entries # Import config_entries
-from homeassistant.config_entries import (
-    ConfigFlow,
-    ConfigFlowResult,
-)
-# from homeassistant.core import HomeAssistant, callback # Add HomeAssistant import - Removed unused
+from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-# import homeassistant.helpers.config_validation as cv - Removed unused
 
-# Local application/library specific imports
-# Import fetch_harbors from __init__.py
-from . import fetch_harbors
+from . import fetch_harbors # fetch_harbors is defined in __init__.py
 from .const import (
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
     DEFAULT_HARBOR,
     DOMAIN,
-    # HARBORSURL, - Removed unused
     INTEGRATION_NAME,
 )
 
@@ -36,41 +25,54 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
+    """Error to indicate we cannot connect to the SHOM API."""
 
 
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
+class InvalidAuth(HomeAssistantError): # Not currently used, but good for future API changes.
+    """Error to indicate there is invalid authentication."""
 
 
 @config_entries.HANDLERS.register(DOMAIN)
 class MareesFranceConfigFlow(ConfigFlow):
-    """Handle a config flow for Marées France."""
+    """Handle a config flow for Marées France.
 
-    VERSION = 2 # Version bumped for migration
-    # Store fetched harbors temporarily during the flow instance
+    This config flow allows users to select a French harbor for which to
+    retrieve tide, coefficient, and water level data.
+    """
+
+    VERSION = 2
     _harbors_cache: dict[str, dict[str, str]] | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
+        """Handle the initial user step of the config flow.
+
+        This step fetches the list of available harbors from the SHOM API
+        and presents them to the user for selection.
+
+        Args:
+            user_input: The user's input from the form, if any.
+
+        Returns:
+            A ConfigFlowResult, either showing the form or creating an entry.
+        """
         errors: dict[str, str] = {}
 
         if self._harbors_cache is None:
             try:
                 websession = async_get_clientsession(self.hass)
-                # Call imported function
                 self._harbors_cache = await fetch_harbors(websession)
             except CannotConnect as err:
                 _LOGGER.error("Failed to connect to SHOM API to fetch harbors: %s", err)
                 return self.async_abort(reason="cannot_connect")
-            except Exception as err:
+            except Exception as err: # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected error fetching harbors: %s", err)
                 return self.async_abort(reason="unknown")
 
         if user_input is not None:
             selected_harbor_id = user_input[CONF_HARBOR_ID]
+            # Ensure _harbors_cache is not None before accessing
             if self._harbors_cache is None or selected_harbor_id not in self._harbors_cache:
                 errors["base"] = "invalid_harbor"
             else:
@@ -84,16 +86,15 @@ class MareesFranceConfigFlow(ConfigFlow):
                     data={CONF_HARBOR_ID: selected_harbor_id, CONF_HARBOR_NAME: harbor_name}
                 )
 
-        # Create harbor options safely, providing fallbacks if 'display' or 'name' is missing
         harbor_options = {
-            k: v.get("display", v.get("name", k)) # Fallback: display -> name -> key (harbor_id)
+            k: v.get("display", v.get("name", k))
             for k, v in (self._harbors_cache or {}).items()
-            if isinstance(v, dict) # Ensure v is a dictionary before accessing keys
+            if isinstance(v, dict)
         }
 
-        # If no valid harbor options could be created, abort.
         if not harbor_options:
             _LOGGER.error("No valid harbor options found after fetching. Aborting.")
+            # This typically means the _harbors_cache was empty or malformed.
             return self.async_abort(reason="cannot_connect")
 
         data_schema = vol.Schema(
@@ -107,5 +108,3 @@ class MareesFranceConfigFlow(ConfigFlow):
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
         )
-
-# Removed debug log for class registration

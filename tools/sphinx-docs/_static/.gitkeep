@@ -1,0 +1,2 @@
+# This file is here to ensure the _static directory is created and tracked by git.
+# You can place custom static assets (CSS, JS, images) for your Sphinx documentation here.

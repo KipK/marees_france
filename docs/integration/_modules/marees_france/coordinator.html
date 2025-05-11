@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>marees_france.coordinator &mdash; Marées France Integration  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Marées France Integration
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../init.html">__init__ Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_tides"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_tides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_remove_entry"><code class="docutils literal notranslate"><span class="pre">async_remove_entry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sensor.html">sensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.extra_state_attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.icon"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.icon</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../coordinator.html">coordinator Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_flow.html">config_flow Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.InvalidAuth"><code class="docutils literal notranslate"><span class="pre">InvalidAuth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.VERSION"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.VERSION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.async_step_user"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.async_step_user()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_helpers.html">api_helpers Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../const.html">const Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Marées France Integration</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../marees_france.html">marees_france</a></li>
+      <li class="breadcrumb-item active">marees_france.coordinator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for marees_france.coordinator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;DataUpdateCoordinator for the Marées France integration.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Coroutine</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytz</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.config_entries</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">HomeAssistant</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Store</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">async_get_translations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.update_coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataUpdateCoordinator</span><span class="p">,</span> <span class="n">UpdateFailed</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ATTR_COEFFICIENT</span><span class="p">,</span>
+    <span class="n">ATTR_CURRENT_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_FINISHED_TIME</span><span class="p">,</span>
+    <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">,</span>
+    <span class="n">ATTR_STARTING_TIME</span><span class="p">,</span>
+    <span class="n">ATTR_TIDE_TREND</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_ID</span><span class="p">,</span>
+    <span class="n">DATE_FORMAT</span><span class="p">,</span>
+    <span class="n">DOMAIN</span><span class="p">,</span>
+    <span class="n">NEAP_TIDE_THRESHOLD</span><span class="p">,</span>
+    <span class="n">SPRING_TIDE_THRESHOLD</span><span class="p">,</span>
+    <span class="n">STATE_HIGH_TIDE</span><span class="p">,</span>
+    <span class="n">STATE_LOW_TIDE</span><span class="p">,</span>
+    <span class="n">TIDE_HIGH</span><span class="p">,</span>
+    <span class="n">TIDE_LOW</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.api_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_async_fetch_and_store_water_level</span><span class="p">,</span>
+    <span class="n">_async_fetch_and_store_tides</span><span class="p">,</span>
+    <span class="n">_async_fetch_and_store_coefficients</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MareesFranceUpdateCoordinator">
+<a class="viewcode-back" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceUpdateCoordinator</span><span class="p">(</span><span class="n">DataUpdateCoordinator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manages fetching, caching, and processing of Marées France data.</span>
+
+<span class="sd">    This coordinator is responsible for:</span>
+<span class="sd">    - Loading tide, coefficient, and water level data from persistent storage (cache).</span>
+<span class="sd">    - Validating the integrity of cached data and repairing it by fetching fresh data if necessary.</span>
+<span class="sd">    - Periodically updating the data by fetching new information for the configured harbor.</span>
+<span class="sd">    - Parsing the raw data into a structured format suitable for sensor entities.</span>
+<span class="sd">    - Calculating derived information such as current tide trend, next spring/neap tides.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span>
+
+<div class="viewcode-block" id="MareesFranceUpdateCoordinator.__init__">
+<a class="viewcode-back" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+        <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+        <span class="n">tides_store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="n">coeff_store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="n">water_level_store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the data update coordinator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hass: The Home Assistant instance.</span>
+<span class="sd">            entry: The config entry for this coordinator instance.</span>
+<span class="sd">            tides_store: The store for caching tide data.</span>
+<span class="sd">            coeff_store: The store for caching coefficient data.</span>
+<span class="sd">            water_level_store: The store for caching water level data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hass</span> <span class="o">=</span> <span class="n">hass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_entry</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tides_store</span> <span class="o">=</span> <span class="n">tides_store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coeff_store</span> <span class="o">=</span> <span class="n">coeff_store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_level_store</span> <span class="o">=</span> <span class="n">water_level_store</span>
+
+        <span class="n">update_interval</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="c1"># Frequent updates for water levels</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span>
+            <span class="n">_LOGGER</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">update_interval</span><span class="o">=</span><span class="n">update_interval</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_validate_and_repair_cache</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="n">cache_full</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">fetch_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+            <span class="p">[</span><span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+            <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="p">],</span>
+        <span class="n">fetch_args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate cache for the harbor, repair if needed, and return caches.</span>
+
+<span class="sd">        Checks if the cache for the specific harbor and data type is present and</span>
+<span class="sd">        has a valid basic structure. If not, it attempts to clear the invalid</span>
+<span class="sd">        entry and re-fetch the data using the provided `fetch_function`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            store: The data store instance (tides, coefficients, or water levels).</span>
+<span class="sd">            cache_full: The entire cache dictionary loaded from the store.</span>
+<span class="sd">            data_type: A string identifying the type of data (&quot;tides&quot;,</span>
+<span class="sd">                       &quot;coefficients&quot;, &quot;water_levels&quot;).</span>
+<span class="sd">            fetch_function: The async function to call to re-fetch data if repair</span>
+<span class="sd">                            is needed.</span>
+<span class="sd">            fetch_args: A tuple of arguments to pass to the `fetch_function`</span>
+<span class="sd">                        (excluding hass, store, cache_full, harbor_id which are</span>
+<span class="sd">                        passed automatically).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple containing:</span>
+<span class="sd">                - The (potentially modified) full cache dictionary.</span>
+<span class="sd">                - The harbor-specific cache dictionary (potentially re-fetched).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">harbor_cache</span> <span class="o">=</span> <span class="n">cache_full</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">needs_repair</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">harbor_cache</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Invalid cache format for </span><span class="si">%s</span><span class="s2"> harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;: &quot;</span>
+                <span class="s2">&quot;Expected dict, got </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">harbor_cache</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="p">)</span>
+            <span class="n">needs_repair</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">harbor_cache</span> <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="s2">&quot;water_levels&quot;</span><span class="p">:</span> <span class="c1"># Allow empty water_levels initially</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Empty </span><span class="si">%s</span><span class="s2"> cache entry found for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span><span class="p">,</span>
+                <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="n">needs_repair</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Specific validation for data structures within the harbor_cache</span>
+            <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;water_levels&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">date_key</span><span class="p">,</span> <span class="n">daily_data</span> <span class="ow">in</span> <span class="n">harbor_cache</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daily_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> \
+                       <span class="n">date_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">daily_data</span> <span class="ow">or</span> \
+                       <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daily_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">date_key</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Invalid </span><span class="si">%s</span><span class="s2"> cache structure for &quot;</span>
+                            <span class="s2">&quot;harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;, date &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span><span class="p">,</span>
+                            <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_key</span>
+                        <span class="p">)</span>
+                        <span class="n">needs_repair</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Tides and Coefficients expect a list of items per date</span>
+                <span class="k">for</span> <span class="n">date_key</span><span class="p">,</span> <span class="n">daily_data</span> <span class="ow">in</span> <span class="n">harbor_cache</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daily_data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Invalid </span><span class="si">%s</span><span class="s2"> cache data for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;, &quot;</span>
+                            <span class="s2">&quot;date &#39;</span><span class="si">%s</span><span class="s2">&#39;: Expected list, got </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                            <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_key</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">daily_data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+                        <span class="p">)</span>
+                        <span class="n">needs_repair</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">needs_repair</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Invalid or empty </span><span class="si">%s</span><span class="s2"> cache detected &quot;</span>
+                <span class="s2">&quot;for </span><span class="si">%s</span><span class="s2">. Attempting repair.&quot;</span><span class="p">,</span>
+                <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">cache_full</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">cache_full</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">]</span>
+                <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache_full</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Removed invalid </span><span class="si">%s</span><span class="s2"> cache entry for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+                <span class="p">)</span>
+
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Triggering immediate fetch for </span><span class="si">%s</span><span class="s2"> data &quot;</span>
+                    <span class="s2">&quot;for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+                <span class="p">)</span>
+                <span class="n">fetch_successful</span> <span class="o">=</span> <span class="k">await</span> <span class="n">fetch_function</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hass</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">cache_full</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="o">*</span><span class="n">fetch_args</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">fetch_successful</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Successfully re-fetched </span><span class="si">%s</span><span class="s2"> data for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                        <span class="s2">&quot;after cache repair.&quot;</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+                    <span class="p">)</span>
+                    <span class="n">cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+                    <span class="n">harbor_cache</span> <span class="o">=</span> <span class="n">cache_full</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Failed to re-fetch </span><span class="si">%s</span><span class="s2"> data for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                        <span class="s2">&quot;after cache repair.&quot;</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+                    <span class="p">)</span>
+                    <span class="n">harbor_cache</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Error during </span><span class="si">%s</span><span class="s2"> cache repair for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+                <span class="p">)</span>
+                <span class="n">harbor_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">cache_full</span><span class="p">,</span> <span class="n">harbor_cache</span>
+
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_update_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch and process tide, coefficient, and water level data.</span>
+
+<span class="sd">        This is the core method called by DataUpdateCoordinator to refresh data.</span>
+<span class="sd">        It loads data from caches, validates/repairs them, fetches today&#39;s</span>
+<span class="sd">        water levels if missing, and then parses all data into a structured</span>
+<span class="sd">        format for sensors.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary containing the processed data for the harbor.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            UpdateFailed: If essential data (like tides) cannot be loaded or fetched.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France Coordinator: Starting update cycle for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tides_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">tides_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">coeff_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">coeff_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">water_level_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">water_level_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Failed to load cache stores for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">UpdateFailed</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load cache: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+        <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+        <span class="n">today_str</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="n">yesterday_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">today</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="n">tide_fetch_duration</span> <span class="o">=</span> <span class="mi">8</span>
+
+        <span class="n">tides_cache_full</span><span class="p">,</span> <span class="n">harbor_tides_cache</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_and_repair_cache</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tides_store</span><span class="p">,</span> <span class="n">tides_cache_full</span><span class="p">,</span> <span class="s2">&quot;tides&quot;</span><span class="p">,</span>
+            <span class="n">_async_fetch_and_store_tides</span><span class="p">,</span> <span class="p">(</span><span class="n">yesterday_str</span><span class="p">,</span> <span class="n">tide_fetch_duration</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">first_day_of_current_month</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">coeff_fetch_days</span> <span class="o">=</span> <span class="mi">365</span>
+        <span class="n">coeff_cache_full</span><span class="p">,</span> <span class="n">harbor_coeff_cache</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_and_repair_cache</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coeff_store</span><span class="p">,</span> <span class="n">coeff_cache_full</span><span class="p">,</span> <span class="s2">&quot;coefficients&quot;</span><span class="p">,</span>
+            <span class="n">_async_fetch_and_store_coefficients</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">first_day_of_current_month</span><span class="p">,</span> <span class="n">coeff_fetch_days</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Validate water levels, but repair fetch only targets today if triggered by validation.</span>
+        <span class="c1"># Full prefetch is handled by scheduled jobs in __init__.py.</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">harbor_water_level_cache_validated</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_and_repair_cache</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">water_level_store</span><span class="p">,</span> <span class="n">water_level_cache_full</span><span class="p">,</span> <span class="s2">&quot;water_levels&quot;</span><span class="p">,</span>
+            <span class="n">_async_fetch_and_store_water_level</span><span class="p">,</span> <span class="p">(</span><span class="n">today_str</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="c1"># Reload full water level cache as repair might have modified it.</span>
+        <span class="n">water_level_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">water_level_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="c1"># Use the potentially repaired harbor-specific cache for today&#39;s data.</span>
+        <span class="n">harbor_water_level_cache</span> <span class="o">=</span> <span class="n">water_level_cache_full</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+
+
+        <span class="n">future_window_days</span> <span class="o">=</span> <span class="mi">366</span>
+        <span class="n">tides_data_for_parser</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">coeff_data_for_parser</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">water_level_data_for_parser</span> <span class="o">=</span> <span class="n">harbor_water_level_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">today_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">water_level_data_for_parser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Today&#39;s (</span><span class="si">%s</span><span class="s2">) water level data missing &quot;</span>
+                <span class="s2">&quot;from cache for </span><span class="si">%s</span><span class="s2"> post-validation. Attempting fetch...&quot;</span><span class="p">,</span>
+                <span class="n">today_str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="n">fetched_data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_water_level</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hass</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">water_level_store</span><span class="p">,</span> <span class="n">water_level_cache_full</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="p">,</span> <span class="n">today_str</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">fetched_data</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Successfully fetched today&#39;s water &quot;</span>
+                    <span class="s2">&quot;level data on demand.&quot;</span>
+                <span class="p">)</span>
+                <span class="n">water_level_data_for_parser</span> <span class="o">=</span> <span class="n">fetched_data</span>
+                <span class="n">harbor_water_level_cache</span><span class="p">[</span><span class="n">today_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">fetched_data</span> <span class="c1"># Update local view</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Failed to fetch today&#39;s water level data &quot;</span>
+                    <span class="s2">&quot;on demand. Current height will be unavailable.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">future_window_days</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="c1"># Yesterday for tides</span>
+            <span class="n">check_date</span> <span class="o">=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">check_date_str</span> <span class="o">=</span> <span class="n">check_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">check_date_str</span> <span class="ow">in</span> <span class="n">harbor_tides_cache</span><span class="p">:</span>
+                <span class="n">tides_data_for_parser</span><span class="p">[</span><span class="n">check_date_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">harbor_tides_cache</span><span class="p">[</span><span class="n">check_date_str</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">future_window_days</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="c1"># Today for coeffs</span>
+            <span class="n">check_date</span> <span class="o">=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">check_date_str</span> <span class="o">=</span> <span class="n">check_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">check_date_str</span> <span class="ow">in</span> <span class="n">harbor_coeff_cache</span><span class="p">:</span>
+                <span class="n">coeff_data_for_parser</span><span class="p">[</span><span class="n">check_date_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">harbor_coeff_cache</span><span class="p">[</span><span class="n">check_date_str</span><span class="p">]</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France Coordinator: Loaded </span><span class="si">%d</span><span class="s2"> days of tide data and </span><span class="si">%d</span><span class="s2"> days of &quot;</span>
+            <span class="s2">&quot;coeff data for parser post-validation.&quot;</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">tides_data_for_parser</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">coeff_data_for_parser</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tides_data_for_parser</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: No tide data available for </span><span class="si">%s</span><span class="s2"> even after &quot;</span>
+                <span class="s2">&quot;validation/repair.&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">UpdateFailed</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;No tide data available for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2"> after validation/repair.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">coeff_data_for_parser</span><span class="p">:</span> <span class="c1"># Allow proceeding without coeffs, but log warning</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: No coefficient data available for </span><span class="si">%s</span><span class="s2"> after &quot;</span>
+                <span class="s2">&quot;validation/repair. Proceeding without it.&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">translations</span> <span class="o">=</span> <span class="k">await</span> <span class="n">async_get_translations</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hass</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hass</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">language</span><span class="p">,</span> <span class="s2">&quot;entity&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">DOMAIN</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">translation_high</span> <span class="o">=</span> <span class="n">translations</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;component.</span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">.entity.sensor.tides.state.</span><span class="si">{</span><span class="n">STATE_HIGH_TIDE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">STATE_HIGH_TIDE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">translation_low</span> <span class="o">=</span> <span class="n">translations</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;component.</span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">.entity.sensor.tides.state.</span><span class="si">{</span><span class="n">STATE_LOW_TIDE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">STATE_LOW_TIDE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span>
+            <span class="p">)</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Calling _parse_tide_data with &quot;</span>
+                <span class="s2">&quot;water_level_data_for_parser: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">water_level_data_for_parser</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_tide_data</span><span class="p">(</span>
+                <span class="n">tides_data_for_parser</span><span class="p">,</span>
+                <span class="n">coeff_data_for_parser</span><span class="p">,</span>
+                <span class="n">water_level_data_for_parser</span><span class="p">,</span>
+                <span class="n">translation_high</span><span class="p">,</span> <span class="c1"># Though unused, kept for signature consistency</span>
+                <span class="n">translation_low</span>   <span class="c1"># Though unused, kept for signature consistency</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Unexpected error processing data for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">UpdateFailed</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing data: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_parse_tide_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tides_raw_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
+        <span class="n">coeff_raw_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">water_level_raw_data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">_translation_high</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="c1"># Parameter kept for signature, but not used directly</span>
+        <span class="n">_translation_low</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># Parameter kept for signature, but not used directly</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse raw tide, coefficient, and water level data into a structured format.</span>
+
+<span class="sd">        This method takes the raw data fetched from the SHOM API (via cache)</span>
+<span class="sd">        and transforms it into a dictionary containing:</span>
+<span class="sd">        - Information about the current tide (if any).</span>
+<span class="sd">        - Information about the next tide event.</span>
+<span class="sd">        - Information about the previous tide event.</span>
+<span class="sd">        - The date and coefficient of the next spring tide.</span>
+<span class="sd">        - The date and coefficient of the next neap tide.</span>
+<span class="sd">        - The current water height (if available).</span>
+<span class="sd">        - A timestamp of the last update.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tides_raw_data: Raw tide data, mapping dates to lists of tide events.</span>
+<span class="sd">                            Expected to cover yesterday through future dates.</span>
+<span class="sd">            coeff_raw_data: Raw coefficient data, mapping dates to lists of coeffs.</span>
+<span class="sd">                            Expected to cover today through future dates.</span>
+<span class="sd">            water_level_raw_data: Raw water level data for today, structured as</span>
+<span class="sd">                                  `{date_str: [[timestamp_str, height_str], ...]}`.</span>
+<span class="sd">                                  Can be None if not available.</span>
+<span class="sd">            _translation_high: Translation for &quot;High Tide&quot; (unused).</span>
+<span class="sd">            _translation_low: Translation for &quot;Low Tide&quot; (unused).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary containing parsed and processed tide information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">now_utc</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+        <span class="n">last_update_iso</span> <span class="o">=</span> <span class="n">now_utc</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tides_raw_data</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: No tide data provided to _parse_tide_data.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;last_update&quot;</span><span class="p">:</span> <span class="n">last_update_iso</span><span class="p">}</span>
+
+        <span class="n">all_tides_flat</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">paris_tz</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">hass</span><span class="o">.</span><span class="n">async_add_executor_job</span><span class="p">(</span><span class="n">pytz</span><span class="o">.</span><span class="n">timezone</span><span class="p">,</span> <span class="s2">&quot;Europe/Paris&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">day_str</span><span class="p">,</span> <span class="n">tides</span> <span class="ow">in</span> <span class="n">tides_raw_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">tide_info</span> <span class="ow">in</span> <span class="n">tides</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tide_info</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">tide_info</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Skipping invalid tide_info format &quot;</span>
+                        <span class="s2">&quot;for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">day_str</span><span class="p">,</span> <span class="n">tide_info</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">tide_type</span><span class="p">,</span> <span class="n">time_str</span><span class="p">,</span> <span class="n">height_str</span><span class="p">,</span> <span class="n">coeff_str</span> <span class="o">=</span> <span class="n">tide_info</span>
+                <span class="k">if</span> <span class="n">time_str</span> <span class="o">==</span> <span class="s2">&quot;--:--&quot;</span> <span class="ow">or</span> <span class="n">height_str</span> <span class="o">==</span> <span class="s2">&quot;---&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">tide_dt_naive</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">day_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DATE_FORMAT</span><span class="si">}</span><span class="s2"> %H:%M&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">tide_dt_local</span> <span class="o">=</span> <span class="n">paris_tz</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">tide_dt_naive</span><span class="p">)</span>
+                    <span class="n">tide_dt_utc</span> <span class="o">=</span> <span class="n">tide_dt_local</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Could not parse datetime: </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">day_str</span><span class="p">,</span> <span class="n">time_str</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="n">coeff_value</span> <span class="o">=</span> <span class="n">coeff_str</span> <span class="k">if</span> <span class="n">coeff_str</span> <span class="o">!=</span> <span class="s2">&quot;---&quot;</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">flat_entry</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">tide_type</span><span class="p">,</span>
+                    <span class="s2">&quot;time_local&quot;</span><span class="p">:</span> <span class="n">time_str</span><span class="p">,</span>
+                    <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="n">height_str</span><span class="p">,</span>
+                    <span class="s2">&quot;coefficient&quot;</span><span class="p">:</span> <span class="n">coeff_value</span><span class="p">,</span>
+                    <span class="s2">&quot;datetime_utc&quot;</span><span class="p">:</span> <span class="n">tide_dt_utc</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+                    <span class="s2">&quot;date_local&quot;</span><span class="p">:</span> <span class="n">day_str</span><span class="p">,</span>
+                    <span class="s2">&quot;translated_type&quot;</span><span class="p">:</span> <span class="p">(</span> <span class="c1"># Use raw constants for internal logic</span>
+                        <span class="n">TIDE_HIGH</span> <span class="k">if</span> <span class="n">tide_type</span> <span class="o">==</span> <span class="n">TIDE_HIGH</span>
+                        <span class="k">else</span> <span class="n">TIDE_LOW</span> <span class="k">if</span> <span class="n">tide_type</span> <span class="o">==</span> <span class="n">TIDE_LOW</span>
+                        <span class="k">else</span> <span class="s2">&quot;Unknown&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+                <span class="n">all_tides_flat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flat_entry</span><span class="p">)</span>
+
+        <span class="n">all_tides_flat</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">tide</span> <span class="ow">in</span> <span class="n">all_tides_flat</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">day_coeffs</span> <span class="o">=</span> <span class="n">coeff_raw_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tide</span><span class="p">[</span><span class="s2">&quot;date_local&quot;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">day_coeffs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">day_coeffs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">valid_coeffs_int</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">day_coeffs</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="n">valid_coeffs_int</span><span class="p">:</span>
+                            <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">valid_coeffs_int</span><span class="p">))</span>
+                            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                <span class="s2">&quot;Marées France Coordinator: Assigned max daily coeff </span><span class="si">%s</span><span class="s2"> to &quot;</span>
+                                <span class="s2">&quot;tide on </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                                <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">],</span> <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;date_local&quot;</span><span class="p">],</span> <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;time_local&quot;</span><span class="p">]</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Error processing daily coefficients &quot;</span>
+                            <span class="s2">&quot;for </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;date_local&quot;</span><span class="p">],</span> <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;time_local&quot;</span><span class="p">],</span> <span class="n">day_coeffs</span>
+                        <span class="p">)</span>
+                        <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tide</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">now_tide_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tide</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_tides_flat</span><span class="p">):</span>
+            <span class="n">tide_dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">tide</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tide_dt</span> <span class="o">&gt;</span> <span class="n">now_utc</span><span class="p">:</span>
+                <span class="n">now_tide_index</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+
+        <span class="n">now_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">next_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">previous_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">now_tide_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">next_tide_event</span> <span class="o">=</span> <span class="n">all_tides_flat</span><span class="p">[</span><span class="n">now_tide_index</span><span class="p">]</span>
+            <span class="n">next_starting_height</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">all_tides_flat</span><span class="p">[</span><span class="n">now_tide_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="s2">&quot;height&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">now_tide_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="n">next_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">ATTR_TIDE_TREND</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;translated_type&quot;</span><span class="p">],</span>
+                <span class="n">ATTR_STARTING_TIME</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                <span class="n">ATTR_FINISHED_TIME</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">:</span> <span class="n">next_starting_height</span><span class="p">,</span>
+                <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;height&quot;</span><span class="p">],</span>
+                <span class="n">ATTR_COEFFICIENT</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">],</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">now_tide_index</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">previous_tide_event</span> <span class="o">=</span> <span class="n">all_tides_flat</span><span class="p">[</span><span class="n">now_tide_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">previous_starting_height</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">all_tides_flat</span><span class="p">[</span><span class="n">now_tide_index</span> <span class="o">-</span> <span class="mi">2</span><span class="p">][</span><span class="s2">&quot;height&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">now_tide_index</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">)</span>
+                <span class="n">previous_data</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">ATTR_TIDE_TREND</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;translated_type&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_STARTING_TIME</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_FINISHED_TIME</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">:</span> <span class="n">previous_starting_height</span><span class="p">,</span>
+                    <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;height&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_COEFFICIENT</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+
+                <span class="n">tide_status</span> <span class="o">=</span> <span class="s2">&quot;rising&quot;</span> <span class="k">if</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TIDE_LOW</span> <span class="k">else</span> <span class="s2">&quot;falling&quot;</span>
+                <span class="n">now_data</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">ATTR_TIDE_TREND</span><span class="p">:</span> <span class="n">tide_status</span><span class="p">,</span>
+                    <span class="n">ATTR_STARTING_TIME</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_FINISHED_TIME</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;datetime_utc&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_STARTING_HEIGHT</span><span class="p">:</span> <span class="n">previous_tide_event</span><span class="p">[</span><span class="s2">&quot;height&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_FINISHED_HEIGHT</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;height&quot;</span><span class="p">],</span>
+                    <span class="n">ATTR_COEFFICIENT</span><span class="p">:</span> <span class="n">next_tide_event</span><span class="p">[</span><span class="s2">&quot;coefficient&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+
+        <span class="n">current_water_height</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France Coordinator: Checking water level data for current height &quot;</span>
+            <span class="s2">&quot;calculation. Received data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">water_level_raw_data</span>
+        <span class="p">)</span>
+        <span class="n">water_levels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">today_str_key</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">water_level_raw_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">water_level_raw_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">today_str_key</span><span class="p">),</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Extracting water levels using key &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span><span class="p">,</span>
+                <span class="n">today_str_key</span>
+            <span class="p">)</span>
+            <span class="n">water_levels</span> <span class="o">=</span> <span class="n">water_level_raw_data</span><span class="p">[</span><span class="n">today_str_key</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">water_level_raw_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># Log if data is present but not in expected format</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France Coordinator: Received water level data, but it&#39;s not a &quot;</span>
+                <span class="s2">&quot;dictionary or lacks the expected key &#39;</span><span class="si">%s</span><span class="s2">&#39;. Data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">today_str_key</span><span class="p">,</span> <span class="n">water_level_raw_data</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">water_levels</span><span class="p">:</span>
+            <span class="n">closest_entry</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">min_diff</span> <span class="o">=</span> <span class="n">timedelta</span><span class="o">.</span><span class="n">max</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">water_levels</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">time_str</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_str</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span> <span class="n">time_str</span> <span class="o">+=</span> <span class="s2">&quot;:00&quot;</span>
+                        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_str</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">8</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected time format: </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                        <span class="n">dt_naive</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">today_str_key</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DATE_FORMAT</span><span class="si">}</span><span class="s2"> %H:%M:%S&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">dt_local</span> <span class="o">=</span> <span class="n">paris_tz</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">dt_naive</span><span class="p">)</span>
+                        <span class="n">entry_dt</span> <span class="o">=</span> <span class="n">dt_local</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">now_utc</span> <span class="o">-</span> <span class="n">entry_dt</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">min_diff</span><span class="p">:</span>
+                            <span class="n">min_diff</span> <span class="o">=</span> <span class="n">diff</span>
+                            <span class="n">closest_entry</span> <span class="o">=</span> <span class="n">entry</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="n">pytz</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">AmbiguousTimeError</span><span class="p">,</span>
+                            <span class="n">pytz</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NonExistentTimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Skipping water level entry due to &quot;</span>
+                            <span class="s2">&quot;parsing/timezone error for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                            <span class="n">entry</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">e</span>
+                        <span class="p">)</span>
+                        <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">closest_entry</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">min_diff</span> <span class="o">&lt;=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span> <span class="c1"># Check if recent enough</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">current_water_height</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">closest_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Found closest water level height: &quot;</span>
+                            <span class="s2">&quot;</span><span class="si">%.2f</span><span class="s2"> m at </span><span class="si">%s</span><span class="s2"> (diff: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                            <span class="n">current_water_height</span><span class="p">,</span> <span class="n">closest_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">min_diff</span>
+                        <span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Could not parse height from &quot;</span>
+                            <span class="s2">&quot;closest water level entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">closest_entry</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Closest water level entry is too old &quot;</span>
+                        <span class="s2">&quot;(</span><span class="si">%s</span><span class="s2"> difference). Cannot determine current height.&quot;</span><span class="p">,</span> <span class="n">min_diff</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># No valid entry found in water_levels</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France Coordinator: Could not find any valid/parseable &quot;</span>
+                    <span class="s2">&quot;water level entries for today.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">now_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current_water_height</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">now_data</span><span class="p">[</span><span class="n">ATTR_CURRENT_HEIGHT</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_water_height</span>
+
+        <span class="n">next_spring_date_str</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">next_spring_coeff</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">next_neap_date_str</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">next_neap_coeff</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">found_spring</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">found_neap</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">today_str_compare</span> <span class="o">=</span> <span class="n">now_utc</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="n">sorted_coeff_dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coeff_raw_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">for</span> <span class="n">day_str</span> <span class="ow">in</span> <span class="n">sorted_coeff_dates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">day_str</span> <span class="o">&lt;</span> <span class="n">today_str_compare</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">daily_coeffs</span> <span class="o">=</span> <span class="n">coeff_raw_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">day_str</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">daily_coeffs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daily_coeffs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">valid_coeffs_int</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">daily_coeffs</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_coeffs_int</span><span class="p">:</span> <span class="k">continue</span>
+                    <span class="n">max_coeff</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">valid_coeffs_int</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">found_spring</span> <span class="ow">and</span> <span class="n">max_coeff</span> <span class="o">&gt;=</span> <span class="n">SPRING_TIDE_THRESHOLD</span><span class="p">:</span>
+                        <span class="n">next_spring_date_str</span> <span class="o">=</span> <span class="n">day_str</span>
+                        <span class="n">next_spring_coeff</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_coeff</span><span class="p">)</span>
+                        <span class="n">found_spring</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Found next Spring Tide date: </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                            <span class="s2">&quot;(Coeff: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">next_spring_date_str</span><span class="p">,</span> <span class="n">next_spring_coeff</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">found_neap</span> <span class="ow">and</span> <span class="n">max_coeff</span> <span class="o">&lt;=</span> <span class="n">NEAP_TIDE_THRESHOLD</span><span class="p">:</span>
+                        <span class="n">next_neap_date_str</span> <span class="o">=</span> <span class="n">day_str</span>
+                        <span class="n">next_neap_coeff</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_coeff</span><span class="p">)</span>
+                        <span class="n">found_neap</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="s2">&quot;Marées France Coordinator: Found next Neap Tide date: </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                            <span class="s2">&quot;(Coeff: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">next_neap_date_str</span><span class="p">,</span> <span class="n">next_neap_coeff</span>
+                        <span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France Coordinator: Error processing coefficients for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">day_str</span><span class="p">,</span> <span class="n">daily_coeffs</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="n">found_spring</span> <span class="ow">and</span> <span class="n">found_neap</span><span class="p">:</span> <span class="k">break</span>
+
+        <span class="n">next_spring_date_obj</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">next_spring_date_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_spring_date_str</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">next_neap_date_obj</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">next_neap_date_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">next_neap_date_str</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">final_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;now_data&quot;</span><span class="p">:</span> <span class="n">now_data</span><span class="p">,</span>
+            <span class="s2">&quot;next_data&quot;</span><span class="p">:</span> <span class="n">next_data</span><span class="p">,</span>
+            <span class="s2">&quot;previous_data&quot;</span><span class="p">:</span> <span class="n">previous_data</span><span class="p">,</span>
+            <span class="s2">&quot;next_spring_date&quot;</span><span class="p">:</span> <span class="n">next_spring_date_obj</span><span class="p">,</span>
+            <span class="s2">&quot;next_spring_coeff&quot;</span><span class="p">:</span> <span class="n">next_spring_coeff</span><span class="p">,</span>
+            <span class="s2">&quot;next_neap_date&quot;</span><span class="p">:</span> <span class="n">next_neap_date_obj</span><span class="p">,</span>
+            <span class="s2">&quot;next_neap_coeff&quot;</span><span class="p">:</span> <span class="n">next_neap_coeff</span><span class="p">,</span>
+            <span class="s2">&quot;last_update&quot;</span><span class="p">:</span> <span class="n">last_update_iso</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">final_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, The Marées France Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1421 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>marees_france &mdash; Marées France Integration  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Marées France Integration
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../init.html">__init__ Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_check_and_prefetch_tides"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_tides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html#marees_france.async_remove_entry"><code class="docutils literal notranslate"><span class="pre">async_remove_entry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sensor.html">sensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceBaseSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceBaseSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNowSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNowSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNowSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.extra_state_attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNowSensor.icon"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.icon</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceTimestampSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFrancePreviousSensor"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../coordinator.html">coordinator Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../config_flow.html">config_flow Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../config_flow.html#marees_france.config_flow.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config_flow.html#marees_france.config_flow.InvalidAuth"><code class="docutils literal notranslate"><span class="pre">InvalidAuth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.VERSION"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.VERSION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.async_step_user"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.async_step_user()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api_helpers.html">api_helpers Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../const.html">const Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Marées France Integration</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">marees_france</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for marees_france</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Marées France integration.</span>
+
+<span class="sd">This component provides tide, coefficient, and water level information for French harbors.</span>
+<span class="sd">It sets up sensors, services, and handles data fetching and caching.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="c1"># Third-party imports</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">aiohttp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">voluptuous</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vol</span>
+
+<span class="c1"># Home Assistant core imports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.config_entries</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">ServiceCall</span><span class="p">,</span>
+    <span class="n">ServiceResponse</span><span class="p">,</span>
+    <span class="n">SupportsResponse</span><span class="p">,</span>
+    <span class="n">CoreState</span><span class="p">,</span>
+    <span class="n">EVENT_HOMEASSISTANT_STARTED</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">HomeAssistantError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.aiohttp_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">async_get_clientsession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">async_track_time_change</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Store</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">homeassistant.helpers.config_validation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">homeassistant.helpers.device_registry</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dr</span>
+
+<span class="c1"># Local application/library specific imports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ATTR_DATE</span><span class="p">,</span>
+    <span class="n">COEFF_STORAGE_KEY</span><span class="p">,</span>
+    <span class="n">COEFF_STORAGE_VERSION</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_ID</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_NAME</span><span class="p">,</span>
+    <span class="n">DATE_FORMAT</span><span class="p">,</span>
+    <span class="n">DOMAIN</span><span class="p">,</span>
+    <span class="n">HARBORSURL</span><span class="p">,</span>
+    <span class="n">HEADERS</span><span class="p">,</span>
+    <span class="n">PLATFORMS</span><span class="p">,</span>
+    <span class="n">SERVICE_GET_COEFFICIENTS_DATA</span><span class="p">,</span>
+    <span class="n">SERVICE_GET_TIDES_DATA</span><span class="p">,</span>
+    <span class="n">SERVICE_GET_WATER_LEVELS</span><span class="p">,</span>
+    <span class="n">SERVICE_REINITIALIZE_HARBOR_DATA</span><span class="p">,</span>
+    <span class="n">TIDES_STORAGE_KEY</span><span class="p">,</span>
+    <span class="n">TIDES_STORAGE_VERSION</span><span class="p">,</span>
+    <span class="n">WATERLEVELS_STORAGE_KEY</span><span class="p">,</span>
+    <span class="n">WATERLEVELS_STORAGE_VERSION</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">MareesFranceUpdateCoordinator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSModuleRegistration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.api_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_async_fetch_and_store_water_level</span><span class="p">,</span>
+    <span class="n">_async_fetch_and_store_tides</span><span class="p">,</span>
+    <span class="n">_async_fetch_and_store_coefficients</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CannotConnect">
+<a class="viewcode-back" href="../init.html#marees_france.CannotConnect">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CannotConnect</span><span class="p">(</span><span class="n">HomeAssistantError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Error to indicate a failure to connect to the SHOM API.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_harbors">
+<a class="viewcode-back" href="../init.html#marees_france.fetch_harbors">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_harbors</span><span class="p">(</span>
+    <span class="n">websession</span><span class="p">:</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch the list of harbors from the SHOM API.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        websession: The aiohttp client session to use for the request.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary of harbors, where keys are harbor IDs and values are</span>
+<span class="sd">        dictionaries containing &#39;display&#39; (formatted name) and &#39;name&#39; (harbor name).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        CannotConnect: If there&#39;s an issue fetching or parsing the harbor list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Fetching harbor list from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">HARBORSURL</span><span class="p">)</span>
+    <span class="n">harbors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">result_harbors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">websession</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">HARBORSURL</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">HEADERS</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">or</span> <span class="s2">&quot;features&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid harbor data received: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CannotConnect</span><span class="p">(</span><span class="s2">&quot;Invalid harbor data received&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;properties&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">properties</span> <span class="ow">and</span> <span class="s2">&quot;cst&quot;</span> <span class="ow">in</span> <span class="n">properties</span> <span class="ow">and</span> <span class="s2">&quot;toponyme&quot;</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+                <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;cst&quot;</span><span class="p">]</span>
+                <span class="n">harbor_name</span> <span class="o">=</span> <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;toponyme&quot;</span><span class="p">]</span>
+                <span class="n">harbors</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;display&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">harbor_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">harbor_name</span>
+                <span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">harbors</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No harbors found in the response.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CannotConnect</span><span class="p">(</span><span class="s2">&quot;No harbors found&quot;</span><span class="p">)</span>
+
+        <span class="n">result_harbors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">harbors</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;display&quot;</span><span class="p">]))</span>
+
+    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TimeoutError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Timeout fetching harbor list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CannotConnect</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timeout fetching harbor list: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+    <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Client error fetching harbor list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CannotConnect</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Client error fetching harbor list: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unexpected error fetching harbor list&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CannotConnect</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error fetching harbor list: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+    <span class="k">return</span> <span class="n">result_harbors</span></div>
+
+
+
+<div class="viewcode-block" id="async_migrate_entry">
+<a class="viewcode-back" href="../init.html#marees_france.async_migrate_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_migrate_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Migrate an old config entry to the current version.</span>
+
+<span class="sd">    Currently supports migration from version 1 to version 2, which involves</span>
+<span class="sd">    fetching and adding the harbor name based on the harbor ID.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        config_entry: The config entry to migrate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if migration was successful or not needed, False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Migrating config entry </span><span class="si">%s</span><span class="s2"> from version </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">version</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">}</span>
+        <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">new_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CONF_HARBOR_ID</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">harbor_id</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot migrate config entry </span><span class="si">%s</span><span class="s2">: Missing harbor_id&quot;</span><span class="p">,</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">websession</span> <span class="o">=</span> <span class="n">async_get_clientsession</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+            <span class="n">all_harbors</span> <span class="o">=</span> <span class="k">await</span> <span class="n">fetch_harbors</span><span class="p">(</span><span class="n">websession</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CannotConnect</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Migration failed for entry </span><span class="si">%s</span><span class="s2">: Could not fetch harbor list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span> <span class="n">err</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Migration failed for entry </span><span class="si">%s</span><span class="s2">: Unexpected error fetching harbor list&quot;</span><span class="p">,</span>
+                <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">harbor_details</span> <span class="o">=</span> <span class="n">all_harbors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">harbor_details</span> <span class="ow">or</span> <span class="s2">&quot;name&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">harbor_details</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Migration failed for entry </span><span class="si">%s</span><span class="s2">: Harbor ID &#39;</span><span class="si">%s</span><span class="s2">&#39; not found &quot;</span>
+                <span class="s2">&quot;in fetched list or missing &#39;name&#39;&quot;</span><span class="p">,</span>
+                <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span>
+                <span class="n">harbor_id</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">harbor_name</span> <span class="o">=</span> <span class="n">harbor_details</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+        <span class="n">new_data</span><span class="p">[</span><span class="n">CONF_HARBOR_NAME</span><span class="p">]</span> <span class="o">=</span> <span class="n">harbor_name</span>
+
+        <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_update_entry</span><span class="p">(</span>
+            <span class="n">config_entry</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">new_data</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Successfully migrated config entry </span><span class="si">%s</span><span class="s2"> to version 2, added harbor_name: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span>
+            <span class="n">harbor_name</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">version</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot migrate config entry </span><span class="si">%s</span><span class="s2">: Config entry version </span><span class="si">%s</span><span class="s2"> is newer than &quot;</span>
+            <span class="s2">&quot;integration version 2&quot;</span><span class="p">,</span>
+            <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span>
+            <span class="n">config_entry</span><span class="o">.</span><span class="n">version</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Migration check complete for config entry </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="c1"># Service Schemas</span>
+<span class="n">SERVICE_GET_WATER_LEVELS_SCHEMA</span> <span class="o">=</span> <span class="n">vol</span><span class="o">.</span><span class="n">Schema</span><span class="p">({</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Required</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">):</span> <span class="n">cv</span><span class="o">.</span><span class="n">string</span><span class="p">,</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Required</span><span class="p">(</span><span class="n">ATTR_DATE</span><span class="p">):</span> <span class="n">vol</span><span class="o">.</span><span class="n">Match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="n">SERVICE_GET_TIDES_DATA_SCHEMA</span> <span class="o">=</span> <span class="n">vol</span><span class="o">.</span><span class="n">Schema</span><span class="p">({</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Required</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">):</span> <span class="n">cv</span><span class="o">.</span><span class="n">string</span><span class="p">,</span>
+<span class="p">})</span>
+<span class="n">SERVICE_GET_COEFFICIENTS_DATA_SCHEMA</span> <span class="o">=</span> <span class="n">vol</span><span class="o">.</span><span class="n">Schema</span><span class="p">({</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Required</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">):</span> <span class="n">cv</span><span class="o">.</span><span class="n">string</span><span class="p">,</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">ATTR_DATE</span><span class="p">):</span> <span class="n">vol</span><span class="o">.</span><span class="n">Match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">),</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">):</span> <span class="n">cv</span><span class="o">.</span><span class="n">positive_int</span><span class="p">,</span>
+<span class="p">})</span>
+<span class="n">SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA</span> <span class="o">=</span> <span class="n">vol</span><span class="o">.</span><span class="n">Schema</span><span class="p">({</span>
+    <span class="n">vol</span><span class="o">.</span><span class="n">Required</span><span class="p">(</span><span class="s2">&quot;device_id&quot;</span><span class="p">):</span> <span class="n">cv</span><span class="o">.</span><span class="n">string</span><span class="p">,</span>
+<span class="p">})</span>
+
+
+<div class="viewcode-block" id="async_handle_reinitialize_harbor_data">
+<a class="viewcode-back" href="../init.html#marees_france.async_handle_reinitialize_harbor_data">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_handle_reinitialize_harbor_data</span><span class="p">(</span><span class="n">call</span><span class="p">:</span> <span class="n">ServiceCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle the service call to reinitialize data for a specific harbor.</span>
+
+<span class="sd">    This service clears cached data (tides, coefficients, water levels) for the</span>
+<span class="sd">    specified harbor and triggers an immediate refetch of all data. It also</span>
+<span class="sd">    requests an update from the coordinator if available.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        call: The service call object, containing &#39;device_id&#39;.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HomeAssistantError: If the device or config entry is not found, or if</span>
+<span class="sd">                            there&#39;s an error during cache clearing or data refetch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device_id</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]</span>
+    <span class="n">hass</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">hass</span>
+
+    <span class="n">dev_reg</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+    <span class="n">device_entry</span> <span class="o">=</span> <span class="n">dev_reg</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Device </span><span class="si">%s</span><span class="s2"> not found or not linked to Marées France.&quot;</span><span class="p">,</span>
+            <span class="n">device_id</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2"> not found or not linked to Marées France.&quot;</span><span class="p">)</span>
+    <span class="n">config_entry_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">))</span>
+    <span class="n">config_entry</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_get_entry</span><span class="p">(</span><span class="n">config_entry_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_entry</span> <span class="ow">or</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">domain</span> <span class="o">!=</span> <span class="n">DOMAIN</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Config entry </span><span class="si">%s</span><span class="s2"> not found or not for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="n">config_entry_id</span><span class="p">,</span> <span class="n">DOMAIN</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Config entry </span><span class="si">{</span><span class="n">config_entry_id</span><span class="si">}</span><span class="s2"> not found or not for </span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Reinitialize Service: Starting data reinitialization for device </span><span class="si">%s</span><span class="s2"> (harbor: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="p">,</span> <span class="n">harbor_id</span>
+    <span class="p">)</span>
+
+    <span class="n">tides_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span><span class="n">hass</span><span class="p">,</span> <span class="n">TIDES_STORAGE_VERSION</span><span class="p">,</span> <span class="n">TIDES_STORAGE_KEY</span><span class="p">)</span>
+    <span class="n">coeff_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span><span class="n">hass</span><span class="p">,</span> <span class="n">COEFF_STORAGE_VERSION</span><span class="p">,</span> <span class="n">COEFF_STORAGE_KEY</span><span class="p">)</span>
+    <span class="n">water_level_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_VERSION</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_KEY</span>
+    <span class="p">)</span>
+
+    <span class="n">caches_cleared</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tides_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tides_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">tides_cache_full</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">tides_cache_full</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="k">await</span> <span class="n">tides_store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">tides_cache_full</span><span class="p">)</span>
+            <span class="n">caches_cleared</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;tides&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: Cleared tides cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+        <span class="n">coeff_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">coeff_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">coeff_cache_full</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">coeff_cache_full</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="k">await</span> <span class="n">coeff_store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">coeff_cache_full</span><span class="p">)</span>
+            <span class="n">caches_cleared</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;coefficients&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: Cleared coefficients cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+        <span class="n">water_level_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">water_level_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">water_level_cache_full</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">water_level_cache_full</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="k">await</span> <span class="n">water_level_store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">water_level_cache_full</span><span class="p">)</span>
+            <span class="n">caches_cleared</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;water levels&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: Cleared water levels cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">caches_cleared</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Reinitialize Service: Successfully cleared cache(s) for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">harbor_id</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">caches_cleared</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: No cache entries found to clear for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: Error clearing cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing cache for </span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reinitialize Service: Triggering immediate data refetch for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+    <span class="n">fetch_errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tides_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tides_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">coeff_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">coeff_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">water_level_cache_full</span> <span class="o">=</span> <span class="k">await</span> <span class="n">water_level_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+        <span class="n">yesterday</span> <span class="o">=</span> <span class="n">today</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">yesterday_str</span> <span class="o">=</span> <span class="n">yesterday</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="n">fetch_duration</span> <span class="o">=</span> <span class="mi">8</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_tides</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">tides_store</span><span class="p">,</span> <span class="n">tides_cache_full</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">yesterday_str</span><span class="p">,</span> <span class="n">fetch_duration</span>
+        <span class="p">):</span>
+            <span class="n">fetch_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;tides&quot;</span><span class="p">)</span>
+
+        <span class="n">first_day_of_current_month</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">coeff_fetch_days</span> <span class="o">=</span> <span class="mi">365</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_coefficients</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">coeff_store</span><span class="p">,</span> <span class="n">coeff_cache_full</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span>
+            <span class="n">first_day_of_current_month</span><span class="p">,</span> <span class="n">coeff_fetch_days</span>
+        <span class="p">):</span>
+            <span class="n">fetch_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;coefficients&quot;</span><span class="p">)</span>
+
+        <span class="n">today_str</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_water_level</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">water_level_store</span><span class="p">,</span> <span class="n">water_level_cache_full</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">today_str</span>
+        <span class="p">):</span>
+            <span class="n">fetch_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;water levels&quot;</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Unexpected error during data refetch for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unexpected error during data refetch for </span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+    <span class="k">if</span> <span class="n">fetch_errors</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Failed to refetch the following data for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fetch_errors</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Failed to refetch data for </span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fetch_errors</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Reinitialize Service: Successfully completed data reinitialization and refetch for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">harbor_id</span>
+    <span class="p">)</span>
+
+    <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">coordinator</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Requesting immediate coordinator update for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span>
+        <span class="p">)</span>
+        <span class="k">await</span> <span class="n">coordinator</span><span class="o">.</span><span class="n">async_request_refresh</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Reinitialize Service: Could not find coordinator instance for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;to trigger refresh.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="async_check_and_prefetch_water_levels">
+<a class="viewcode-back" href="../init.html#marees_france.async_check_and_prefetch_water_levels">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_check_and_prefetch_water_levels</span><span class="p">(</span>
+    <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check cache for the next 8 days and prefetch missing water level data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry for the harbor.</span>
+<span class="sd">        store: The store object for water level data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Starting water level prefetch check for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span>
+    <span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="n">missing_dates</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span> <span class="c1"># Check today + next 7 days</span>
+        <span class="n">check_date</span> <span class="o">=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">check_date_str</span> <span class="o">=</span> <span class="n">check_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">check_date_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{}):</span>
+            <span class="n">missing_dates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">check_date_str</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_dates</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Water level cache is up to date for the next 8 days for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Found missing water level data for </span><span class="si">%s</span><span class="s2"> on dates: </span><span class="si">%s</span><span class="s2">. Starting prefetch.&quot;</span><span class="p">,</span>
+        <span class="n">harbor_id</span><span class="p">,</span>
+        <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_dates</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">date_str</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">missing_dates</span><span class="p">):</span>
+        <span class="k">await</span> <span class="n">_async_fetch_and_store_water_level</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">cache</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_dates</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Finished prefetching water level data for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="async_handle_get_water_levels">
+<a class="viewcode-back" href="../init.html#marees_france.async_handle_get_water_levels">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_handle_get_water_levels</span><span class="p">(</span><span class="n">call</span><span class="p">:</span> <span class="n">ServiceCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle the service call to get water levels for a device, using caching.</span>
+
+<span class="sd">    Retrieves water level data for a specific device and date. It uses a local</span>
+<span class="sd">    cache, prunes old entries, and falls back to fetching from the API if data</span>
+<span class="sd">    is not cached (though prefetching aims to minimize this).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        call: The service call object, containing &#39;device_id&#39; and &#39;date&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the water level data for the requested date,</span>
+<span class="sd">        or an error structure if data cannot be retrieved.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HomeAssistantError: If the device, config entry is not found, or if</span>
+<span class="sd">                            there&#39;s an error fetching data after a cache miss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device_id</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]</span>
+    <span class="n">date_str</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ATTR_DATE</span><span class="p">]</span>
+    <span class="n">hass</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">hass</span>
+
+    <span class="n">dev_reg</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+    <span class="n">device_entry</span> <span class="o">=</span> <span class="n">dev_reg</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device not found: </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2"> not associated with a config entry&quot;</span><span class="p">)</span>
+    <span class="n">config_entry_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">))</span>
+    <span class="n">config_entry</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_get_entry</span><span class="p">(</span><span class="n">config_entry_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_entry</span> <span class="ow">or</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">domain</span> <span class="o">!=</span> <span class="n">DOMAIN</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config entry </span><span class="si">{</span><span class="n">config_entry_id</span><span class="si">}</span><span class="s2"> not found or not for </span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Service call get_water_levels for device </span><span class="si">%s</span><span class="s2"> (harbor: </span><span class="si">%s</span><span class="s2">), date: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_str</span>
+    <span class="p">)</span>
+
+    <span class="n">store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_VERSION</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_KEY</span>
+    <span class="p">)</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">today_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">dates_to_prune</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">d_str</span> <span class="ow">in</span> <span class="n">dates_to_prune</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">d_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">d_str</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d_date</span> <span class="o">&lt;</span> <span class="n">today_date</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Marées France: Pruned old cache entry: </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">d_str</span><span class="p">,</span>
+                        <span class="n">harbor_id</span><span class="p">,</span>
+                    <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France: Removed cache entry with invalid date key: </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">d_str</span><span class="p">,</span>
+                    <span class="n">harbor_id</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">cached_entry</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">date_str</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cached_entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Cache hit for water levels service: </span><span class="si">%s</span><span class="s2"> on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span>
+            <span class="n">date_str</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">needs_save</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Saved pruned cache during service call&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cached_entry</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Cache miss during service call for </span><span class="si">%s</span><span class="s2"> on </span><span class="si">%s</span><span class="s2">. Fetching...&quot;</span><span class="p">,</span>
+        <span class="n">harbor_id</span><span class="p">,</span>
+        <span class="n">date_str</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">needs_save</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Saved pruned cache before fallback fetch&quot;</span><span class="p">)</span>
+
+    <span class="n">fetched_data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_water_level</span><span class="p">(</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">cache</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_str</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fetched_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Marées France: Failed to fetch water levels for </span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;on </span><span class="si">{</span><span class="n">date_str</span><span class="si">}</span><span class="s2"> after cache miss.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fetched_data</span></div>
+
+
+
+<div class="viewcode-block" id="async_check_and_prefetch_tides">
+<a class="viewcode-back" href="../init.html#marees_france.async_check_and_prefetch_tides">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_check_and_prefetch_tides</span><span class="p">(</span>
+    <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check tide cache (yesterday to today+7 days) and prefetch if needed.</span>
+
+<span class="sd">    Also prunes old data (before yesterday) from the cache.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry for the harbor.</span>
+<span class="sd">        store: The store object for tide data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Marées France: Starting tide data prefetch check for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="n">yesterday</span> <span class="o">=</span> <span class="n">today</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">yesterday_str</span> <span class="o">=</span> <span class="n">yesterday</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+    <span class="n">needs_fetch</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">fetch_duration</span> <span class="o">=</span> <span class="mi">8</span> <span class="c1"># Fetch 8 days (yesterday + 7 future)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fetch_duration</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="c1"># -1 (yesterday) to 6 (today+6)</span>
+        <span class="n">check_date</span> <span class="o">=</span> <span class="n">today</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">check_date_str</span> <span class="o">=</span> <span class="n">check_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">check_date_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{}):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Missing tide data for </span><span class="si">%s</span><span class="s2"> on </span><span class="si">%s</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;Triggering full </span><span class="si">%d</span><span class="s2">-day fetch.&quot;</span><span class="p">,</span>
+                <span class="n">harbor_id</span><span class="p">,</span> <span class="n">check_date_str</span><span class="p">,</span> <span class="n">fetch_duration</span>
+            <span class="p">)</span>
+            <span class="n">needs_fetch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">needs_fetch</span><span class="p">:</span>
+        <span class="n">fetch_successful</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_tides</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">cache</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">yesterday_str</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">fetch_duration</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">fetch_successful</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Successfully prefetched </span><span class="si">%d</span><span class="s2"> days of tide data for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                <span class="s2">&quot;starting </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">fetch_duration</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">yesterday_str</span>
+            <span class="p">)</span>
+            <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Marées France: Failed to prefetch tide data for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+            <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Tide data cache is up to date for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;(yesterday to today+</span><span class="si">%d</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">fetch_duration</span> <span class="o">-</span> <span class="mi">2</span> <span class="c1"># -1 for yesterday, -1 for 0-index</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">dates_to_prune</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">pruned_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">d_str</span> <span class="ow">in</span> <span class="n">dates_to_prune</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">d_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">d_str</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d_date</span> <span class="o">&lt;</span> <span class="n">yesterday</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">pruned_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">pruned_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France: Removed tide cache entry with invalid date key: &quot;</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">d_str</span><span class="p">,</span> <span class="n">harbor_id</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pruned_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Pruned </span><span class="si">%d</span><span class="s2"> old tide data entries for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">pruned_count</span><span class="p">,</span> <span class="n">harbor_id</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">needs_save</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">needs_fetch</span><span class="p">:</span> <span class="c1"># Fetch already saved</span>
+        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Saved pruned tides cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Marées France: Finished tide data prefetch check for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="async_handle_get_tides_data">
+<a class="viewcode-back" href="../init.html#marees_france.async_handle_get_tides_data">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_handle_get_tides_data</span><span class="p">(</span><span class="n">call</span><span class="p">:</span> <span class="n">ServiceCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle the service call to get all cached tides data for a device.</span>
+
+<span class="sd">    Retrieves all currently cached tide data for the specified device&#39;s harbor.</span>
+<span class="sd">    Performs basic validation on the cache structure.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        call: The service call object, containing &#39;device_id&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary where keys are dates (YYYY-MM-DD) and values are lists of</span>
+<span class="sd">        tide events for that date. Returns an error structure if cache is</span>
+<span class="sd">        invalid or missing.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HomeAssistantError: If the device or config entry is not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device_id</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]</span>
+    <span class="n">hass</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">hass</span>
+
+    <span class="n">dev_reg</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+    <span class="n">device_entry</span> <span class="o">=</span> <span class="n">dev_reg</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device not found: </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2"> not associated with a config entry&quot;</span><span class="p">)</span>
+    <span class="n">config_entry_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">))</span>
+    <span class="n">config_entry</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_get_entry</span><span class="p">(</span><span class="n">config_entry_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_entry</span> <span class="ow">or</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">domain</span> <span class="o">!=</span> <span class="n">DOMAIN</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config entry </span><span class="si">{</span><span class="n">config_entry_id</span><span class="si">}</span><span class="s2"> not found or not for </span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Service call get_tides_data for device </span><span class="si">%s</span><span class="s2"> (harbor: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+    <span class="n">tides_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span><span class="n">hass</span><span class="p">,</span> <span class="n">TIDES_STORAGE_VERSION</span><span class="p">,</span> <span class="n">TIDES_STORAGE_KEY</span><span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tides_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="n">harbor_data</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="n">data_valid</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">harbor_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">data_valid</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Invalid cache format for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39; (device: </span><span class="si">%s</span><span class="s2">): &quot;</span>
+            <span class="s2">&quot;Expected dict, got </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">harbor_data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">harbor_data</span><span class="p">:</span>
+        <span class="n">data_valid</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: No cached tide data found for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39; (device: </span><span class="si">%s</span><span class="s2">) &quot;</span>
+            <span class="s2">&quot;in service call (empty cache entry).&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">device_id</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">date_key</span><span class="p">,</span> <span class="n">daily_tides</span> <span class="ow">in</span> <span class="n">harbor_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">daily_tides</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">data_valid</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France: Invalid cache data for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;, date &#39;</span><span class="si">%s</span><span class="s2">&#39; &quot;</span>
+                    <span class="s2">&quot;(device: </span><span class="si">%s</span><span class="s2">): Expected list, got </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="n">harbor_id</span><span class="p">,</span> <span class="n">date_key</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">daily_tides</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+                <span class="k">break</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;invalid_or_missing_cache&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Invalid or missing cached tide data found for harbor &#39;</span><span class="si">{</span><span class="n">harbor_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="p">}</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Returning valid cached tide data for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39; &quot;</span>
+        <span class="s2">&quot;(device: </span><span class="si">%s</span><span class="s2">) via service call.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">device_id</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">harbor_data</span></div>
+
+
+
+<div class="viewcode-block" id="async_check_and_prefetch_coefficients">
+<a class="viewcode-back" href="../init.html#marees_france.async_check_and_prefetch_coefficients">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_check_and_prefetch_coefficients</span><span class="p">(</span>
+    <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check coefficient cache, prefetch missing data, and prune old entries.</span>
+
+<span class="sd">    The cache aims to store 365 days of coefficient data starting from the</span>
+<span class="sd">    1st of the current month. Old data (previous years/months) is pruned.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry for the harbor.</span>
+<span class="sd">        store: The store object for coefficient data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Starting coefficient data prefetch check for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">harbor_id</span>
+    <span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">fetch_start_date</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fetch_days</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">dates_to_prune</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">pruned_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">d_str</span> <span class="ow">in</span> <span class="n">dates_to_prune</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">d_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">d_str</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d_date</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;</span> <span class="n">today</span><span class="o">.</span><span class="n">year</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">d_date</span><span class="o">.</span><span class="n">year</span> <span class="o">==</span> <span class="n">today</span><span class="o">.</span><span class="n">year</span> <span class="ow">and</span> <span class="n">d_date</span><span class="o">.</span><span class="n">month</span> <span class="o">&lt;</span> <span class="n">today</span><span class="o">.</span><span class="n">month</span>
+                <span class="p">):</span>
+                    <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                    <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">pruned_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">][</span><span class="n">d_str</span><span class="p">]</span>
+                <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">pruned_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France: Removed coefficient cache entry with invalid &quot;</span>
+                    <span class="s2">&quot;date key: </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">d_str</span><span class="p">,</span> <span class="n">harbor_id</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pruned_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Pruned </span><span class="si">%d</span><span class="s2"> old coefficient data entries for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">pruned_count</span><span class="p">,</span> <span class="n">harbor_id</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+            <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">harbor_cache</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">first_missing_date</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">first_day_of_current_month</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">day</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">required_start_date</span> <span class="o">=</span> <span class="n">first_day_of_current_month</span>
+    <span class="n">required_end_date</span> <span class="o">=</span> <span class="n">required_start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">364</span><span class="p">)</span>
+
+    <span class="n">current_check_date</span> <span class="o">=</span> <span class="n">required_start_date</span>
+    <span class="k">while</span> <span class="n">current_check_date</span> <span class="o">&lt;=</span> <span class="n">required_end_date</span><span class="p">:</span>
+        <span class="n">check_date_str</span> <span class="o">=</span> <span class="n">current_check_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">check_date_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">harbor_cache</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">first_missing_date</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">first_missing_date</span> <span class="o">=</span> <span class="n">current_check_date</span>
+        <span class="k">elif</span> <span class="n">first_missing_date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Found cached coefficient data for </span><span class="si">%s</span><span class="s2"> after missing &quot;</span>
+                <span class="s2">&quot;date </span><span class="si">%s</span><span class="s2">. Inconsistency detected.&quot;</span><span class="p">,</span>
+                <span class="n">check_date_str</span><span class="p">,</span> <span class="n">first_missing_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">current_check_date</span> <span class="o">+=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">first_missing_date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fetch_start_date</span> <span class="o">=</span> <span class="n">first_missing_date</span>
+        <span class="n">fetch_days</span> <span class="o">=</span> <span class="p">(</span><span class="n">required_end_date</span> <span class="o">-</span> <span class="n">fetch_start_date</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Missing coefficient data for </span><span class="si">%s</span><span class="s2"> starting </span><span class="si">%s</span><span class="s2"> (up to </span><span class="si">%s</span><span class="s2">). &quot;</span>
+            <span class="s2">&quot;Need to fetch </span><span class="si">%d</span><span class="s2"> days.&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span> <span class="n">fetch_start_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">),</span>
+            <span class="n">required_end_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">),</span> <span class="n">fetch_days</span>
+        <span class="p">)</span>
+
+        <span class="n">fetch_successful</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_async_fetch_and_store_coefficients</span><span class="p">(</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">cache</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">fetch_start_date</span><span class="p">,</span> <span class="n">fetch_days</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">fetch_successful</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Successfully prefetched </span><span class="si">%d</span><span class="s2"> days of coefficient data &quot;</span>
+                <span class="s2">&quot;for </span><span class="si">%s</span><span class="s2"> starting </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">fetch_days</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">fetch_start_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">needs_save</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Fetch helper saved</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Marées France: Failed to prefetch coefficient data for </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">needs_save</span><span class="p">:</span> <span class="c1"># Save pruned state if fetch failed</span>
+                <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Marées France: Saved pruned coefficients cache for </span><span class="si">%s</span><span class="s2"> &quot;</span>
+                    <span class="s2">&quot;after failed fetch.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span>
+                <span class="p">)</span>
+            <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Coefficient data cache is up to date for </span><span class="si">%s</span><span class="s2"> (from </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span><span class="p">,</span> <span class="n">required_start_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">),</span>
+            <span class="n">required_end_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">needs_save</span><span class="p">:</span> <span class="c1"># Only pruning occurred</span>
+        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Saved pruned coefficients cache for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Finished coefficient data prefetch check for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">harbor_id</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="async_handle_get_coefficients_data">
+<a class="viewcode-back" href="../init.html#marees_france.async_handle_get_coefficients_data">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_handle_get_coefficients_data</span><span class="p">(</span><span class="n">call</span><span class="p">:</span> <span class="n">ServiceCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle the service call to get cached coefficient data for a device.</span>
+
+<span class="sd">    Retrieves coefficient data based on the provided &#39;device_id&#39;, optional</span>
+<span class="sd">    &#39;date&#39; (YYYY-MM-DD), and optional &#39;days&#39;.</span>
+<span class="sd">    - If no date/days: returns all cached data for the harbor.</span>
+<span class="sd">    - If date only: returns data for that specific date.</span>
+<span class="sd">    - If days only: returns data for &#39;days&#39; starting from today.</span>
+<span class="sd">    - If date and days: returns data for &#39;days&#39; starting from &#39;date&#39;.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        call: The service call object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary where keys are dates (YYYY-MM-DD) and values are coefficient</span>
+<span class="sd">        data for that date. Returns an empty dictionary if no data is found.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HomeAssistantError: If the device/config entry is not found or date format is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device_id</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]</span>
+    <span class="n">req_date_str</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ATTR_DATE</span><span class="p">)</span>
+    <span class="n">req_days</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">)</span>
+    <span class="n">hass</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">hass</span>
+
+    <span class="n">dev_reg</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+    <span class="n">device_entry</span> <span class="o">=</span> <span class="n">dev_reg</span><span class="o">.</span><span class="n">async_get</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">device_entry</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device </span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2"> not found or not linked to Marées France.&quot;</span><span class="p">)</span>
+    <span class="n">config_entry_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">device_entry</span><span class="o">.</span><span class="n">config_entries</span><span class="p">))</span>
+    <span class="n">config_entry</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_get_entry</span><span class="p">(</span><span class="n">config_entry_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_entry</span> <span class="ow">or</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">domain</span> <span class="o">!=</span> <span class="n">DOMAIN</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config entry </span><span class="si">{</span><span class="n">config_entry_id</span><span class="si">}</span><span class="s2"> not found or not for </span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Service call get_coefficients_data for device </span><span class="si">%s</span><span class="s2"> (harbor: </span><span class="si">%s</span><span class="s2">), &quot;</span>
+        <span class="s2">&quot;date: </span><span class="si">%s</span><span class="s2">, days: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">req_date_str</span><span class="p">,</span> <span class="n">req_days</span>
+    <span class="p">)</span>
+
+    <span class="n">coeff_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span><span class="n">hass</span><span class="p">,</span> <span class="n">COEFF_STORAGE_VERSION</span><span class="p">,</span> <span class="n">COEFF_STORAGE_KEY</span><span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="k">await</span> <span class="n">coeff_store</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">harbor_cache</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">harbor_id</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">harbor_cache</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: No cached coefficient data found for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39; &quot;</span>
+            <span class="s2">&quot;(device: </span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">device_id</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="n">start_date</span><span class="p">:</span> <span class="n">date</span>
+    <span class="n">end_date</span><span class="p">:</span> <span class="n">date</span>
+
+    <span class="k">if</span> <span class="n">req_date_str</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">start_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">req_date_str</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HomeAssistantError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid date format: </span><span class="si">{</span><span class="n">req_date_str</span><span class="si">}</span><span class="s2">. Use YYYY-MM-DD.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">if</span> <span class="n">req_days</span><span class="p">:</span>
+            <span class="n">end_date</span> <span class="o">=</span> <span class="n">start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">req_days</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">end_date</span> <span class="o">=</span> <span class="n">start_date</span>
+    <span class="k">elif</span> <span class="n">req_days</span><span class="p">:</span>
+        <span class="n">start_date</span> <span class="o">=</span> <span class="n">today</span>
+        <span class="n">end_date</span> <span class="o">=</span> <span class="n">start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">req_days</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Returning all cached coefficient data for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span><span class="p">,</span>
+            <span class="n">harbor_id</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">harbor_cache</span>
+
+    <span class="n">current_date_iter</span> <span class="o">=</span> <span class="n">start_date</span>
+    <span class="k">while</span> <span class="n">current_date_iter</span> <span class="o">&lt;=</span> <span class="n">end_date</span><span class="p">:</span>
+        <span class="n">current_date_str</span> <span class="o">=</span> <span class="n">current_date_iter</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current_date_str</span> <span class="ow">in</span> <span class="n">harbor_cache</span><span class="p">:</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">current_date_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">harbor_cache</span><span class="p">[</span><span class="n">current_date_str</span><span class="p">]</span>
+        <span class="n">current_date_iter</span> <span class="o">+=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Returning coefficient data for harbor &#39;</span><span class="si">%s</span><span class="s2">&#39; from </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                  <span class="n">harbor_id</span><span class="p">,</span> <span class="n">start_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">),</span> <span class="n">end_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="async_register_frontend_modules_when_ready">
+<a class="viewcode-back" href="../init.html#marees_france.async_register_frontend_modules_when_ready">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_register_frontend_modules_when_ready</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register frontend modules once Home Assistant has fully started.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Home Assistant started, registering frontend modules.&quot;</span><span class="p">)</span>
+    <span class="n">module_register</span> <span class="o">=</span> <span class="n">JSModuleRegistration</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">module_register</span><span class="o">.</span><span class="n">async_register</span><span class="p">()</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Registered Marées France frontend module.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="async_setup">
+<a class="viewcode-back" href="../init.html#marees_france.async_setup">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_setup</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up the Marées France component.</span>
+
+<span class="sd">    This function is called by Home Assistant during the setup phase.</span>
+<span class="sd">    It schedules the registration of frontend modules.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        _config: The component configuration (not used).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True, indicating successful setup.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_setup_frontend</span><span class="p">(</span><span class="n">_event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inner function to register frontend modules.&quot;&quot;&quot;</span>
+        <span class="k">await</span> <span class="n">async_register_frontend_modules_when_ready</span><span class="p">(</span><span class="n">hass</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">hass</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">CoreState</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Home Assistant already running, registering frontend modules immediately.&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">_setup_frontend</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Home Assistant not running yet, scheduling frontend module registration.&quot;</span><span class="p">)</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">async_listen_once</span><span class="p">(</span><span class="n">EVENT_HOMEASSISTANT_STARTED</span><span class="p">,</span> <span class="n">_setup_frontend</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="async_setup_entry">
+<a class="viewcode-back" href="../init.html#marees_france.async_setup_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_setup_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up Marées France from a config entry.</span>
+
+<span class="sd">    This function is called by Home Assistant when a config entry is added or</span>
+<span class="sd">    reloaded. It initializes data stores, sets up the data update coordinator,</span>
+<span class="sd">    prefetches initial data, forwards setup to platforms (e.g., sensor),</span>
+<span class="sd">    registers services, and schedules daily prefetch jobs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry being set up.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the setup was successful, False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Setting up Marées France entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+
+    <span class="n">water_level_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_VERSION</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_KEY</span>
+    <span class="p">)</span>
+    <span class="n">tides_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">TIDES_STORAGE_VERSION</span><span class="p">,</span> <span class="n">TIDES_STORAGE_KEY</span>
+    <span class="p">)</span>
+    <span class="n">coeff_store</span> <span class="o">=</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">COEFF_STORAGE_VERSION</span><span class="p">,</span> <span class="n">COEFF_STORAGE_KEY</span>
+    <span class="p">)</span>
+
+    <span class="n">coordinator</span> <span class="o">=</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">(</span>
+        <span class="n">hass</span><span class="p">,</span>
+        <span class="n">entry</span><span class="p">,</span>
+        <span class="n">tides_store</span><span class="p">,</span>
+        <span class="n">coeff_store</span><span class="p">,</span>
+        <span class="n">water_level_store</span>
+    <span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">async_check_and_prefetch_coefficients</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">coeff_store</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">async_check_and_prefetch_tides</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">tides_store</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">async_check_and_prefetch_water_levels</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">water_level_store</span><span class="p">)</span>
+
+
+    <span class="n">hass</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="p">{})[</span><span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">coordinator</span>
+
+    <span class="k">await</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_forward_entry_setups</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">PLATFORMS</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Forwarded entry setup for platforms: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">PLATFORMS</span><span class="p">)</span>
+
+    <span class="n">entry</span><span class="o">.</span><span class="n">async_on_unload</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">add_update_listener</span><span class="p">(</span><span class="n">async_reload_entry</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">has_service</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_WATER_LEVELS</span><span class="p">):</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">async_register</span><span class="p">(</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_WATER_LEVELS</span><span class="p">,</span> <span class="n">async_handle_get_water_levels</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">SERVICE_GET_WATER_LEVELS_SCHEMA</span><span class="p">,</span> <span class="n">supports_response</span><span class="o">=</span><span class="n">SupportsResponse</span><span class="o">.</span><span class="n">ONLY</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Registered service: </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_WATER_LEVELS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">has_service</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_TIDES_DATA</span><span class="p">):</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">async_register</span><span class="p">(</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_TIDES_DATA</span><span class="p">,</span> <span class="n">async_handle_get_tides_data</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">SERVICE_GET_TIDES_DATA_SCHEMA</span><span class="p">,</span> <span class="n">supports_response</span><span class="o">=</span><span class="n">SupportsResponse</span><span class="o">.</span><span class="n">ONLY</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Registered service: </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_TIDES_DATA</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">has_service</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_COEFFICIENTS_DATA</span><span class="p">):</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">async_register</span><span class="p">(</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_COEFFICIENTS_DATA</span><span class="p">,</span> <span class="n">async_handle_get_coefficients_data</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">SERVICE_GET_COEFFICIENTS_DATA_SCHEMA</span><span class="p">,</span> <span class="n">supports_response</span><span class="o">=</span><span class="n">SupportsResponse</span><span class="o">.</span><span class="n">ONLY</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Registered service: </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_GET_COEFFICIENTS_DATA</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">has_service</span><span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_REINITIALIZE_HARBOR_DATA</span><span class="p">):</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">async_register</span><span class="p">(</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_REINITIALIZE_HARBOR_DATA</span><span class="p">,</span> <span class="n">async_handle_reinitialize_harbor_data</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA</span><span class="p">,</span>
+            <span class="n">supports_response</span><span class="o">=</span><span class="n">SupportsResponse</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Registered service: </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">DOMAIN</span><span class="p">,</span> <span class="n">SERVICE_REINITIALIZE_HARBOR_DATA</span>
+        <span class="p">)</span>
+
+    <span class="n">listeners</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_daily_water_level_prefetch_job</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Running daily water level prefetch job.&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">async_check_and_prefetch_water_levels</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">water_level_store</span><span class="p">)</span>
+    <span class="n">rand_wl_hour</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">rand_wl_min</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">59</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Scheduled daily water level prefetch check at </span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">rand_wl_hour</span><span class="p">,</span> <span class="n">rand_wl_min</span>
+    <span class="p">)</span>
+    <span class="n">listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">async_track_time_change</span><span class="p">(</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">_daily_water_level_prefetch_job</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="n">rand_wl_hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">rand_wl_min</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_daily_tides_prefetch_job</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Running daily tides prefetch job.&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">async_check_and_prefetch_tides</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">tides_store</span><span class="p">)</span>
+    <span class="n">rand_t_hour</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">rand_t_min</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">59</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">rand_t_hour</span> <span class="o">==</span> <span class="n">rand_wl_hour</span> <span class="ow">and</span> <span class="n">rand_t_min</span> <span class="o">==</span> <span class="n">rand_wl_min</span><span class="p">:</span>
+        <span class="n">rand_t_min</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">59</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Scheduled daily tides prefetch check at </span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">rand_t_hour</span><span class="p">,</span> <span class="n">rand_t_min</span>
+    <span class="p">)</span>
+    <span class="n">listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">async_track_time_change</span><span class="p">(</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">_daily_tides_prefetch_job</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="n">rand_t_hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">rand_t_min</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_daily_coefficients_prefetch_job</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Running daily coefficients prefetch job.&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">async_check_and_prefetch_coefficients</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">coeff_store</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Coefficients check done.&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Marées France: Error during scheduled coefficient prefetch job for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CONF_HARBOR_ID</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="n">rand_c_hour</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">rand_c_min</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">59</span><span class="p">)</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">rand_c_hour</span> <span class="o">==</span> <span class="n">rand_wl_hour</span> <span class="ow">and</span> <span class="n">rand_c_min</span> <span class="o">==</span> <span class="n">rand_wl_min</span><span class="p">)</span> <span class="ow">or</span> \
+          <span class="p">(</span><span class="n">rand_c_hour</span> <span class="o">==</span> <span class="n">rand_t_hour</span> <span class="ow">and</span> <span class="n">rand_c_min</span> <span class="o">==</span> <span class="n">rand_t_min</span><span class="p">):</span>
+        <span class="n">rand_c_min</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">59</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rand_c_min</span> <span class="o">==</span> <span class="n">rand_wl_min</span> <span class="ow">and</span> <span class="n">rand_c_hour</span> <span class="o">==</span> <span class="n">rand_wl_hour</span><span class="p">:</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">rand_c_min</span> <span class="o">==</span> <span class="n">rand_t_min</span> <span class="ow">and</span> <span class="n">rand_c_hour</span> <span class="o">==</span> <span class="n">rand_t_hour</span><span class="p">:</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">continue</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Scheduled daily coefficients prefetch check at </span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">rand_c_hour</span><span class="p">,</span> <span class="n">rand_c_min</span>
+    <span class="p">)</span>
+    <span class="n">listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">async_track_time_change</span><span class="p">(</span>
+        <span class="n">hass</span><span class="p">,</span> <span class="n">_daily_coefficients_prefetch_job</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="n">rand_c_hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">rand_c_min</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unload_listeners</span><span class="p">():</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Removing daily prefetch listeners.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">remove_listener</span> <span class="ow">in</span> <span class="n">listeners</span><span class="p">:</span>
+            <span class="n">remove_listener</span><span class="p">()</span>
+    <span class="n">entry</span><span class="o">.</span><span class="n">async_on_unload</span><span class="p">(</span><span class="n">_unload_listeners</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="async_unload_entry">
+<a class="viewcode-back" href="../init.html#marees_france.async_unload_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_unload_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unload a config entry.</span>
+
+<span class="sd">    This function is called by Home Assistant when a config entry is being</span>
+<span class="sd">    unloaded (e.g., during a reload or removal). It unloads associated</span>
+<span class="sd">    platforms and removes the coordinator instance from hass.data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry being unloaded.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the unload was successful, False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Unloading Marées France entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+
+    <span class="n">unload_ok</span> <span class="o">=</span> <span class="k">await</span> <span class="n">hass</span><span class="o">.</span><span class="n">config_entries</span><span class="o">.</span><span class="n">async_unload_platforms</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">PLATFORMS</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">unload_ok</span><span class="p">:</span>
+        <span class="n">hass</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">DOMAIN</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="c1"># Use pop with default to avoid KeyError</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Marées France: Successfully unloaded Marées France entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">unload_ok</span></div>
+
+
+
+<div class="viewcode-block" id="async_reload_entry">
+<a class="viewcode-back" href="../init.html#marees_france.async_reload_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_reload_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reload a config entry.</span>
+
+<span class="sd">    This is typically called when the entry&#39;s options are updated. It unloads</span>
+<span class="sd">    and then sets up the entry again.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry to reload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Marées France: Reloading Marées France entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">async_unload_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">async_setup_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">&quot;Marées France: Finished reloading Marées France entry: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="async_remove_entry">
+<a class="viewcode-back" href="../init.html#marees_france.async_remove_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_remove_entry</span><span class="p">(</span><span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle removal of a config entry.</span>
+
+<span class="sd">    This function is called by Home Assistant when a config entry is being</span>
+<span class="sd">    removed. It cleans up any persistent data associated with the entry,</span>
+<span class="sd">    such as cached tide, coefficient, and water level data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry being removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CONF_HARBOR_ID</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">harbor_id</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot remove cache for entry </span><span class="si">%s</span><span class="s2">: Harbor ID not found in entry data.&quot;</span><span class="p">,</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing cached data for harbor </span><span class="si">%s</span><span class="s2"> (entry: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)</span>
+
+    <span class="n">stores_to_clean</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;tides&quot;</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span><span class="n">hass</span><span class="p">,</span> <span class="n">TIDES_STORAGE_VERSION</span><span class="p">,</span> <span class="n">TIDES_STORAGE_KEY</span><span class="p">),</span>
+        <span class="s2">&quot;coefficients&quot;</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">COEFF_STORAGE_VERSION</span><span class="p">,</span> <span class="n">COEFF_STORAGE_KEY</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;water_levels&quot;</span><span class="p">:</span> <span class="n">Store</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]](</span>
+            <span class="n">hass</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_VERSION</span><span class="p">,</span> <span class="n">WATERLEVELS_STORAGE_KEY</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">store_name</span><span class="p">,</span> <span class="n">store_instance</span> <span class="ow">in</span> <span class="n">stores_to_clean</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache_data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store_instance</span><span class="o">.</span><span class="n">async_load</span><span class="p">()</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">harbor_id</span> <span class="ow">in</span> <span class="n">cache_data</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">cache_data</span><span class="p">[</span><span class="n">harbor_id</span><span class="p">]</span>
+                <span class="k">await</span> <span class="n">store_instance</span><span class="o">.</span><span class="n">async_save</span><span class="p">(</span><span class="n">cache_data</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Removed </span><span class="si">%s</span><span class="s2"> cache data for harbor </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">store_name</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;No </span><span class="si">%s</span><span class="s2"> cache data found for harbor </span><span class="si">%s</span><span class="s2"> to remove.&quot;</span><span class="p">,</span>
+                    <span class="n">store_name</span><span class="p">,</span> <span class="n">harbor_id</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Error removing </span><span class="si">%s</span><span class="s2"> cache data for harbor </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">store_name</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">,</span> <span class="n">e</span>
+            <span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finished removing cached data for harbor </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, The Marées France Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
