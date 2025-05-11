@@ -155,7 +155,7 @@ export class GraphRenderer {
     const pt = svg.createSVGPoint();
 
     // Get the screen coordinates from the event
-    if (evt instanceof TouchEvent && evt.touches && evt.touches.length > 0) {
+    if (typeof TouchEvent !== 'undefined' && evt instanceof TouchEvent && evt.touches && evt.touches.length > 0) {
       pt.x = evt.touches[0].clientX;
       pt.y = evt.touches[0].clientY;
     } else if (evt instanceof MouseEvent && evt.clientX !== undefined && evt.clientY !== undefined) {
