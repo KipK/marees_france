@@ -1,2 +1,6 @@
 pytz
 logging
+pytest
+pytest-homeassistant-custom-component
+syrupy
+zeroconf
