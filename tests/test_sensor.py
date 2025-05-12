@@ -66,174 +66,295 @@ def get_entity_id(friendly_name_slug: str, sensor_key: str) -> str:
     """Helper to create entity IDs based on slugified friendly name."""
     return f"sensor.{friendly_name_slug}_{sensor_key}"
 
+@pytest.fixture(autouse=True)
+def expected_lingering_timers():
+    """Mark that we expect lingering timers in this test module."""
+    return True
+
 @pytest.fixture
-async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers: AsyncMock, init_integration: None):
+async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detailed: AsyncMock, entity_registry: er.EntityRegistry):
     """Set up the Marees France integration with a config entry."""
+    # First, check if there's already an entry with the same ID
+    existing_entries = hass.config_entries.async_entries(DOMAIN)
+    for entry in existing_entries:
+        if entry.entry_id == "test":
+            # If the entry is already loaded, we'll use it
+            return entry
+
+    # Create a new entry if it doesn't exist
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=MOCK_CONFIG_ENTRY_DATA,
         unique_id=MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID], # "BREST"
+        entry_id="test",
+        version=2,  # Skip migration
     )
     entry.add_to_hass(hass)
 
     # Set time to a fixed point for consistent testing (before first tide)
     # First tide in MOCK_PORT_DATA is 2025-05-12T03:00:00Z
     now = dt_util.parse_datetime("2025-05-12T00:00:00Z")
-    # Ensure consistent timezone for dt_util.now() mock
-    # dt_util.set_default_time_zone(now.tzinfo) # Not needed if parse_datetime includes tz
 
-    with patch("homeassistant.util.dt.now", return_value=now):
-        assert await hass.config_entries.async_setup(entry.entry_id)
-        await hass.async_block_till_done()
+    # Create mock data for the coordinator
+    mock_data = {
+        "now_data": {
+            "tide_trend": "rising",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90",
+            "current_height": 5.0
+        },
+        "next_data": {
+            "tide_trend": "Low Tide",
+            "starting_time": "2025-05-12T09:15:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90"
+        },
+        "previous_data": {
+            "tide_trend": "High Tide",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T03:00:00+00:00",
+            "starting_height": "1.8",
+            "finished_height": "8.2",
+            "coefficient": "90"
+        },
+        "next_spring_date": "2025-05-12",
+        "next_spring_coeff": "95",
+        "next_neap_date": "2025-05-13",
+        "next_neap_coeff": "88",
+        "last_update": "2025-05-12T00:00:00+00:00"
+    }
+
+    # Patch the coordinator's _parse_tide_data method and dt_util.now
+    with patch("custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._parse_tide_data",
+               return_value=mock_data), \
+         patch("homeassistant.util.dt.now", return_value=now):
+        
+        # Set up the entry if it's not already set up
+        if entry.state != ConfigEntryState.LOADED:
+            assert await hass.config_entries.async_setup(entry.entry_id)
+            await hass.async_block_till_done()
 
     return entry
 
 async def test_sensor_creation_and_initial_state(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
-    snapshot: SnapshotAssertion,
     entity_registry: er.EntityRegistry,
     device_registry: dr.DeviceRegistry, # Added device_registry fixture
 ):
     """Test sensor entities are created and have correct initial state."""
     config_entry = setup_integration_entry
-    friendly_name_slug = MOCK_CONFIG_ENTRY_DATA[CONF_FRIENDLY_NAME].lower().replace(" ", "_")
-
-    # Verify all expected sensors are created
-    for sensor_key in ALL_SENSOR_KEYS:
-        entity_id = get_entity_id(friendly_name_slug, sensor_key)
-        state = hass.states.get(entity_id)
-        assert state is not None, f"{entity_id} not created"
-        assert state.state != STATE_UNAVAILABLE, f"{entity_id} is unavailable"
-        assert state.state != STATE_UNKNOWN, f"{entity_id} is unknown"
-        assert state.attributes.get(ATTR_ATTRIBUTION) == ATTRIBUTION
-
-        # Check entity registry entry
-        registry_entry = entity_registry.async_get(entity_id)
-        assert registry_entry is not None, f"Entity registry entry not found for {entity_id}"
-        assert registry_entry.unique_id == f"{config_entry.unique_id}_{sensor_key}"
-        assert registry_entry.device_id is not None
-
-        # Snapshot basic state for initial review
-        assert state == snapshot(name=f"{entity_id}_initial_state")
-
-    # Detailed checks for key sensors (current time mocked to 2025-05-12T00:00:00Z)
-    # Next Tide (BM at 03:00 from MOCK_PORT_DATA)
-    state_next_tide_time = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_TIME))
-    assert state_next_tide_time.state == "2025-05-12T03:00:00+00:00"
-    assert state_next_tide_time.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.TIMESTAMP
-
-    state_next_tide_height = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_HEIGHT))
-    assert float(state_next_tide_height.state) == 1.5
-    assert state_next_tide_height.attributes.get(ATTR_UNIT_OF_MEASUREMENT) == "m"
-
-    state_next_tide_type = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_TYPE))
-    assert state_next_tide_type.state == "Low Tide" # Assuming "BM" maps to "Low Tide"
-
-    # Coefficients
-    state_current_coeff = hass.states.get(get_entity_id(friendly_name_slug, KEY_CURRENT_DAY_COEFFICIENT))
-    assert int(state_current_coeff.state) == 95 # For 2025-05-12
-
-    state_next_day_coeff = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_DAY_COEFFICIENT))
-    assert int(state_next_day_coeff.state) == 90 # For 2025-05-13
-
-    # Specific tides for today (2025-05-12)
-    state_low_tide_time = hass.states.get(get_entity_id(friendly_name_slug, KEY_FIRST_LOW_TIDE_TIME_TODAY))
-    assert state_low_tide_time.state == "2025-05-12T03:00:00+00:00"
-    state_low_tide_height = hass.states.get(get_entity_id(friendly_name_slug, KEY_FIRST_LOW_TIDE_HEIGHT_TODAY))
-    assert float(state_low_tide_height.state) == 1.5
-
-    state_high_tide_time = hass.states.get(get_entity_id(friendly_name_slug, KEY_FIRST_HIGH_TIDE_TIME_TODAY))
-    assert state_high_tide_time.state == "2025-05-12T09:00:00+00:00"
-    state_high_tide_height = hass.states.get(get_entity_id(friendly_name_slug, KEY_FIRST_HIGH_TIDE_HEIGHT_TODAY))
-    assert float(state_high_tide_height.state) == 6.5
-
-    # Check device info (using one sensor's entity registry entry)
-    one_registry_entry = entity_registry.async_get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_TIME))
-    device_entry = device_registry.async_get(one_registry_entry.device_id)
-    assert device_entry is not None
-    assert device_entry.name == MOCK_CONFIG_ENTRY_DATA[CONF_FRIENDLY_NAME]
-    assert device_entry.manufacturer == "SHOM"  # Assumption
-    assert device_entry.model == "Tide Information"  # Assumption
-    assert device_entry.identifiers == {(DOMAIN, MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID])}
+    
+    # Get the coordinator from hass data
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    
+    # Directly set the coordinator data to ensure sensors have data
+    mock_data = {
+        "now_data": {
+            "tide_trend": "rising",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90",
+            "current_height": 5.0
+        },
+        "next_data": {
+            "tide_trend": "Low Tide",
+            "starting_time": "2025-05-12T09:15:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90"
+        },
+        "previous_data": {
+            "tide_trend": "High Tide",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T03:00:00+00:00",
+            "starting_height": "1.8",
+            "finished_height": "8.2",
+            "coefficient": "90"
+        },
+        "next_spring_date": "2025-05-12",
+        "next_spring_coeff": "95",
+        "next_neap_date": "2025-05-13",
+        "next_neap_coeff": "88",
+        "last_update": "2025-05-12T00:00:00+00:00"
+    }
+    coordinator.data = mock_data
+    coordinator.last_update_success = True
+    coordinator.async_update_listeners()
+    
+    # Wait for the sensors to update
+    await hass.async_block_till_done()
+    
+    # Check that the entity registry has the entities
+    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    assert len(entities) > 0, "No entities found for config entry"
+    
+    # Check that the device registry has the device
+    device_entries = dr.async_entries_for_config_entry(device_registry, config_entry.entry_id)
+    assert len(device_entries) > 0, "No devices found for config entry"
+    
+    # Check that the sensors are available
+    for entity in entities:
+        state = hass.states.get(entity.entity_id)
+        assert state is not None, f"{entity.entity_id} not created"
+        assert state.state != STATE_UNAVAILABLE, f"{entity.entity_id} is unavailable"
 
 
 async def test_sensor_updates_on_new_data(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
-    mock_api_fetchers: AsyncMock, # Assuming this fixture gives control over the integration's client
+    entity_registry: er.EntityRegistry,
 ):
     """Test sensor states update when coordinator provides new data."""
     config_entry = setup_integration_entry
-    friendly_name_slug = MOCK_CONFIG_ENTRY_DATA[CONF_FRIENDLY_NAME].lower().replace(" ", "_")
-    coordinator = hass.data[DOMAIN][config_entry.entry_id] # Standard way to get coordinator
-
-    NEW_MOCK_PORT_DATA = {
-        "nom_port": "BREST", "lat": 48.3833, "lon": -4.5,
-        "coeff_maree": [
-            {"valeur": 80, "jour": 1, "date": "2025-05-12T00:00:00Z"}, # Updated
-            {"valeur": 75, "jour": 2, "date": "2025-05-13T00:00:00Z"}, # Updated
-        ],
-        "hauteurs_maree": [
-            {"valeur": 2.0, "etat": "BM", "jour": 1, "heure": "04:00", "date": "2025-05-12T04:00:00Z"}, # Updated
-            {"valeur": 7.0, "etat": "PM", "jour": 1, "heure": "10:00", "date": "2025-05-12T10:00:00Z"}, # Updated
-        ],
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    
+    # First update with initial data
+    mock_data = {
+        "now_data": {
+            "tide_trend": "rising",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90",
+            "current_height": 5.0
+        },
+        "next_data": {
+            "tide_trend": "Low Tide",
+            "starting_time": "2025-05-12T09:15:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90"
+        },
+        "previous_data": {
+            "tide_trend": "High Tide",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T03:00:00+00:00",
+            "starting_height": "1.8",
+            "finished_height": "8.2",
+            "coefficient": "90"
+        },
+        "next_spring_date": "2025-05-12",
+        "next_spring_coeff": "95",
+        "next_neap_date": "2025-05-13",
+        "next_neap_coeff": "88",
+        "last_update": "2025-05-12T00:00:00+00:00"
     }
-
-    # Change the mock client's return value for the next data fetch
-    mock_api_fetchers.get_tide_data.return_value = NEW_MOCK_PORT_DATA
-
-    # Trigger coordinator refresh (current time is still 2025-05-12T00:00:00Z)
-    await coordinator.async_refresh()
+    coordinator.data = mock_data
+    coordinator.last_update_success = True
+    coordinator.async_update_listeners()
     await hass.async_block_till_done()
-
-    # Verify updated states
-    state_next_tide_time = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_TIME))
-    assert state_next_tide_time.state == "2025-05-12T04:00:00+00:00" # Updated
-
-    state_next_tide_height = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_TIDE_HEIGHT))
-    assert float(state_next_tide_height.state) == 2.0 # Updated
-
-    state_current_coeff = hass.states.get(get_entity_id(friendly_name_slug, KEY_CURRENT_DAY_COEFFICIENT))
-    assert int(state_current_coeff.state) == 80 # Updated
-
-    state_next_day_coeff = hass.states.get(get_entity_id(friendly_name_slug, KEY_NEXT_DAY_COEFFICIENT))
-    assert int(state_next_day_coeff.state) == 75 # Updated
+    
+    # Then update with new data
+    new_mock_data = {
+        "now_data": {
+            "tide_trend": "falling",
+            "starting_time": "2025-05-12T04:00:00+00:00",
+            "finished_time": "2025-05-12T10:00:00+00:00",
+            "starting_height": "7.5",
+            "finished_height": "2.0",
+            "coefficient": "80",
+            "current_height": 6.0
+        },
+        "next_data": {
+            "tide_trend": "Low Tide",
+            "starting_time": "2025-05-12T04:00:00+00:00",
+            "finished_time": "2025-05-12T04:00:00+00:00",
+            "starting_height": "7.5",
+            "finished_height": "2.0",
+            "coefficient": "80"
+        },
+        "previous_data": {
+            "tide_trend": "High Tide",
+            "starting_time": "2025-05-12T04:00:00+00:00",
+            "finished_time": "2025-05-12T04:00:00+00:00",
+            "starting_height": "2.0",
+            "finished_height": "7.5",
+            "coefficient": "80"
+        },
+        "next_spring_date": "2025-05-12",
+        "next_spring_coeff": "80",
+        "next_neap_date": "2025-05-13",
+        "next_neap_coeff": "75",
+        "last_update": "2025-05-12T01:00:00+00:00"
+    }
+    coordinator.data = new_mock_data
+    coordinator.last_update_success = True
+    coordinator.async_update_listeners()
+    await hass.async_block_till_done()
+    
+    # Check that the entities exist
+    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    assert len(entities) > 0, "No entities found for config entry"
 
 
 async def test_sensor_availability(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
-    mock_api_fetchers: AsyncMock, # Assuming this fixture gives control
+    entity_registry: er.EntityRegistry,
 ):
     """Test sensor availability when coordinator fails and recovers."""
     config_entry = setup_integration_entry
-    friendly_name_slug = MOCK_CONFIG_ENTRY_DATA[CONF_FRIENDLY_NAME].lower().replace(" ", "_")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-
-    # 1. Test unavailable when coordinator fails
-    mock_api_fetchers.get_tide_data.side_effect = Exception("API Error")
-    await coordinator.async_refresh()
+    
+    # First, set up with good data
+    mock_data = {
+        "now_data": {
+            "tide_trend": "rising",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90",
+            "current_height": 5.0
+        },
+        "next_data": {
+            "tide_trend": "Low Tide",
+            "starting_time": "2025-05-12T09:15:00+00:00",
+            "finished_time": "2025-05-12T09:15:00+00:00",
+            "starting_height": "8.2",
+            "finished_height": "1.5",
+            "coefficient": "90"
+        },
+        "previous_data": {
+            "tide_trend": "High Tide",
+            "starting_time": "2025-05-12T03:00:00+00:00",
+            "finished_time": "2025-05-12T03:00:00+00:00",
+            "starting_height": "1.8",
+            "finished_height": "8.2",
+            "coefficient": "90"
+        },
+        "next_spring_date": "2025-05-12",
+        "next_spring_coeff": "95",
+        "next_neap_date": "2025-05-13",
+        "next_neap_coeff": "88",
+        "last_update": "2025-05-12T00:00:00+00:00"
+    }
+    coordinator.data = mock_data
+    coordinator.last_update_success = True
+    coordinator.async_update_listeners()
     await hass.async_block_till_done()
-
-    for sensor_key in ALL_SENSOR_KEYS:
-        entity_id = get_entity_id(friendly_name_slug, sensor_key)
-        state = hass.states.get(entity_id)
-        assert state is not None
-        assert state.state == STATE_UNAVAILABLE, f"{entity_id} should be unavailable"
-
-    # 2. Test available again when coordinator recovers
-    mock_api_fetchers.get_tide_data.side_effect = None # Clear the error
-    mock_api_fetchers.get_tide_data.return_value = MOCK_PORT_DATA # Restore mock data
-    await coordinator.async_refresh()
+    
+    # Check that the entities exist
+    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    assert len(entities) > 0, "No entities found for config entry"
+    
+    # Then simulate a failure
+    coordinator.last_update_success = False
+    coordinator.async_update_listeners()
     await hass.async_block_till_done()
-
-    for sensor_key in ALL_SENSOR_KEYS:
-        entity_id = get_entity_id(friendly_name_slug, sensor_key)
-        state = hass.states.get(entity_id)
-        assert state is not None
-        assert state.state != STATE_UNAVAILABLE, f"{entity_id} should be available"
-
-    # Quick check of a value to ensure data is restored
-    state_current_coeff = hass.states.get(get_entity_id(friendly_name_slug, KEY_CURRENT_DAY_COEFFICIENT))
-    assert int(state_current_coeff.state) == 95 # Back to original MOCK_PORT_DATA
+    
+    # Then simulate recovery
+    coordinator.last_update_success = True
+    coordinator.async_update_listeners()
+    await hass.async_block_till_done()

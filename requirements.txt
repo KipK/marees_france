@@ -1,6 +1,1 @@
 pytz
-pytest
-pytest-homeassistant-custom-component
-syrupy
-zeroconf
-homeassistant==2025.5.1

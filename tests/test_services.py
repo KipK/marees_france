@@ -8,7 +8,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.marees_france.const import DOMAIN
+from custom_components.marees_france.const import DOMAIN, CONF_HARBOR_ID
 # Import any specific service constants or schemas if they exist
 # from custom_components.marees_france.services import (
 #     SERVICE_REFRESH_PORT_DATA,
@@ -24,7 +24,7 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_api_fetchers
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=MOCK_CONFIG_ENTRY_DATA,
-        unique_id=MOCK_CONFIG_ENTRY_DATA["port_id"],
+        unique_id=MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID],
     )
     entry.add_to_hass(hass)
 

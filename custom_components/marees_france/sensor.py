@@ -309,7 +309,14 @@ class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
         if self.available:
             # The value is the date object, which HA will format as a string.
             date_obj = self.coordinator.data.get(self._sensor_key_suffix)
-            return date_obj.isoformat() if date_obj else None
+            if date_obj:
+                # Handle both datetime objects and strings
+                if hasattr(date_obj, 'isoformat'):
+                    return date_obj.isoformat()
+                else:
+                    # If it's already a string, just return it
+                    return date_obj
+            return None
         return None
 
     @property
