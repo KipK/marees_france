@@ -1,4 +1,5 @@
 """Test with mocked dependencies."""
+
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -31,8 +32,11 @@ def mock_js_module():
     """Mock the JSModuleRegistration class."""
     mock_instance = MagicMock()
     mock_instance.async_register = MagicMock(return_value=True)
-    
-    with patch("custom_components.marees_france.frontend.JSModuleRegistration", return_value=mock_instance):
+
+    with patch(
+        "custom_components.marees_france.frontend.JSModuleRegistration",
+        return_value=mock_instance,
+    ):
         yield
 
 
@@ -43,6 +47,6 @@ async def test_setup_with_mocked_dependencies(hass):
         # Try to set up the component
         result = await async_setup_component(hass, DOMAIN, {})
         await hass.async_block_till_done()
-        
+
         # Check if the setup was successful
         assert result is True, "Failed to set up the component with mocked dependencies"

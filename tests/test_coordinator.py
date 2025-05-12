@@ -15,44 +15,47 @@ from custom_components.marees_france.coordinator import MareesFranceUpdateCoordi
 # Assuming ShomApiClient and specific exceptions are importable for mocking/testing
 # from custom_components.marees_france.api import ShomApiClient, ShomApiError
 
-from tests.conftest import MOCK_CONFIG_ENTRY_DATA, CONF_HARBOR_ID # MOCK_PORT_DATA is likely obsolete now
+from tests.conftest import (
+    MOCK_CONFIG_ENTRY_DATA,
+    CONF_HARBOR_ID,
+)  # MOCK_PORT_DATA is likely obsolete now
 
 
 # Mock data simulating the structure stored in the cache by helper functions
 # Dates are chosen around the test's reference 'now' (2025-05-12T00:00:00Z)
 MOCK_TIDES_CACHE = {
     MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]: {
-        "2025-05-11": [ # Yesterday
+        "2025-05-11": [  # Yesterday
             ["BM", "20:45", "1.8", "---"],
         ],
-        "2025-05-12": [ # Today
+        "2025-05-12": [  # Today
             ["PM", "03:00", "8.2", "90"],
             ["BM", "09:15", "1.5", "---"],
             ["PM", "15:30", "8.5", "95"],
             ["BM", "21:45", "1.2", "---"],
         ],
-        "2025-05-13": [ # Tomorrow
+        "2025-05-13": [  # Tomorrow
             ["PM", "03:45", "8.0", "88"],
             ["BM", "10:00", "1.8", "---"],
-        ]
+        ],
         # ... potentially more days
     }
 }
 MOCK_COEFF_CACHE = {
     MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]: {
-        "2025-05-12": ["90", "95"], # Today
-        "2025-05-13": ["88", "85"], # Tomorrow
+        "2025-05-12": ["90", "95"],  # Today
+        "2025-05-13": ["88", "85"],  # Tomorrow
         # ... potentially more days
     }
 }
 MOCK_WATER_LEVEL_CACHE = {
     MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]: {
-        "2025-05-12": [ # Today
+        "2025-05-12": [  # Today
             ["02:55:00", "8.15"],
-            ["03:00:00", "8.20"], # Matches high tide time
+            ["03:00:00", "8.20"],  # Matches high tide time
             ["03:05:00", "8.18"],
             ["09:10:00", "1.55"],
-            ["09:15:00", "1.50"], # Matches low tide time
+            ["09:15:00", "1.50"],  # Matches low tide time
             ["09:20:00", "1.52"],
             # ... more readings for the day
         ]
@@ -80,7 +83,9 @@ def mock_stores() -> tuple[AsyncMock, AsyncMock, AsyncMock]:
 async def setup_coordinator(
     hass: HomeAssistant,
     mock_stores: tuple[AsyncMock, AsyncMock, AsyncMock],
-) -> tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry]:
+) -> tuple[
+    MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+]:
     """Set up the MareesFranceUpdateCoordinator with mock stores."""
     mock_tides_store, mock_coeff_store, mock_water_level_store = mock_stores
     entry = MockConfigEntry(
@@ -105,7 +110,7 @@ async def setup_coordinator(
             "starting_height": "8.2",
             "finished_height": "1.5",
             "coefficient": "90",
-            "current_height": 5.0
+            "current_height": 5.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -113,7 +118,7 @@ async def setup_coordinator(
             "finished_time": "2025-05-12T09:15:00+00:00",
             "starting_height": "8.2",
             "finished_height": "1.5",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -121,15 +126,15 @@ async def setup_coordinator(
             "finished_time": "2025-05-12T03:00:00+00:00",
             "starting_height": "1.8",
             "finished_height": "8.2",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "95",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
-        "last_update": "2025-05-12T00:00:00Z"
+        "last_update": "2025-05-12T00:00:00Z",
     }
-    
+
     coordinator = MareesFranceUpdateCoordinator(
         hass, entry, mock_tides_store, mock_coeff_store, mock_water_level_store
     )
@@ -137,18 +142,26 @@ async def setup_coordinator(
     # Prevent coordinator's scheduled updates during tests by default
     # Tests can manually trigger updates using async_refresh()
     coordinator.update_interval = None
-    
+
     # Directly set the data property
     coordinator.data = mock_data
     coordinator.last_update_success = True
-    
-    return coordinator, mock_tides_store, mock_coeff_store, mock_water_level_store, entry
+
+    return (
+        coordinator,
+        mock_tides_store,
+        mock_coeff_store,
+        mock_water_level_store,
+        entry,
+    )
 
 
 async def test_coordinator_initial_fetch_success(
     hass: HomeAssistant,
-    setup_coordinator: tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry],
-    mock_api_fetchers_detailed: MagicMock, # Access patched helpers if needed
+    setup_coordinator: tuple[
+        MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+    ],
+    mock_api_fetchers_detailed: MagicMock,  # Access patched helpers if needed
     snapshot: SnapshotAssertion,
 ):
     """Test successful initial data fetch by the coordinator."""
@@ -158,15 +171,17 @@ async def test_coordinator_initial_fetch_success(
     # we just need to verify it's correct
     assert coordinator.last_update_success is True
     assert coordinator.data is not None
-    
+
     # Skip snapshot testing for now
     # assert coordinator.data == snapshot
 
 
 async def test_coordinator_listener_updated_on_success(
     hass: HomeAssistant,
-    setup_coordinator: tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry],
-    mock_api_fetchers_detailed: MagicMock, # Access patched helpers if needed
+    setup_coordinator: tuple[
+        MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+    ],
+    mock_api_fetchers_detailed: MagicMock,  # Access patched helpers if needed
 ):
     """Test that listeners are updated after a successful data fetch."""
     coordinator, mock_tides, mock_coeffs, mock_water, _ = setup_coordinator
@@ -174,53 +189,57 @@ async def test_coordinator_listener_updated_on_success(
     # Add a regular function as a listener instead of an AsyncMock
     # to avoid the "coroutine never awaited" warning
     called = False
-    
+
     def listener_callback():
         nonlocal called
         called = True
-    
+
     coordinator.async_add_listener(listener_callback)
 
     # Manually trigger the listeners
     coordinator.async_update_listeners()
-    
+
     # Verify the listener was called
     assert called is True
 
 
 async def test_coordinator_api_error_handling(
     hass: HomeAssistant,
-    setup_coordinator: tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry],
-    mock_api_fetchers_detailed: MagicMock, # Access patched helpers
+    setup_coordinator: tuple[
+        MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+    ],
+    mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
 ):
     """Test coordinator error handling when the API call fails during cache repair."""
     coordinator, mock_tides, mock_coeffs, mock_water, _ = setup_coordinator
 
     # Simulate an error by directly setting the coordinator state
     coordinator.last_update_success = False
-    
+
     # Verify the coordinator state
     assert coordinator.last_update_success is False
 
 
 async def test_coordinator_recovery_after_api_error(
     hass: HomeAssistant,
-    setup_coordinator: tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry],
-    mock_api_fetchers_detailed: MagicMock, # Access patched helpers
+    setup_coordinator: tuple[
+        MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+    ],
+    mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
     snapshot: SnapshotAssertion,
 ):
     """Test coordinator recovers and fetches data after a previous API error."""
     coordinator, mock_tides, mock_coeffs, mock_water, _ = setup_coordinator
-    
+
     # First, simulate an error
     coordinator.last_update_success = False
-    
+
     # Verify the coordinator state after error
     assert coordinator.last_update_success is False
-    
+
     # Then, simulate recovery
     coordinator.last_update_success = True
-    
+
     # Verify the coordinator state after recovery
     assert coordinator.last_update_success is True
     assert coordinator.data is not None
@@ -228,19 +247,21 @@ async def test_coordinator_recovery_after_api_error(
 
 async def test_coordinator_scheduled_update(
     hass: HomeAssistant,
-    setup_coordinator: tuple[MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry],
-    mock_api_fetchers_detailed: MagicMock, # Access patched helpers
-    freezer, # Use time freezing fixture
+    setup_coordinator: tuple[
+        MareesFranceUpdateCoordinator, AsyncMock, AsyncMock, AsyncMock, MockConfigEntry
+    ],
+    mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
+    freezer,  # Use time freezing fixture
 ):
     """Test scheduled updates trigger data fetching."""
     coordinator, mock_tides, mock_coeffs, mock_water, entry = setup_coordinator
 
     # Set the update interval
     coordinator.update_interval = timedelta(minutes=5)
-    
+
     # Verify the coordinator has the correct update interval
     assert coordinator.update_interval == timedelta(minutes=5)
-    
+
     # Verify the coordinator state
     assert coordinator.last_update_success is True
 

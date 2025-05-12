@@ -18,7 +18,9 @@ from tests.conftest import MOCK_CONFIG_ENTRY_DATA
 
 
 @pytest.fixture
-async def setup_integration_with_services(hass: HomeAssistant, mock_api_fetchers: AsyncMock):
+async def setup_integration_with_services(
+    hass: HomeAssistant, mock_api_fetchers: AsyncMock
+):
     """Set up the Marees France integration with a config entry for service testing."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -30,6 +32,7 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_api_fetchers
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
 
 # Placeholder: To be expanded if the integration has custom services.
 # As of now, it's assumed there might not be specific custom services
@@ -92,11 +95,13 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_api_fetchers
 #             blocking=True,
 #         )
 
+
 # If there are no custom services, this file can remain minimal.
 # For example, a simple test to ensure the file is picked up by pytest:
 def test_placeholder_services():
     """Placeholder test to ensure the file is valid."""
     assert True
+
 
 # Add more tests here if the integration defines custom services.
 # Remember to mock dependencies and verify outcomes.

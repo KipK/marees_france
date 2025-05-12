@@ -1,4 +1,5 @@
 """Tests for the Marees France sensor platform."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -46,17 +47,24 @@ ALL_SENSOR_KEYS = [
     KEY_FIRST_HIGH_TIDE_HEIGHT_TODAY,
 ]
 
+
 def get_entity_id(friendly_name_slug: str, sensor_key: str) -> str:
     """Helper to create entity IDs based on slugified friendly name."""
     return f"sensor.{friendly_name_slug}_{sensor_key}"
+
 
 @pytest.fixture(autouse=True)
 def expected_lingering_timers():
     """Mark that we expect lingering timers in this test module."""
     return True
 
+
 @pytest.fixture
-async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detailed: AsyncMock, entity_registry: er.EntityRegistry):
+async def setup_integration_entry(
+    hass: HomeAssistant,
+    mock_api_fetchers_detailed: AsyncMock,
+    entity_registry: er.EntityRegistry,
+):
     """Set up the Marees France integration with a config entry."""
     # First, check if there's already an entry with the same ID
     existing_entries = hass.config_entries.async_entries(DOMAIN)
@@ -69,7 +77,7 @@ async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detaile
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=MOCK_CONFIG_ENTRY_DATA,
-        unique_id=MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID], # "BREST"
+        unique_id=MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID],  # "BREST"
         entry_id="test",
         version=2,  # Skip migration
     )
@@ -88,7 +96,7 @@ async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detaile
             "starting_height": "8.2",
             "finished_height": "1.5",
             "coefficient": "90",
-            "current_height": 5.0
+            "current_height": 5.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -96,7 +104,7 @@ async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detaile
             "finished_time": "2025-05-12T09:15:00+00:00",
             "starting_height": "8.2",
             "finished_height": "1.5",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -104,20 +112,23 @@ async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detaile
             "finished_time": "2025-05-12T03:00:00+00:00",
             "starting_height": "1.8",
             "finished_height": "8.2",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "95",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
-        "last_update": "2025-05-12T00:00:00+00:00"
+        "last_update": "2025-05-12T00:00:00+00:00",
     }
 
     # Patch the coordinator's _parse_tide_data method and dt_util.now
-    with patch("custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._parse_tide_data",
-               return_value=mock_data), \
-         patch("homeassistant.util.dt.now", return_value=now):
-        
+    with (
+        patch(
+            "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._parse_tide_data",
+            return_value=mock_data,
+        ),
+        patch("homeassistant.util.dt.now", return_value=now),
+    ):
         # Set up the entry if it's not already set up
         if entry.state != ConfigEntryState.LOADED:
             assert await hass.config_entries.async_setup(entry.entry_id)
@@ -125,18 +136,19 @@ async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers_detaile
 
     return entry
 
+
 async def test_sensor_creation_and_initial_state(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
     entity_registry: er.EntityRegistry,
-    device_registry: dr.DeviceRegistry, # Added device_registry fixture
+    device_registry: dr.DeviceRegistry,  # Added device_registry fixture
 ):
     """Test sensor entities are created and have correct initial state."""
     config_entry = setup_integration_entry
-    
+
     # Get the coordinator from hass data
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    
+
     # Directly set the coordinator data to ensure sensors have data
     mock_data = {
         "now_data": {
@@ -146,7 +158,7 @@ async def test_sensor_creation_and_initial_state(
             "starting_height": "8.2",
             "finished_height": "1.5",
             "coefficient": "90",
-            "current_height": 5.0
+            "current_height": 5.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -154,7 +166,7 @@ async def test_sensor_creation_and_initial_state(
             "finished_time": "2025-05-12T09:15:00+00:00",
             "starting_height": "8.2",
             "finished_height": "1.5",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -162,29 +174,31 @@ async def test_sensor_creation_and_initial_state(
             "finished_time": "2025-05-12T03:00:00+00:00",
             "starting_height": "1.8",
             "finished_height": "8.2",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "95",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
-        "last_update": "2025-05-12T00:00:00+00:00"
+        "last_update": "2025-05-12T00:00:00+00:00",
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
     coordinator.async_update_listeners()
-    
+
     # Wait for the sensors to update
     await hass.async_block_till_done()
-    
+
     # Check that the entity registry has the entities
     entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
     assert len(entities) > 0, "No entities found for config entry"
-    
+
     # Check that the device registry has the device
-    device_entries = dr.async_entries_for_config_entry(device_registry, config_entry.entry_id)
+    device_entries = dr.async_entries_for_config_entry(
+        device_registry, config_entry.entry_id
+    )
     assert len(device_entries) > 0, "No devices found for config entry"
-    
+
     # Check that the sensors are available
     for entity in entities:
         state = hass.states.get(entity.entity_id)
@@ -200,7 +214,7 @@ async def test_sensor_updates_on_new_data(
     """Test sensor states update when coordinator provides new data."""
     config_entry = setup_integration_entry
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    
+
     # First update with initial data
     mock_data = {
         "now_data": {
@@ -210,7 +224,7 @@ async def test_sensor_updates_on_new_data(
             "starting_height": "8.2",
             "finished_height": "1.5",
             "coefficient": "90",
-            "current_height": 5.0
+            "current_height": 5.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -218,7 +232,7 @@ async def test_sensor_updates_on_new_data(
             "finished_time": "2025-05-12T09:15:00+00:00",
             "starting_height": "8.2",
             "finished_height": "1.5",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -226,19 +240,19 @@ async def test_sensor_updates_on_new_data(
             "finished_time": "2025-05-12T03:00:00+00:00",
             "starting_height": "1.8",
             "finished_height": "8.2",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "95",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
-        "last_update": "2025-05-12T00:00:00+00:00"
+        "last_update": "2025-05-12T00:00:00+00:00",
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
-    
+
     # Then update with new data
     new_mock_data = {
         "now_data": {
@@ -248,7 +262,7 @@ async def test_sensor_updates_on_new_data(
             "starting_height": "7.5",
             "finished_height": "2.0",
             "coefficient": "80",
-            "current_height": 6.0
+            "current_height": 6.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -256,7 +270,7 @@ async def test_sensor_updates_on_new_data(
             "finished_time": "2025-05-12T04:00:00+00:00",
             "starting_height": "7.5",
             "finished_height": "2.0",
-            "coefficient": "80"
+            "coefficient": "80",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -264,19 +278,19 @@ async def test_sensor_updates_on_new_data(
             "finished_time": "2025-05-12T04:00:00+00:00",
             "starting_height": "2.0",
             "finished_height": "7.5",
-            "coefficient": "80"
+            "coefficient": "80",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "80",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "75",
-        "last_update": "2025-05-12T01:00:00+00:00"
+        "last_update": "2025-05-12T01:00:00+00:00",
     }
     coordinator.data = new_mock_data
     coordinator.last_update_success = True
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
-    
+
     # Check that the entities exist
     entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
     assert len(entities) > 0, "No entities found for config entry"
@@ -290,7 +304,7 @@ async def test_sensor_availability(
     """Test sensor availability when coordinator fails and recovers."""
     config_entry = setup_integration_entry
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    
+
     # First, set up with good data
     mock_data = {
         "now_data": {
@@ -300,7 +314,7 @@ async def test_sensor_availability(
             "starting_height": "8.2",
             "finished_height": "1.5",
             "coefficient": "90",
-            "current_height": 5.0
+            "current_height": 5.0,
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -308,7 +322,7 @@ async def test_sensor_availability(
             "finished_time": "2025-05-12T09:15:00+00:00",
             "starting_height": "8.2",
             "finished_height": "1.5",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "previous_data": {
             "tide_trend": "High Tide",
@@ -316,28 +330,28 @@ async def test_sensor_availability(
             "finished_time": "2025-05-12T03:00:00+00:00",
             "starting_height": "1.8",
             "finished_height": "8.2",
-            "coefficient": "90"
+            "coefficient": "90",
         },
         "next_spring_date": "2025-05-12",
         "next_spring_coeff": "95",
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
-        "last_update": "2025-05-12T00:00:00+00:00"
+        "last_update": "2025-05-12T00:00:00+00:00",
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
-    
+
     # Check that the entities exist
     entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
     assert len(entities) > 0, "No entities found for config entry"
-    
+
     # Then simulate a failure
     coordinator.last_update_success = False
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
-    
+
     # Then simulate recovery
     coordinator.last_update_success = True
     coordinator.async_update_listeners()

@@ -57,11 +57,13 @@ async def _async_fetch_with_retry(
     await asyncio.sleep(API_REQUEST_DELAY)
     _LOGGER.debug(
         "Marées France Helper: Preparing to fetch %s for %s from %s",
-        data_type, harbor_id, url
+        data_type,
+        harbor_id,
+        url,
     )
 
     for attempt in range(max_retries):
-        current_delay = initial_delay * (2 ** attempt)
+        current_delay = initial_delay * (2**attempt)
         try:
             async with asyncio.timeout(timeout):
                 response = await session.get(url, headers=headers)
@@ -69,7 +71,10 @@ async def _async_fetch_with_retry(
                 data = await response.json()
                 _LOGGER.debug(
                     "Marées France Helper: Successfully fetched %s for %s (attempt %d/%d)",
-                    data_type, harbor_id, attempt + 1, max_retries
+                    data_type,
+                    harbor_id,
+                    attempt + 1,
+                    max_retries,
                 )
                 return data
 
@@ -77,26 +82,45 @@ async def _async_fetch_with_retry(
             _LOGGER.warning(
                 "Marées France Helper: Timeout fetching %s for %s (attempt %d/%d). "
                 "Retrying in %ds...",
-                data_type, harbor_id, attempt + 1, max_retries, current_delay
+                data_type,
+                harbor_id,
+                attempt + 1,
+                max_retries,
+                current_delay,
             )
         except aiohttp.ClientResponseError as err:
             _LOGGER.warning(
                 "Marées France Helper: HTTP error %s fetching %s for %s (attempt %d/%d): %s. "
                 "Retrying in %ds...",
-                err.status, data_type, harbor_id, attempt + 1, max_retries,
-                err.message, current_delay
+                err.status,
+                data_type,
+                harbor_id,
+                attempt + 1,
+                max_retries,
+                err.message,
+                current_delay,
             )
         except aiohttp.ClientError as err:
             _LOGGER.warning(
                 "Marées France Helper: Client error fetching %s for %s (attempt %d/%d): %s. "
                 "Retrying in %ds...",
-                data_type, harbor_id, attempt + 1, max_retries, err, current_delay
+                data_type,
+                harbor_id,
+                attempt + 1,
+                max_retries,
+                err,
+                current_delay,
             )
         except Exception as err:
             _LOGGER.warning(
                 "Marées France Helper: Unexpected error fetching %s for %s (attempt %d/%d): %s. "
                 "Retrying in %ds...",
-                data_type, harbor_id, attempt + 1, max_retries, err, current_delay
+                data_type,
+                harbor_id,
+                attempt + 1,
+                max_retries,
+                err,
+                current_delay,
             )
 
         if attempt < max_retries - 1:
@@ -104,7 +128,9 @@ async def _async_fetch_with_retry(
         else:
             _LOGGER.error(
                 "Marées France Helper: Failed to fetch %s for %s after %d attempts.",
-                data_type, harbor_id, max_retries
+                data_type,
+                harbor_id,
+                max_retries,
             )
     return None
 
@@ -138,23 +164,23 @@ async def _async_fetch_and_store_water_level(
         headers=HEADERS,
         timeout=timeout_seconds,
         harbor_id=harbor_name,
-        data_type="water levels"
+        data_type="water levels",
     )
 
     if data is None:
         return None
 
     valid_structure = (
-        isinstance(data, dict) and
-        date_str in data and
-        isinstance(data[date_str], list)
+        isinstance(data, dict) and date_str in data and isinstance(data[date_str], list)
     )
 
     if not valid_structure:
         _LOGGER.error(
             "Marées France Helper: Fetched water level data for %s on %s has unexpected "
             "structure or is missing the date key. Discarding. Data: %s",
-            harbor_name, date_str, data
+            harbor_name,
+            date_str,
+            data,
         )
         return None
 
@@ -210,13 +236,15 @@ async def _async_fetch_and_store_tides(
         headers=HEADERS,
         timeout=timeout_seconds,
         harbor_id=harbor_id,
-        data_type="tides"
+        data_type="tides",
     )
 
     if fetched_data_dict is None or not isinstance(fetched_data_dict, dict):
         _LOGGER.error(
             "Marées France Helper: Failed to fetch or received invalid format for "
-            "tide data for %s starting %s.", harbor_id, start_date_str
+            "tide data for %s starting %s.",
+            harbor_id,
+            start_date_str,
         )
         return False
 
@@ -226,11 +254,14 @@ async def _async_fetch_and_store_tides(
             cache[harbor_id][day_str] = tides
             _LOGGER.debug(
                 "Marées France Helper: Updated tide cache for %s on %s",
-                harbor_id, day_str
+                harbor_id,
+                day_str,
             )
 
         await store.async_save(cache)
-        _LOGGER.debug("Marées France Helper: Saved updated tides cache for %s", harbor_id)
+        _LOGGER.debug(
+            "Marées France Helper: Saved updated tides cache for %s", harbor_id
+        )
         return True
     except Exception:
         _LOGGER.exception(
@@ -264,7 +295,9 @@ async def _async_fetch_and_store_coefficients(
         of days, False otherwise.
     """
     start_date_str = start_date.strftime(DATE_FORMAT)
-    url = COEFF_URL_TEMPLATE.format(harbor_name=harbor_id, date=start_date_str, days=days)
+    url = COEFF_URL_TEMPLATE.format(
+        harbor_name=harbor_id, date=start_date_str, days=days
+    )
     session = async_get_clientsession(hass)
     timeout_seconds = 60
 
@@ -274,14 +307,16 @@ async def _async_fetch_and_store_coefficients(
         headers=HEADERS,
         timeout=timeout_seconds,
         harbor_id=harbor_id,
-        data_type="coefficients"
+        data_type="coefficients",
     )
 
     if fetched_data_list is None or not isinstance(fetched_data_list, list):
         _LOGGER.error(
             "Marées France Helper: Failed to fetch or received invalid format for "
             "coefficient data for %s starting %s (%d days).",
-            harbor_id, start_date_str, days
+            harbor_id,
+            start_date_str,
+            days,
         )
         return False
 
@@ -302,22 +337,28 @@ async def _async_fetch_and_store_coefficients(
                         for coeff_item in daily_coeffs:
                             if isinstance(coeff_item, str):
                                 parsed_coeffs.append(coeff_item)
-                            elif (isinstance(coeff_item, list)
-                                  and len(coeff_item) == 1
-                                  and isinstance(coeff_item[0], str)):
+                            elif (
+                                isinstance(coeff_item, list)
+                                and len(coeff_item) == 1
+                                and isinstance(coeff_item[0], str)
+                            ):
                                 parsed_coeffs.append(coeff_item[0])
                             else:
                                 _LOGGER.warning(
                                     "Marées France Helper: Unexpected item format within daily "
                                     "coefficients for %s on %s: %s. Skipping item.",
-                                    harbor_id, day_str, coeff_item
+                                    harbor_id,
+                                    day_str,
+                                    coeff_item,
                                 )
 
                         if parsed_coeffs:
                             cache[harbor_id][day_str] = parsed_coeffs
                             _LOGGER.debug(
                                 "Marées France Helper: Updated coefficient cache for %s on %s: %s",
-                                harbor_id, day_str, parsed_coeffs
+                                harbor_id,
+                                day_str,
+                                parsed_coeffs,
                             )
                         else:
                             _LOGGER.warning(
@@ -331,7 +372,9 @@ async def _async_fetch_and_store_coefficients(
                         _LOGGER.warning(
                             "Marées France Helper: Unexpected format for daily coefficients "
                             "container for %s on %s: %s. Skipping day.",
-                            harbor_id, day_str, daily_coeffs
+                            harbor_id,
+                            day_str,
+                            daily_coeffs,
                         )
                     processed_days_count += 1
             if processed_days_count >= days:
@@ -341,20 +384,27 @@ async def _async_fetch_and_store_coefficients(
             await store.async_save(cache)
             _LOGGER.debug(
                 "Marées France Helper: Saved updated coefficients cache for %s "
-                "after processing %d days.", harbor_id, processed_days_count
+                "after processing %d days.",
+                harbor_id,
+                processed_days_count,
             )
             return True
 
         _LOGGER.error(
             "Marées France Helper: Processed %d days of coefficient data, but expected %d "
             "for %s starting %s. API data might be incomplete or parsing failed.",
-            processed_days_count, days, harbor_id, start_date_str
+            processed_days_count,
+            days,
+            harbor_id,
+            start_date_str,
         )
-        if processed_days_count > 0: # Save partial data if any was processed
+        if processed_days_count > 0:  # Save partial data if any was processed
             await store.async_save(cache)
             _LOGGER.debug(
                 "Marées France Helper: Saved partially updated coefficients cache for %s "
-                "(%d days processed).", harbor_id, processed_days_count
+                "(%d days processed).",
+                harbor_id,
+                processed_days_count,
             )
         return False
 
@@ -364,6 +414,6 @@ async def _async_fetch_and_store_coefficients(
             "starting %s (%d days)",
             harbor_id,
             start_date_str,
-            days
+            days,
         )
         return False

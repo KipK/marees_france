@@ -1,4 +1,5 @@
 """Test the Marees France config flow."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -10,20 +11,26 @@ from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.marees_france.const import (
-   CONF_HARBOR_ID,
+    CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
     DOMAIN,
     INTEGRATION_NAME,
 )
-from custom_components.marees_france.config_flow import CannotConnect, MareesFranceConfigFlow
+from custom_components.marees_france.config_flow import (
+    CannotConnect,
+    MareesFranceConfigFlow,
+)
 
 from tests.conftest import MOCK_CONFIG_ENTRY_DATA, MOCK_PORT_DATA
 
 # Define a mock harbor cache based on MOCK_PORT_DATA
 MOCK_HARBOR_ID = MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]
-MOCK_HARBOR_NAME = MOCK_PORT_DATA["nom_port"] # Use the name from MOCK_PORT_DATA
+MOCK_HARBOR_NAME = MOCK_PORT_DATA["nom_port"]  # Use the name from MOCK_PORT_DATA
 MOCK_HARBORS_CACHE = {
-    MOCK_HARBOR_ID: {"name": MOCK_HARBOR_NAME, "display": f"{MOCK_HARBOR_NAME} ({MOCK_HARBOR_ID})"},
+    MOCK_HARBOR_ID: {
+        "name": MOCK_HARBOR_NAME,
+        "display": f"{MOCK_HARBOR_NAME} ({MOCK_HARBOR_ID})",
+    },
     "OTHER_ID": {"name": "Other Port", "display": "Other Port (OTHER_ID)"},
 }
 
@@ -33,12 +40,13 @@ def expected_lingering_timers():
     """Mark that we expect lingering timers in this test module."""
     return True
 
+
 @pytest.fixture(name="mock_fetch_harbors")
 def fixture_mock_fetch_harbors():
     """Mock the fetch_harbors function."""
     # Create a modified cache that includes the invalid harbor ID for testing
     test_harbors_cache = MOCK_HARBORS_CACHE.copy()
-    
+
     with patch(
         "custom_components.marees_france.config_flow.fetch_harbors",
         return_value=test_harbors_cache,
@@ -54,7 +62,7 @@ async def test_async_step_user_success(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
-    await hass.async_block_till_done() # Allow fetch_harbors mock to be called
+    await hass.async_block_till_done()  # Allow fetch_harbors mock to be called
 
     # Check that the form is shown
     assert result is not None
@@ -62,7 +70,7 @@ async def test_async_step_user_success(
     assert result["step_id"] == "user"
     # In newer Home Assistant versions, errors is an empty dict instead of None
     assert result["errors"] == {}
-    mock_fetch_harbors.assert_called_once() # Check fetch_harbors was called
+    mock_fetch_harbors.assert_called_once()  # Check fetch_harbors was called
 
     # Simulate user input selecting the mock harbor
     result2 = await hass.config_entries.flow.async_configure(
@@ -78,7 +86,7 @@ async def test_async_step_user_success(
     assert result2["title"] == f"{INTEGRATION_NAME} - {MOCK_HARBOR_NAME}"
     assert result2["data"] == {
         CONF_HARBOR_ID: MOCK_HARBOR_ID,
-        CONF_HARBOR_NAME: MOCK_HARBOR_NAME, # Ensure name is also stored
+        CONF_HARBOR_NAME: MOCK_HARBOR_NAME,  # Ensure name is also stored
     }
     # No second call to fetch_harbors expected here
     mock_fetch_harbors.assert_called_once()
@@ -91,13 +99,13 @@ async def test_async_step_user_invalid_harbor(
     # Create a direct instance of the config flow
     flow = MareesFranceConfigFlow()
     flow.hass = hass
-    
+
     # Mock the _harbors_cache with a valid harbor
     flow._harbors_cache = {"BREST": {"name": "Brest", "display": "Brest (BREST)"}}
-    
+
     # Test with an invalid harbor ID
     result = await flow.async_step_user({"harbor_id": "INVALID_HARBOR_ID"})
-    
+
     # Check that the form is shown again with an error
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
@@ -149,7 +157,7 @@ async def test_async_step_user_already_configured(
     # Setup an existing entry using the mock data
     existing_entry = MockConfigEntry(
         domain=DOMAIN,
-        unique_id=MOCK_HARBOR_ID.lower(), # unique_id is lowercase harbor_id
+        unique_id=MOCK_HARBOR_ID.lower(),  # unique_id is lowercase harbor_id
         data={CONF_HARBOR_ID: MOCK_HARBOR_ID, CONF_HARBOR_NAME: MOCK_HARBOR_NAME},
         title=f"{INTEGRATION_NAME} - {MOCK_HARBOR_NAME}",
     )

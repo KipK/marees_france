@@ -31,10 +31,12 @@ ATTRIBUTION: Final[str] = "Data provided by SHOM"
 
 # --- Configuration Constants ---
 CONF_HARBOR_ID: Final[str] = "harbor_id"
-CONF_HARBOR_NAME: Final[str] = "harbor_name" # Used in config entry, not directly by user
+CONF_HARBOR_NAME: Final[str] = (
+    "harbor_name"  # Used in config entry, not directly by user
+)
 
 # --- Default Values ---
-DEFAULT_HARBOR: Final[str] = "PORNICHET" # Default harbor for config flow
+DEFAULT_HARBOR: Final[str] = "PORNICHET"  # Default harbor for config flow
 
 # --- API Configuration ---
 HARBORSURL: Final[str] = (
@@ -59,24 +61,32 @@ HEADERS: Final[dict[str, str]] = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/109.0.0.0 Safari/537.36" # Common User-Agent
+        "Chrome/109.0.0.0 Safari/537.36"  # Common User-Agent
     ),
 }
 API_REQUEST_DELAY: Final[float] = 0.2  # Delay in seconds between API requests
 
 # --- Data Attributes & Keys ---
-ATTR_DATA: Final[str] = "data" # General data attribute
-ATTR_NEXT_TIDE: Final[str] = "next" # Key for next tide information
-ATTR_PREVIOUS_TIDE: Final[str] = "previous" # Key for previous tide information
-ATTR_HARBOR_NAME: Final[str] = "harbor_name" # Attribute for harbor name in sensor state
-ATTR_DATE: Final[str] = "date" # Attribute/key for date
-ATTR_COEFFICIENT: Final[str] = "coefficient" # Attribute for tide coefficient
-ATTR_TIDE_TREND: Final[str] = "tide_trend" # Attribute for tide trend (e.g., rising, falling)
-ATTR_STARTING_HEIGHT: Final[str] = "starting_height" # Attribute for tide starting height
-ATTR_FINISHED_HEIGHT: Final[str] = "finished_height" # Attribute for tide finished height
-ATTR_STARTING_TIME: Final[str] = "starting_time" # Attribute for tide starting time
-ATTR_FINISHED_TIME: Final[str] = "finished_time" # Attribute for tide finished time
-ATTR_CURRENT_HEIGHT: Final[str] = "current_height" # Attribute for current water height
+ATTR_DATA: Final[str] = "data"  # General data attribute
+ATTR_NEXT_TIDE: Final[str] = "next"  # Key for next tide information
+ATTR_PREVIOUS_TIDE: Final[str] = "previous"  # Key for previous tide information
+ATTR_HARBOR_NAME: Final[str] = (
+    "harbor_name"  # Attribute for harbor name in sensor state
+)
+ATTR_DATE: Final[str] = "date"  # Attribute/key for date
+ATTR_COEFFICIENT: Final[str] = "coefficient"  # Attribute for tide coefficient
+ATTR_TIDE_TREND: Final[str] = (
+    "tide_trend"  # Attribute for tide trend (e.g., rising, falling)
+)
+ATTR_STARTING_HEIGHT: Final[str] = (
+    "starting_height"  # Attribute for tide starting height
+)
+ATTR_FINISHED_HEIGHT: Final[str] = (
+    "finished_height"  # Attribute for tide finished height
+)
+ATTR_STARTING_TIME: Final[str] = "starting_time"  # Attribute for tide starting time
+ATTR_FINISHED_TIME: Final[str] = "finished_time"  # Attribute for tide finished time
+ATTR_CURRENT_HEIGHT: Final[str] = "current_height"  # Attribute for current water height
 
 # --- Storage Keys and Versions ---
 WATERLEVELS_STORAGE_KEY: Final[str] = f"{DOMAIN}_water_levels_cache"
@@ -87,11 +97,11 @@ COEFF_STORAGE_KEY: Final[str] = f"{DOMAIN}_coefficients_cache"
 COEFF_STORAGE_VERSION: Final[int] = 1
 
 # --- Tide Types & Thresholds ---
-TIDE_HIGH: Final[str] = "tide.high" # Internal representation for high tide
-TIDE_LOW: Final[str] = "tide.low"   # Internal representation for low tide
-TIDE_NONE: Final[str] = "tide.none" # Internal representation for no current tide event
-SPRING_TIDE_THRESHOLD: Final[int] = 100 # Coefficient threshold for spring tide
-NEAP_TIDE_THRESHOLD: Final[int] = 40   # Coefficient threshold for neap tide
+TIDE_HIGH: Final[str] = "tide.high"  # Internal representation for high tide
+TIDE_LOW: Final[str] = "tide.low"  # Internal representation for low tide
+TIDE_NONE: Final[str] = "tide.none"  # Internal representation for no current tide event
+SPRING_TIDE_THRESHOLD: Final[int] = 100  # Coefficient threshold for spring tide
+NEAP_TIDE_THRESHOLD: Final[int] = 40  # Coefficient threshold for neap tide
 
 # --- Translation Keys for Sensor State (matches strings.json) ---
 STATE_HIGH_TIDE: Final[str] = "high_tide"
@@ -121,4 +131,4 @@ JSMODULES: Final[list[dict[str, str]]] = [
         "version": INTEGRATION_VERSION,
     },
 ]
-URL_BASE: Final[str] = "/marees-france" # Base URL for frontend resources
+URL_BASE: Final[str] = "/marees-france"  # Base URL for frontend resources

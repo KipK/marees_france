@@ -63,7 +63,9 @@ async def async_setup_entry(
     _LOGGER.debug("Added 5 Marées France sensors for harbor: %s", harbor_id)
 
 
-class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], SensorEntity):
+class MareesFranceBaseSensor(
+    CoordinatorEntity[MareesFranceUpdateCoordinator], SensorEntity
+):
     """Base class for Marées France sensors.
 
     Provides common attributes and functionality for all sensors derived from it,
@@ -71,7 +73,7 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
     """
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True # Uses the name defined by `translation_key`.
+    _attr_has_entity_name = True  # Uses the name defined by `translation_key`.
 
     def __init__(
         self,
@@ -90,17 +92,23 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._harbor_id: str = config_entry.data[CONF_HARBOR_ID]
-        self._harbor_name: str = config_entry.data.get(CONF_HARBOR_NAME, self._harbor_id)
-        self._sensor_key_suffix = sensor_key_suffix # Used for unique ID and data access
+        self._harbor_name: str = config_entry.data.get(
+            CONF_HARBOR_NAME, self._harbor_id
+        )
+        self._sensor_key_suffix = (
+            sensor_key_suffix  # Used for unique ID and data access
+        )
 
-        self._attr_unique_id = f"{DOMAIN}_{self._harbor_id.lower()}_{self._sensor_key_suffix}"
+        self._attr_unique_id = (
+            f"{DOMAIN}_{self._harbor_id.lower()}_{self._sensor_key_suffix}"
+        )
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
             name=self._harbor_name,
             manufacturer=MANUFACTURER,
-            entry_type="service", # Using "service" as it's data from an external service
-            configuration_url=None, # No specific URL for device configuration
+            entry_type="service",  # Using "service" as it's data from an external service
+            configuration_url=None,  # No specific URL for device configuration
         )
         _LOGGER.debug("Initialized base sensor with unique_id: %s", self.unique_id)
 
@@ -113,7 +121,7 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
         is present in the coordinator's data.
         """
         return (
-            super().available # Checks coordinator.last_update_success and coordinator.data
+            super().available  # Checks coordinator.last_update_success and coordinator.data
             and self.coordinator.data is not None
             # Check for the specific data key related to this sensor type
             # For "now", "next", "previous" sensors, data is under "now_data", "next_data", etc.
@@ -121,7 +129,8 @@ class MareesFranceBaseSensor(CoordinatorEntity[MareesFranceUpdateCoordinator], S
             and (
                 f"{self._sensor_key_suffix}_data" in self.coordinator.data
                 if self._sensor_key_suffix in ["now", "next", "previous"]
-                else self._sensor_key_suffix in self.coordinator.data # For date sensors
+                else self._sensor_key_suffix
+                in self.coordinator.data  # For date sensors
             )
         )
 
@@ -160,7 +169,9 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the 'current tide' sensor."""
-        super().__init__(coordinator, config_entry, "now") # "now" is the sensor_key_suffix
+        super().__init__(
+            coordinator, config_entry, "now"
+        )  # "now" is the sensor_key_suffix
 
     @property
     def _sensor_data(self) -> dict[str, Any] | None:
@@ -180,9 +191,13 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
         if self.available and self._sensor_data:
             attrs = {}
             for key in [
-                ATTR_TIDE_TREND, ATTR_CURRENT_HEIGHT, ATTR_COEFFICIENT,
-                ATTR_STARTING_HEIGHT, ATTR_FINISHED_HEIGHT,
-                ATTR_STARTING_TIME, ATTR_FINISHED_TIME
+                ATTR_TIDE_TREND,
+                ATTR_CURRENT_HEIGHT,
+                ATTR_COEFFICIENT,
+                ATTR_STARTING_HEIGHT,
+                ATTR_FINISHED_HEIGHT,
+                ATTR_STARTING_TIME,
+                ATTR_FINISHED_TIME,
             ]:
                 if (value := self._sensor_data.get(key)) is not None:
                     attrs[key] = value
@@ -198,7 +213,7 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
                 return "mdi:transfer-up"
             if trend == "falling":
                 return "mdi:transfer-down"
-        return "mdi:waves" # Default icon
+        return "mdi:waves"  # Default icon
 
 
 class MareesFranceTimestampSensor(MareesFranceBaseSensor):
@@ -215,8 +230,8 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
         self,
         coordinator: MareesFranceUpdateCoordinator,
         config_entry: ConfigEntry,
-        sensor_key_suffix: str, # e.g., "next", "previous"
-        translation_key: str,   # For entity name
+        sensor_key_suffix: str,  # e.g., "next", "previous"
+        translation_key: str,  # For entity name
     ) -> None:
         """Initialize the timestamp-based tide sensor."""
         super().__init__(coordinator, config_entry, sensor_key_suffix)
@@ -241,7 +256,8 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
                 except ValueError:
                     _LOGGER.warning(
                         "Could not parse event time for '%s' sensor: %s",
-                        self._sensor_key_suffix, event_time_str,
+                        self._sensor_key_suffix,
+                        event_time_str,
                     )
         return None
 
@@ -249,12 +265,13 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attributes like tide type, height, coefficient."""
         if self.available and self._sensor_data:
-            return self._sensor_data # The whole block is relevant
+            return self._sensor_data  # The whole block is relevant
         return None
 
 
 class MareesFranceNextSensor(MareesFranceTimestampSensor):
     """Sensor representing the next tide event."""
+
     def __init__(
         self,
         coordinator: MareesFranceUpdateCoordinator,
@@ -263,8 +280,10 @@ class MareesFranceNextSensor(MareesFranceTimestampSensor):
         """Initialize the 'next tide' sensor."""
         super().__init__(coordinator, config_entry, "next", "next_tide")
 
+
 class MareesFrancePreviousSensor(MareesFranceTimestampSensor):
     """Sensor representing the previous tide event."""
+
     def __init__(
         self,
         coordinator: MareesFranceUpdateCoordinator,
@@ -273,19 +292,21 @@ class MareesFrancePreviousSensor(MareesFranceTimestampSensor):
         """Initialize the 'previous tide' sensor."""
         super().__init__(coordinator, config_entry, "previous", "previous_tide")
 
+
 class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
     """Base sensor for next spring/neap tide dates.
 
     The state is the date of the next special tide (spring or neap).
     The coefficient is an attribute.
     """
-    _attr_icon = "mdi:calendar-arrow-right" # Generic icon for future date
+
+    _attr_icon = "mdi:calendar-arrow-right"  # Generic icon for future date
 
     def __init__(
         self,
         coordinator: MareesFranceUpdateCoordinator,
         config_entry: ConfigEntry,
-        sensor_key_suffix: str, # "next_spring_date" or "next_neap_date"
+        sensor_key_suffix: str,  # "next_spring_date" or "next_neap_date"
         translation_key: str,
     ) -> None:
         """Initialize the special tide date sensor."""
@@ -298,7 +319,7 @@ class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
         """Return True if coordinator has data and the specific date exists."""
         # Overrides base availability to check for the direct key (e.g., "next_spring_date")
         return (
-            super(CoordinatorEntity, self).available # Check coordinator health
+            super(CoordinatorEntity, self).available  # Check coordinator health
             and self.coordinator.data is not None
             and self.coordinator.data.get(self._sensor_key_suffix) is not None
         )
@@ -311,7 +332,7 @@ class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
             date_obj = self.coordinator.data.get(self._sensor_key_suffix)
             if date_obj:
                 # Handle both datetime objects and strings
-                if hasattr(date_obj, 'isoformat'):
+                if hasattr(date_obj, "isoformat"):
                     return date_obj.isoformat()
                 else:
                     # If it's already a string, just return it
@@ -324,14 +345,20 @@ class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
         """Return the coefficient as an attribute."""
         if self.available:
             # Determine attribute key based on sensor type
-            coeff_key = "next_spring_coeff" if "spring" in self._sensor_key_suffix else "next_neap_coeff"
+            coeff_key = (
+                "next_spring_coeff"
+                if "spring" in self._sensor_key_suffix
+                else "next_neap_coeff"
+            )
             coeff = self.coordinator.data.get(coeff_key)
             if coeff is not None:
                 return {ATTR_COEFFICIENT: coeff}
         return None
 
+
 class MareesFranceNextSpringTideSensor(MareesFranceNextSpecialTideSensor):
     """Sensor for the date and coefficient of the next spring tide."""
+
     _attr_translation_key = "next_spring_tide"
     # Consider a more specific icon if desired, e.g., mdi:waves-arrow-up
 
@@ -341,10 +368,14 @@ class MareesFranceNextSpringTideSensor(MareesFranceNextSpecialTideSensor):
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the next spring tide sensor."""
-        super().__init__(coordinator, config_entry, "next_spring_date", "next_spring_tide")
+        super().__init__(
+            coordinator, config_entry, "next_spring_date", "next_spring_tide"
+        )
+
 
 class MareesFranceNextNeapTideSensor(MareesFranceNextSpecialTideSensor):
     """Sensor for the date and coefficient of the next neap tide."""
+
     _attr_translation_key = "next_neap_tide"
     # Consider a more specific icon if desired, e.g., mdi:waves-arrow-down
 
