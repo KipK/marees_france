@@ -1,3 +1,4 @@
+pytz
 pytest
 pytest-homeassistant-custom-component
 syrupy
