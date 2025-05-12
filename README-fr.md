@@ -118,7 +118,7 @@ data:
 
 ### Setup
 
-Utilisez setup.sh (linux) ou setup.ps1 (win) pour installer les dépendances nécessaires
+Utilisez ***setup.sh*** (linux) ou ***setup.ps1*** (win) pour installer les dépendances nécessaires
 
 ### Compilation du Frontend
 
@@ -126,7 +126,6 @@ Pour compiler la carte Lovelace :
 
 ```bash
 cd frontend
-npm install
 npm run build
 ```
 
@@ -140,6 +139,13 @@ Pour générer la documentation:
 
 ```bash
 npm run docs
+```
+
+### Tests Unitaires ###
+
+```bash
+pip install -r requirements-test.txt
+npm run test
 ```
 
 ---
