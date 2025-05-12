@@ -28,6 +28,7 @@ jobs:
           npm ci
           npm run build
           npm run lint
+          cd ..
         continue-on-error: true
       - name: Run Unit Tests
         run:
