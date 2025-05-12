@@ -2,8 +2,6 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
 
 from homeassistant.setup import async_setup_component
 from custom_components.marees_france.const import DOMAIN

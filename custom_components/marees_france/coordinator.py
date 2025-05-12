@@ -549,8 +549,10 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if isinstance(entry, list) and len(entry) == 2:
                     try:
                         time_str = entry[0]
-                        if len(time_str) == 5: time_str += ":00"
-                        elif len(time_str) != 8: raise ValueError(f"Unexpected time format: {time_str}")
+                        if len(time_str) == 5:
+                            time_str += ":00"
+                        elif len(time_str) != 8:
+                            raise ValueError(f"Unexpected time format: {time_str}")
 
                         dt_naive = datetime.strptime(
                             f"{today_str_key} {time_str}", f"{DATE_FORMAT} %H:%M:%S"
@@ -616,7 +618,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         int(c) for c in daily_coeffs
                         if isinstance(c, str) and c.isdigit()
                     ]
-                    if not valid_coeffs_int: continue
+                    if not valid_coeffs_int:
+                        continue
                     max_coeff = max(valid_coeffs_int)
 
                     if not found_spring and max_coeff >= SPRING_TIDE_THRESHOLD:
@@ -640,7 +643,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         "Marées France Coordinator: Error processing coefficients for %s: %s",
                         day_str, daily_coeffs
                     )
-            if found_spring and found_neap: break
+            if found_spring and found_neap:
+                break
 
         next_spring_date_obj = date.fromisoformat(next_spring_date_str) if next_spring_date_str else None
         next_neap_date_obj = date.fromisoformat(next_neap_date_str) if next_neap_date_str else None

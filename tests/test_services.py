@@ -1,10 +1,9 @@
 """Tests for the Marees France integration's custom services."""
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 

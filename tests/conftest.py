@@ -3,7 +3,6 @@
 from typing import Generator
 from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import timedelta
-import sys
 import pytest
 
 from homeassistant.core import HomeAssistant

@@ -1,6 +1,6 @@
 """Test basic setup of the integration."""
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from homeassistant.setup import async_setup_component
 from custom_components.marees_france.const import DOMAIN

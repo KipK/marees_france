@@ -1,21 +1,14 @@
 """Tests for the Marees France DataUpdateCoordinator."""
 
 from datetime import timedelta
-from unittest.mock import AsyncMock, patch, call, MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from syrupy import SnapshotAssertion
-
-from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
-from homeassistant.helpers.update_coordinator import UpdateFailed
-from homeassistant.util import dt as dt_util
 
-from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry,
-    async_fire_time_changed,
-)
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.marees_france.const import DOMAIN
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator

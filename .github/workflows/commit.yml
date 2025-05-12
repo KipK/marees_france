@@ -1,13 +1,17 @@
 name: Run Unit Tests and Lint Files
 "on": push
 jobs:  
-  Lint_Build_Tests:
+  Lint_and_Build:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
       - name: Checkout git
         uses: actions/checkout@v2
       - name: Install the code linting and formatting tool Ruff
@@ -27,7 +31,7 @@ jobs:
         continue-on-error: true
       - name: Run Unit Tests
         run:
-          pip install -r requirements.txt
+          npm install
           pip install -r requirements-test.txt 
           npm run test
 

@@ -3,12 +3,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from homeassistant.components import zeroconf # Keep zeroconf for potential future tests
-from homeassistant.config_entries import SOURCE_USER, ConfigEntry
-from homeassistant.const import CONF_NAME # Import CONF_NAME if needed, or remove if not used elsewhere
+from homeassistant.config_entries import SOURCE_USER
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 

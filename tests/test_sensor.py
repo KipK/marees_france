@@ -1,40 +1,24 @@
 """Tests for the Marees France sensor platform."""
-from datetime import timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from syrupy import SnapshotAssertion
 
-from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import (
-    ATTR_ATTRIBUTION,
-    ATTR_DEVICE_CLASS,
-    ATTR_FRIENDLY_NAME,
-    ATTR_ICON,
-    ATTR_UNIT_OF_MEASUREMENT,
-    CONF_DEVICE_ID,
-    CONF_FRIENDLY_NAME,
-    STATE_UNAVAILABLE,
-    STATE_UNKNOWN,
-)
+from homeassistant.const import STATE_UNAVAILABLE
 from custom_components.marees_france.const import CONF_HARBOR_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry,
-    async_fire_time_changed,
-)
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.marees_france.const import ATTRIBUTION, DOMAIN
+from custom_components.marees_france.const import DOMAIN
 # Assuming ATTRIBUTION is defined in const.py, if not, this import will fail
 # and ATTRIBUTION would need to be defined locally or the check removed.
 
 # MOCK_CONFIG_ENTRY_DATA is defined in conftest and available as a fixture or direct import
 # For direct import to work reliably now that pytest.ini should fix paths:
-from tests.conftest import MOCK_CONFIG_ENTRY_DATA, MOCK_PORT_DATA
+from tests.conftest import MOCK_CONFIG_ENTRY_DATA
 
 # Define sensor keys expected to be created by the integration.
 # These are assumptions for the test, based on typical tide data.
