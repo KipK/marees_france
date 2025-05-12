@@ -32,8 +32,7 @@ class InvalidAuth(HomeAssistantError): # Not currently used, but good for future
     """Error to indicate there is invalid authentication."""
 
 
-@config_entries.HANDLERS.register(DOMAIN)
-class MareesFranceConfigFlow(ConfigFlow):
+class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Marées France.
 
     This config flow allows users to select a French harbor for which to
