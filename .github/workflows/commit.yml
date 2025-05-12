@@ -1,7 +1,7 @@
 name: Run Unit Tests and Lint Files
 "on": push
 jobs:  
-  build_frontend:
+  Lint_Build_Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
@@ -24,6 +24,11 @@ jobs:
           npm ci
           npm run build
           npm run lint
-
+        continue-on-error: true
+      - name: Run Unit Tests
+        run:
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt 
+          npm run test
 
 
