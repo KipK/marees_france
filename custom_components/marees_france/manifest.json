@@ -17,7 +17,8 @@
     "marees_france"
   ],
   "dependencies": [
-    "frontend"
+    "frontend",
+    "http"
   ],
   "after_dependencies": []
 }
