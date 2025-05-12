@@ -19,7 +19,7 @@ from tests.conftest import MOCK_CONFIG_ENTRY_DATA
 
 
 @pytest.fixture
-async def setup_integration_with_services(hass: HomeAssistant, mock_shom_client: AsyncMock):
+async def setup_integration_with_services(hass: HomeAssistant, mock_api_fetchers: AsyncMock):
     """Set up the Marees France integration with a config entry for service testing."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -40,14 +40,14 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_shom_client:
 # async def test_service_refresh_port_data_success(
 #     hass: HomeAssistant,
 #     setup_integration_with_services: MockConfigEntry,
-#     mock_shom_client: AsyncMock,
+#     mock_api_fetchers: AsyncMock,
 # ):
 #     """Test the refresh_port_data service call succeeds."""
 #     entry = setup_integration_with_services
 #     coordinator = hass.data[DOMAIN][entry.entry_id]
 #
 #     # Ensure the mock client's get_tide_data is an AsyncMock
-#     mock_shom_client.get_tide_data.reset_mock() # Reset call count
+#     mock_api_fetchers.get_tide_data.reset_mock() # Reset call count
 #
 #     # Call the service
 #     await hass.services.async_call(
@@ -62,7 +62,7 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_shom_client:
 #     # If service calls coordinator.async_request_refresh():
 #     # For this, you might need to patch coordinator.async_request_refresh
 #     # or check if mock_shom_client.get_tide_data was called again.
-#     assert mock_shom_client.get_tide_data.call_count >= 1 # Or specific count if setup calls it once
+#     assert mock_api_fetchers.get_tide_data.call_count >= 1 # Or specific count if setup calls it once
 #
 # async def test_service_refresh_port_data_invalid_port(
 #     hass: HomeAssistant,
@@ -80,10 +80,10 @@ async def setup_integration_with_services(hass: HomeAssistant, mock_shom_client:
 # async def test_service_refresh_port_data_api_error(
 #     hass: HomeAssistant,
 #     setup_integration_with_services: MockConfigEntry,
-#     mock_shom_client: AsyncMock,
+#     mock_api_fetchers: AsyncMock,
 # ):
 #     """Test the refresh_port_data service when the API call fails."""
-#     mock_shom_client.get_tide_data.side_effect = Exception("API communication failed")
+#     mock_api_fetchers.get_tide_data.side_effect = Exception("API communication failed")
 #
 #     with pytest.raises(HomeAssistantError): # Or a more specific error
 #         await hass.services.async_call(

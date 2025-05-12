@@ -67,7 +67,7 @@ def get_entity_id(friendly_name_slug: str, sensor_key: str) -> str:
     return f"sensor.{friendly_name_slug}_{sensor_key}"
 
 @pytest.fixture
-async def setup_integration_entry(hass: HomeAssistant, mock_shom_client: AsyncMock):
+async def setup_integration_entry(hass: HomeAssistant, mock_api_fetchers: AsyncMock, init_integration: None):
     """Set up the Marees France integration with a config entry."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -161,7 +161,7 @@ async def test_sensor_creation_and_initial_state(
 async def test_sensor_updates_on_new_data(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
-    mock_shom_client: AsyncMock, # Assuming this fixture gives control over the integration's client
+    mock_api_fetchers: AsyncMock, # Assuming this fixture gives control over the integration's client
 ):
     """Test sensor states update when coordinator provides new data."""
     config_entry = setup_integration_entry
@@ -181,7 +181,7 @@ async def test_sensor_updates_on_new_data(
     }
 
     # Change the mock client's return value for the next data fetch
-    mock_shom_client.get_tide_data.return_value = NEW_MOCK_PORT_DATA
+    mock_api_fetchers.get_tide_data.return_value = NEW_MOCK_PORT_DATA
 
     # Trigger coordinator refresh (current time is still 2025-05-12T00:00:00Z)
     await coordinator.async_refresh()
@@ -204,7 +204,7 @@ async def test_sensor_updates_on_new_data(
 async def test_sensor_availability(
     hass: HomeAssistant,
     setup_integration_entry: MockConfigEntry,
-    mock_shom_client: AsyncMock, # Assuming this fixture gives control
+    mock_api_fetchers: AsyncMock, # Assuming this fixture gives control
 ):
     """Test sensor availability when coordinator fails and recovers."""
     config_entry = setup_integration_entry
@@ -212,7 +212,7 @@ async def test_sensor_availability(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     # 1. Test unavailable when coordinator fails
-    mock_shom_client.get_tide_data.side_effect = Exception("API Error")
+    mock_api_fetchers.get_tide_data.side_effect = Exception("API Error")
     await coordinator.async_refresh()
     await hass.async_block_till_done()
 
@@ -223,8 +223,8 @@ async def test_sensor_availability(
         assert state.state == STATE_UNAVAILABLE, f"{entity_id} should be unavailable"
 
     # 2. Test available again when coordinator recovers
-    mock_shom_client.get_tide_data.side_effect = None # Clear the error
-    mock_shom_client.get_tide_data.return_value = MOCK_PORT_DATA # Restore mock data
+    mock_api_fetchers.get_tide_data.side_effect = None # Clear the error
+    mock_api_fetchers.get_tide_data.return_value = MOCK_PORT_DATA # Restore mock data
     await coordinator.async_refresh()
     await hass.async_block_till_done()
 

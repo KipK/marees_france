@@ -13,7 +13,7 @@ from tests.conftest import MOCK_CONFIG_ENTRY_DATA
 
 
 async def test_async_setup_entry(
-    hass: HomeAssistant, mock_shom_client: AsyncMock
+    hass: HomeAssistant, init_integration: MockConfigEntry
 ) -> None:
     """Test a successful setup entry."""
     entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA)
@@ -84,9 +84,7 @@ async def test_async_setup_entry(
     # assert state is not None
 
 
-async def test_async_unload_entry(
-    hass: HomeAssistant, mock_shom_client: AsyncMock
-) -> None:
+async def test_async_unload_entry(hass: HomeAssistant, init_integration: MockConfigEntry) -> None:
     """Test a successful unload entry."""
     entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA)
     entry.add_to_hass(hass)
