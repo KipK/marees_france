@@ -289,6 +289,7 @@ export class GraphRenderer {
     this.elementsToKeepSize = [];
     this.currentTimeDotElement = null; // Reset dot reference
     this.currentTimeMarkerData = null; // Reset marker data
+    this.tooltipBottomSvgY = null; // Reset tooltip bottom Y coordinate
 
     const viewBoxWidth = 500;
     const viewBoxHeight = 170;
@@ -727,20 +728,18 @@ export class GraphRenderer {
       .fill('transparent')
       .attr('cursor', 'crosshair') as Rect; // Type assertion
 
-    // Bind interaction handlers once (if not already bound elsewhere, though binding here is fine)
-    if (!this._boundHandleInteractionMove) {
-        this._boundHandleInteractionMove = this._handleInteractionMove.bind(
-          this,
-          interactionGroup,
-          interactionDot
-        );
-    }
-    if (!this._boundHandleInteractionEnd) {
-        this._boundHandleInteractionEnd = this._handleInteractionEnd.bind(
-          this,
-          interactionGroup
-        );
-    }
+    // Always rebind interaction handlers when drawing a new graph
+    // This ensures they reference the current interactionGroup
+    this._boundHandleInteractionMove = this._handleInteractionMove.bind(
+      this,
+      interactionGroup,
+      interactionDot
+    );
+    
+    this._boundHandleInteractionEnd = this._handleInteractionEnd.bind(
+      this,
+      interactionGroup
+    );
 
     // Add event listeners to the overlay
     interactionOverlay.node.addEventListener(
@@ -855,7 +854,7 @@ export class GraphRenderer {
       }
 
       // Update the vertical line position, considering snap status
-      if (this.interactionLine && this.tooltipBottomSvgY !== null) {
+      if (this.interactionLine) {
         let lineStartX: number, lineStartY: number;
 
         // Use yellow dot coords if snapped, otherwise use interpolated coords
@@ -867,16 +866,16 @@ export class GraphRenderer {
           lineStartY = finalY;
         }
 
+        // If tooltipBottomSvgY is valid, use it; otherwise, use a default value
         const lineEndX = lineStartX; // Line is vertical
-        const lineEndY = this.tooltipBottomSvgY; // End at tooltip bottom
+        const lineEndY = (this.tooltipBottomSvgY !== null && this.tooltipBottomSvgY > 0)
+          ? this.tooltipBottomSvgY
+          : this.graphMargin?.top || 0; // Default to top of graph area
 
         // Ensure line doesn't go below the starting point if tooltip is lower
         const plotY2 = Math.min(lineStartY, lineEndY);
 
         this.interactionLine.plot(lineStartX, lineStartY, lineEndX, plotY2); // x1, y1, x2, y2
-      } else if (this.interactionLine) {
-        // Fallback or hide if tooltip Y not set? Hide for now.
-        this.interactionLine.plot(0,0,0,0); // Effectively hide
       }
 
       // Determine which data to show in the tooltip based on snap status
