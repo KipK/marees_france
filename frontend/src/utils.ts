@@ -84,7 +84,7 @@ export function getNextTideStatus(
     return dailyTides
       .map((tideArr: TideEventTuple): ParsedTideEvent | null => {
         if (!Array.isArray(tideArr) || tideArr.length < 3) return null; // Need at least type, time, height
-        const typeStr = tideArr[0]; // "tide.high" or "tide.low"
+        const typeStr = tideArr[0]; // "tide_high" or "tide_low"
         const time = tideArr[1]; // "HH:MM"
         const height = parseFloat(tideArr[2]); // "H.HH" -> number
         const coefficient =
@@ -92,9 +92,9 @@ export function getNextTideStatus(
             ? parseInt(tideArr[3], 10)
             : null; // "CC" or "---" -> number or null
         const type: 'high' | 'low' | null =
-          typeStr === 'tide.high'
+          typeStr === 'tide.high' || typeStr === 'tide_high'
             ? 'high'
-            : typeStr === 'tide.low'
+            : typeStr === 'tide.low' || typeStr === 'tide_low'
               ? 'low'
               : null;
 

@@ -452,8 +452,8 @@ export class GraphRenderer {
           tideArr.length > 3 && tideArr[3] !== '---'
             ? parseInt(tideArr[3], 10)
             : null;
-        const isHigh = typeStr === 'tide.high';
-        const isLow = typeStr === 'tide.low';
+        const isHigh = typeStr === 'tide.high' || typeStr === 'tide_high';
+        const isLow = typeStr === 'tide.low' || typeStr === 'tide_low';
 
         if ((!isHigh && !isLow) || !time || isNaN(height) || !time.includes(':')) return;
 

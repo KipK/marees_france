@@ -95,8 +95,8 @@
                     "tide_trend": {
                         "name": "Tide Trend",
                         "state": {
-                            "tide.high": "High Tide",
-                            "tide.low": "Low Tide"
+                            "tide_high": "High Tide",
+                            "tide_low": "Low Tide"
                         }
                     }
                 }
@@ -122,8 +122,8 @@
                     "tide_trend": {
                         "name": "Tide Trend",
                         "state": {
-                            "tide.high": "High Tide",
-                            "tide.low": "Low Tide"
+                            "tide_high": "High Tide",
+                            "tide_low": "Low Tide"
                         }
                     }
                 }

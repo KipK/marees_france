@@ -431,9 +431,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "coefficient": coeff_value,
                     "datetime_utc": tide_dt_utc.isoformat(),
                     "date_local": day_str,
-                    "translated_type": ( # Use raw constants for internal logic
-                        TIDE_HIGH if tide_type == TIDE_HIGH
-                        else TIDE_LOW if tide_type == TIDE_LOW
+                    "translated_type": ( # Convert dots to underscores for frontend
+                        "tide_high" if tide_type == TIDE_HIGH
+                        else "tide_low" if tide_type == TIDE_LOW
                         else "Unknown"
                     ),
                 }

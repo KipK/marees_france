@@ -73,8 +73,8 @@
                     "tide_trend": {
                         "name": "Tendance Marée",
                         "state": {
-                            "tide.high": "Pleine Mer",
-                            "tide.low": "Basse Mer"
+                            "tide_high": "Pleine Mer",
+                            "tide_low": "Basse Mer"
                         }
                     }
                 }
@@ -90,8 +90,8 @@
                     "tide_trend": {
                         "name": "Tendance Marée",
                         "state": {
-                            "tide.high": "Pleine Mer",
-                            "tide.low": "Basse Mer"
+                            "tide_high": "Pleine Mer",
+                            "tide_low": "Basse Mer"
                         }
                     }
                 }

@@ -20,7 +20,7 @@
   "requirements": [
     "aiohttp>=3.9.0"
   ],
-  "version": "v1.1.2-b2"
+  "version": "v1.1.2"
   
 
   

@@ -65,7 +65,7 @@ from .api_helpers import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = cv.config_entry_only_schema("marees_france")
+CONFIG_SCHEMA = cv.config_entry_only_config_schema("marees_france")
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate a failure to connect to the SHOM API."""
