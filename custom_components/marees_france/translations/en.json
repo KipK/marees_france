@@ -1,96 +1,44 @@
 {
+    "title": "Marées France (SHOM)",
     "config": {
-        "abort": {
-            "already_configured": "Device is already configured",
-            "cannot_connect": "Failed to connect",
-            "unknown": "Unexpected error"
-        },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_harbor": "Selected harbor is invalid. Please choose from the list.",
-            "unknown": "Unexpected error"
-        },
         "step": {
             "user": {
+                "title": "Configure Harbor",
+                "description": "Select the harbor",
                 "data": {
                     "harbor_id": "Harbor Name",
                     "scan_interval": "Update interval (hours)"
-                },
-                "description": "Select the harbor and the update frequency.",
-                "title": "Configure Mar\u00e9es France Harbor"
+                }
             },
             "confirm": {
                 "description": "Please refresh your browser to see the card in Lovelace editor if you've just installed the integration.",
                 "title": "Mar\u00e9es France"
             }
+        },
+        "error": {
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "unknown": "[%key:common::config_flow::error::unknown%]",
+            "invalid_harbor": "Selected harbor is invalid. Please choose from the list."
+        },
+        "abort": {
+            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "unknown": "[%key:common::config_flow::error::unknown%]"
         }
     },
     "options": {
         "step": {
             "init": {
+                "title": "Marées France Options",
+                "description": "Adjust the update frequency for this harbor.",
                 "data": {
                     "scan_interval": "Update interval (hours)"
-                },
-                "description": "Adjust the update frequency for this harbor.",
-                "title": "Mar\u00e9es France Options"
+                }
             }
-        }
+        },
+        "error": {}
     },
-    "services": {
-      "get_water_levels": {
-        "name": "Get Water Levels",
-        "description": "Fetches detailed water level heights for a specific harbor and date.",
-        "fields": {
-          "harbor_name": {
-            "name": "Harbor Name",
-            "description": "The harbor you want the data from."
-          },
-          "date": {
-            "name": "Date",
-            "description": "The date for which to fetch water levels (YYYY-MM-DD format)."
-          }
-        }
-      }
-    },
-    "get_tides_data": {
-        "name": "Get tides data",
-        "description": "Get cached tides data (highs/lows, coefficients).",
-        "fields": {
-            "device_id": {
-                "name": "Harbor",
-                "description": "The harbor you want the data from."
-            }
-        }
-    },
-"get_coefficients_data": {
-        "name": "Get Coefficients Data",
-        "description": "Retrieves cached tide coefficient data for a specific harbor device. Allows filtering by start date and number of days.",
-        "fields": {
-            "device_id": {
-                "name": "Harbor Device",
-                "description": "The Marées France harbor device to get coefficient data for."
-            },
-            "date": {
-                "name": "Start Date (Optional)",
-                "description": "The starting date for which to fetch coefficients (YYYY-MM-DD format)."
-            },
-            "days": {
-                "name": "Number of Days (Optional)",
-                "description": "The number of days (including the start date) to retrieve coefficients for."
-            }
-        }
-    },
-    "reinitialize_harbor_data": {
-      "name": "Reinitialize Harbor Data",
-      "description": "Clears cached data (tides, coefficients, water levels) for a specific harbor and triggers an immediate refetch of the data.",
-      "fields": {
-        "device_id": {
-          "name": "Harbor Device",
-          "description": "The Marées France harbor device whose data should be reinitialized."
-        }
-      }
-    },
-"entity": {
+    "entity": {
         "sensor": {
             "now_tide": {
                 "name": "Current Tide",
@@ -99,11 +47,21 @@
                     "falling": "Falling"
                 },
                 "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Finished Height" },
-                    "finished_time": { "name": "Finished Time" },
-                    "starting_height": { "name": "Starting Height" },
-                    "starting_time": { "name": "Starting Time" },
+                    "coefficient": {
+                        "name": "Coefficient"
+                    },
+                    "finished_height": {
+                        "name": "Finished Height"
+                    },
+                    "finished_time": {
+                        "name": "Finished Time"
+                    },
+                    "starting_height": {
+                        "name": "Starting Height"
+                    },
+                    "starting_time": {
+                        "name": "Starting Time"
+                    },
                     "tide_trend": {
                         "name": "Tide Trend",
                         "state": {
@@ -111,17 +69,29 @@
                             "falling": "Falling"
                         }
                     },
-"current_height": { "name": "Current Height" }
+                    "current_height": {
+                        "name": "Current Height"
+                    }
                 }
             },
             "next_tide": {
                 "name": "Next Tide",
                 "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Finished Height" },
-                    "finished_time": { "name": "Finished Time" },
-                    "starting_height": { "name": "Starting Height" },
-                    "starting_time": { "name": "Starting Time" },
+                    "coefficient": {
+                        "name": "Coefficient"
+                    },
+                    "finished_height": {
+                        "name": "Finished Height"
+                    },
+                    "finished_time": {
+                        "name": "Finished Time"
+                    },
+                    "starting_height": {
+                        "name": "Starting Height"
+                    },
+                    "starting_time": {
+                        "name": "Starting Time"
+                    },
                     "tide_trend": {
                         "name": "Tide Trend",
                         "state": {
@@ -134,11 +104,21 @@
             "previous_tide": {
                 "name": "Previous Tide",
                 "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Finished Height" },
-                    "finished_time": { "name": "Finished Time" },
-                    "starting_height": { "name": "Starting Height" },
-                    "starting_time": { "name": "Starting Time" },
+                    "coefficient": {
+                        "name": "Coefficient"
+                    },
+                    "finished_height": {
+                        "name": "Finished Height"
+                    },
+                    "finished_time": {
+                        "name": "Finished Time"
+                    },
+                    "starting_height": {
+                        "name": "Starting Height"
+                    },
+                    "starting_time": {
+                        "name": "Starting Time"
+                    },
                     "tide_trend": {
                         "name": "Tide Trend",
                         "state": {
@@ -151,26 +131,103 @@
             "next_spring_tide": {
                 "name": "Next Spring Tide",
                 "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Finished Height" },
-                    "finished_time": { "name": "Finished Time" },
-                    "starting_height": { "name": "Starting Height" },
-                    "starting_time": { "name": "Starting Time" },
-                    "tide_trend": { "name": "Tide Trend" }
+                    "coefficient": {
+                        "name": "Coefficient"
+                    },
+                    "finished_height": {
+                        "name": "Finished Height"
+                    },
+                    "finished_time": {
+                        "name": "Finished Time"
+                    },
+                    "starting_height": {
+                        "name": "Starting Height"
+                    },
+                    "starting_time": {
+                        "name": "Starting Time"
+                    },
+                    "tide_trend": {
+                        "name": "Tide Trend"
+                    }
                 }
             },
             "next_neap_tide": {
                 "name": "Next Neap Tide",
                 "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Finished Height" },
-                    "finished_time": { "name": "Finished Time" },
-                    "starting_height": { "name": "Starting Height" },
-                    "starting_time": { "name": "Starting Time" },
-                    "tide_trend": { "name": "Tide Trend" }
+                    "coefficient": {
+                        "name": "Coefficient"
+                    },
+                    "finished_height": {
+                        "name": "Finished Height"
+                    },
+                    "finished_time": {
+                        "name": "Finished Time"
+                    },
+                    "starting_height": {
+                        "name": "Starting Height"
+                    },
+                    "starting_time": {
+                        "name": "Starting Time"
+                    },
+                    "tide_trend": {
+                        "name": "Tide Trend"
+                    }
                 }
             }
         }
     },
-    "title": "Mar\u00e9es France (SHOM)"
+    "services": {
+        "get_water_levels": {
+            "name": "Get Water Levels",
+            "description": "Fetches detailed water level heights for a specific harbor and date.",
+            "fields": {
+                "device_id": {
+                    "name": "Harbor",
+                    "description": "The harbor you want the data from."
+                },
+                "date": {
+                    "name": "Date",
+                    "description": "The date for which to fetch water levels (YYYY-MM-DD format)."
+                }
+            }
+        },
+        "get_tides_data": {
+            "name": "Get Tides Data",
+            "description": "Retrieves cached tides data (highs/lows, coefficients).",
+            "fields": {
+                "device_id": {
+                    "name": "Harbor",
+                    "description": "The harbor you want the data from."
+                }
+            }
+        },
+        "get_coefficients_data": {
+            "name": "Get Coefficients Data",
+            "description": "Retrieves cached tide coefficient data for a specific harbor device. Allows filtering by start date and number of days.",
+            "fields": {
+                "device_id": {
+                    "name": "Harbor Device",
+                    "description": "The Marées France harbor device to get coefficient data for."
+                },
+                "date": {
+                    "name": "Start Date (Optional)",
+                    "description": "The starting date for which to fetch coefficients (YYYY-MM-DD format)."
+                },
+                "days": {
+                    "name": "Number of Days (Optional)",
+                    "description": "The number of days (including the start date) to retrieve coefficients for."
+                }
+            }
+        },
+        "reinitialize_harbor_data": {
+            "name": "Reinitialize Harbor Data",
+            "description": "Clears cached data (tides, coefficients, water levels) for a specific harbor and triggers an immediate refetch of the data.",
+            "fields": {
+                "device_id": {
+                    "name": "Harbor Device",
+                    "description": "The Marées France harbor device whose data should be reinitialized."
+                }
+            }
+        }
+    }
 }
