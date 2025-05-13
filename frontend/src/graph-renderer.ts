@@ -576,7 +576,7 @@ export class GraphRenderer {
     const coefBoxPadding = { x: 6, y: 4 };
     const coefBoxRadius = 4;
     const coefBoxTopMargin = 10;
-    const coefLineToPeakGap = 3;
+    const coefLineToPeakGap = 10; // Increased from 3 for better visual separation
     const dotRadius = 6; // 12px diameter
 
     // Draw Base Elements with anti-aliasing
@@ -686,7 +686,9 @@ export class GraphRenderer {
             if (isNaN(lineStartY) || isNaN(lineEndY) || isNaN(marker.x)) {
                 console.error("GraphRenderer: NaN detected in coefficient line coordinates", marker);
                 // Don't draw the line, but the box/text might be okay
-            } else if (lineEndY > lineStartY) {
+            } else if (lineEndY !== lineStartY) { // Draw if endpoints are different, effectively always if valid
+              // Connects the bottom of the coefficient box (lineStartY)
+              // to the point just above the tide peak (lineEndY)
               coefGroup
                 .line(marker.x, lineStartY, marker.x, lineEndY)
                 .stroke({ color: coefLineColor, width: 1, dasharray: '2,2' })
@@ -702,7 +704,7 @@ export class GraphRenderer {
         // Arrow & Text Group
         try { // Add specific try-catch for arrow/text
           // Use consistent spacing for both high and low tides
-          const TEXT_SPACING = 16; // Standard spacing from curve for both high and low
+          const TEXT_SPACING = 10; // Standard spacing from curve for both high and low
           const arrowYOffset = marker.isHigh ? arrowSize * 2.1 : -arrowSize * 2.1; // Same magnitude for both
           const textLineHeight = tideTimeFontSize * 1.2; // Slightly increased for better readability
           const arrowGroup = draw.group() as G;
