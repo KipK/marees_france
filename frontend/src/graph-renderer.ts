@@ -38,9 +38,6 @@ export class GraphRenderer {
   // Array of SVG elements (like text, groups) that need to maintain their apparent size when the SVG viewbox scales.
   private elementsToKeepSize: Array<SvgElement | G | Text | Path | Line> = [];
 
-  // --- Drawing Constants ---
-  private static readonly ARROW_TO_TEXT_VERTICAL_OFFSET = 5; // Pixels between arrow tip and text block
-
   // Graph properties
   private graphMargin: GraphMargins | null = null;
   private graphWidth: number | null = null;
@@ -413,7 +410,7 @@ export class GraphRenderer {
 
     // Calculate initial domain with padding
     this.yDomainMax = maxHeight + DEFAULT_Y_PADDING_METERS;
-    this.yDomainMin = Math.min(0, minHeight - DEFAULT_Y_PADDING_METERS);
+    this.yDomainMin = Math.max(0, minHeight - DEFAULT_Y_PADDING_METERS);
 
     // Ensure minimum range ratio for small variations
     const range = this.yDomainMax - this.yDomainMin;
@@ -685,24 +682,21 @@ export class GraphRenderer {
         // Arrow & Text Group
         try { // Add specific try-catch for arrow/text
           // Use consistent spacing for both high and low tides
-          // const TEXT_SPACING = 16; // Replaced by ARROW_TO_TEXT_VERTICAL_OFFSET
-          // const arrowYOffset = marker.isHigh ? arrowSize * 2.1 : -arrowSize * 2.1; // REMOVED - This was causing the large displacement
+          const TEXT_SPACING = 16; // Standard spacing from curve for both high and low
+          const arrowYOffset = marker.isHigh ? arrowSize * 2.1 : -arrowSize * 2.1; // Same magnitude for both
           const textLineHeight = tideTimeFontSize * 1.2; // Slightly increased for better readability
           const arrowGroup = draw.group() as G;
 
           let arrowPathData: string;
-          const arrowTipActualY = marker.y; // Arrow tip is always at marker.y
-          const arrowHalfWidth = arrowSize / 2;
-
-          if (marker.isHigh) { // Upward arrow, tip at (marker.x, arrowTipActualY)
-            const arrowBaseY = arrowTipActualY + arrowSize; // Base is 'arrowSize' pixels below the tip
-            arrowPathData = `M ${marker.x - arrowHalfWidth},${arrowBaseY} L ${marker.x + arrowHalfWidth},${arrowBaseY} L ${marker.x},${arrowTipActualY} Z`;
-          } else { // Downward arrow, tip at (marker.x, arrowTipActualY)
-            const arrowBaseY = arrowTipActualY - arrowSize; // Base is 'arrowSize' pixels above the tip
-            arrowPathData = `M ${marker.x - arrowHalfWidth},${arrowBaseY} L ${marker.x + arrowHalfWidth},${arrowBaseY} L ${marker.x},${arrowTipActualY} Z`;
+          const arrowY = marker.y + arrowYOffset;
+          // Arrow path with consistent proportions
+          if (marker.isHigh) {
+            arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x},${arrowY - arrowSize * 0.4} Z`;
+          } else {
+            arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x},${arrowY + arrowSize * 0.4} Z`;
           }
 
-          if (isNaN(marker.x) || isNaN(arrowTipActualY)) {
+          if (isNaN(marker.x) || isNaN(arrowY)) {
              console.error("GraphRenderer: NaN detected in arrow path coordinates", marker);
              return; // Skip drawing arrow/text for this marker
           }
@@ -710,21 +704,15 @@ export class GraphRenderer {
           arrowGroup.path(arrowPathData).fill(primaryTextColor).stroke('none');
 
           let timeTextY: number, heightTextY: number;
-          // const arrowTipOffset = arrowSize * 0.4; // This logic is now incorporated into pathRefY for tip at marker.y
-          const approxTimeAscent = tideTimeFontSize * 0.75; // Approximate ascent (distance from baseline to top)
-          const approxHeightDescent = tideHeightFontSize * 0.25; // Approximate descent (distance from baseline to bottom)
+          const arrowTipOffset = arrowSize * 0.4;
 
-          // approxTimeAscent and approxHeightDescent are already defined above at lines 714-715
-
-          if (marker.isHigh) { // Arrow points up, text below.
-            // Distance D from top of Time data to bottom of arrow (arrow base)
-            // timeTextY = marker.y (arrowTip) + arrowSize (to get to arrowBase) + D + approxTimeAscent
-            timeTextY = marker.y + arrowSize + GraphRenderer.ARROW_TO_TEXT_VERTICAL_OFFSET + approxTimeAscent;
+          if (marker.isHigh) { // Arrow points up, text below
+            const arrowTipY = arrowY - arrowTipOffset;
+            timeTextY = arrowTipY + TEXT_SPACING;
             heightTextY = timeTextY + textLineHeight;
-          } else { // Arrow points down, text above.
-            // Distance D from top of arrow (arrow base) to bottom of Height data
-            // heightTextY = marker.y (arrowTip) - arrowSize (to get to arrowBase) - D - approxHeightDescent
-            heightTextY = marker.y - arrowSize - GraphRenderer.ARROW_TO_TEXT_VERTICAL_OFFSET - approxHeightDescent;
+          } else { // Arrow points down, text above
+            const arrowTipY = arrowY + arrowTipOffset;
+            heightTextY = arrowTipY - TEXT_SPACING - textLineHeight;
             timeTextY = heightTextY - textLineHeight;
           }
 
