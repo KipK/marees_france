@@ -85,7 +85,7 @@ export class GraphRenderer {
       }
       // Initialize svg.js instance with viewBox for scaling
       // Use type assertion if SVG() return type is not specific enough
-      this.svgDraw = SVG().addTo(this.svgContainer).viewbox(0, 0, 500, 170) as Svg;
+      this.svgDraw = SVG().addTo(this.svgContainer).viewbox(0, 0, 500, 190) as Svg;
     } else {
       console.error(
         'GraphRenderer: SVG container not provided during initialization.'
@@ -294,7 +294,7 @@ export class GraphRenderer {
     this.tooltipBottomSvgY = null; // Reset tooltip bottom Y coordinate
 
     const viewBoxWidth = 500;
-    const viewBoxHeight = 170;
+    const viewBoxHeight = 190;
     const locale = this.hass.language || 'en';
 
     // --- 1. Check for Errors or Missing Data ---
@@ -360,7 +360,7 @@ export class GraphRenderer {
     }
 
     // --- SVG Dimensions and Margins ---
-    this.graphMargin = { top: 55, right: 15, bottom: 35, left: 15 };
+    this.graphMargin = { top: 55, right: 15, bottom: 27.2, left: 15 };
     this.graphWidth =
       viewBoxWidth - this.graphMargin.left - this.graphMargin.right;
     this.graphHeight =
@@ -437,7 +437,6 @@ export class GraphRenderer {
 
     // --- Generate SVG Path Data Strings ---
     // Calculate Y coordinate for height = 0 (sea level) - used for both fill path and axis labels
-    const yOfZero = this._heightToY(0);
 
     const pathData = this.pointsData
       .map((p, index) => {
@@ -451,7 +450,8 @@ export class GraphRenderer {
     const lastPointX = this._timeToX(
       this.pointsData[this.pointsData.length - 1].totalMinutes
     );
-    const fillPathData = `M ${firstPointX.toFixed(2)} ${yOfZero} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${yOfZero} Z`;
+    const fillAreaBottomY = this.graphMargin!.top + this.graphHeight!;
+    const fillPathData = `M ${firstPointX.toFixed(2)} ${fillAreaBottomY.toFixed(2)} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${fillAreaBottomY.toFixed(2)} Z`;
 
     // --- Calculate Ticks and Markers Data ---
     const xTicks: { x: number; label: string }[] = [];
@@ -602,7 +602,7 @@ export class GraphRenderer {
             anchor: 'middle',
             weight: 'normal',
           })
-          .move(tick.x, yOfZero + axisFontSize * 0.8); // Position labels relative to 0-meter line
+          .move(tick.x, viewBoxHeight - (axisFontSize * 0.8)); // Position labels relative to 0-meter line
         this.elementsToKeepSize.push(textEl);
       }
     });
