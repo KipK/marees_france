@@ -46,6 +46,7 @@ export class GraphRenderer {
   private curveMinMinutes: number | null = null;
   private curveMaxMinutes: number | null = null;
   private yDomainMin: number | null = null;
+  private yDomainMax: number | null = null;  // Add yDomainMax property
   private yRange: number | null = null;
   private currentTimeMarkerData: CurrentTimeMarkerData | null = null; // Store current time marker info
   private currentTimeDotElement: Circle | null = null; // Store reference to the yellow dot SVG element
@@ -103,6 +104,7 @@ export class GraphRenderer {
       !this.graphMargin ||
       this.graphHeight === null ||
       this.yDomainMin === null ||
+      this.yDomainMax === null ||
       !this.yRange
     )
       return 0;
@@ -401,13 +403,42 @@ export class GraphRenderer {
         this.pointsData[this.pointsData.length - 1].totalMinutes;
     }
 
-    // Adjust Y domain slightly for padding
-    const yPadding = (maxHeight - minHeight) * 0.1 || 0.5;
-    this.yDomainMin = Math.max(0, minHeight - yPadding);
-    const yDomainMax = maxHeight + yPadding;
-    this.yRange = Math.max(1, yDomainMax - this.yDomainMin); // Ensure yRange is at least 1
+    // Constants for Y-axis scaling
+    const DEFAULT_Y_PADDING_METERS = 0.2; // Standard padding
+    const TEXT_SPACING = 16; // Pixels for text spacing from curve
+    const MIN_RANGE_RATIO = 1.2; // Minimum ratio between max and min height
+
+    // Calculate initial domain with padding
+    this.yDomainMax = maxHeight + DEFAULT_Y_PADDING_METERS;
+    this.yDomainMin = Math.max(0, minHeight - DEFAULT_Y_PADDING_METERS);
+
+    // Ensure minimum range ratio for small variations
+    const range = this.yDomainMax - this.yDomainMin;
+    const minRange = maxHeight / MIN_RANGE_RATIO;
+    if (range < minRange) {
+      // Expand range while keeping center point
+      const center = (maxHeight + minHeight) / 2;
+      const halfRange = Math.max(minRange, range) / 2;
+      this.yDomainMax = center + halfRange + DEFAULT_Y_PADDING_METERS;
+      this.yDomainMin = Math.max(0, center - halfRange - DEFAULT_Y_PADDING_METERS);
+    }
+
+    // Ensure text spacing by adjusting domain if needed
+    const textSpacingInMeters = (TEXT_SPACING / this.graphHeight) * range;
+    if (minHeight > 0 && minHeight - this.yDomainMin < textSpacingInMeters) {
+      this.yDomainMin = Math.max(0, minHeight - textSpacingInMeters);
+    }
+
+    // Calculate final range
+    this.yRange = this.yDomainMax - this.yDomainMin;
+
+    // Ensure non-zero range
+    this.yRange = Math.max(0.01, this.yRange);
 
     // --- Generate SVG Path Data Strings ---
+    // Calculate Y coordinate for height = 0 (sea level) - used for both fill path and axis labels
+    const yOfZero = this._heightToY(0);
+
     const pathData = this.pointsData
       .map((p, index) => {
         const x = this._timeToX(p.totalMinutes);
@@ -416,12 +447,11 @@ export class GraphRenderer {
       })
       .join(' ');
 
-    const xAxisY = this.graphMargin.top + this.graphHeight;
     const firstPointX = this._timeToX(this.pointsData[0].totalMinutes);
     const lastPointX = this._timeToX(
       this.pointsData[this.pointsData.length - 1].totalMinutes
     );
-    const fillPathData = `M ${firstPointX.toFixed(2)} ${xAxisY} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${xAxisY} Z`;
+    const fillPathData = `M ${firstPointX.toFixed(2)} ${yOfZero} ${pathData.replace(/^M/, 'L')} L ${lastPointX.toFixed(2)} ${yOfZero} Z`;
 
     // --- Calculate Ticks and Markers Data ---
     const xTicks: { x: number; label: string }[] = [];
@@ -529,12 +559,19 @@ export class GraphRenderer {
     const coefLineToPeakGap = 3;
     const dotRadius = 6; // 12px diameter
 
-    // Draw Base Elements
+    // Draw Base Elements with anti-aliasing
     draw
       .path(fillPathData)
       .fill({ color: curveColor, opacity: 0.4 })
-      .stroke('none');
-    draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 });
+      .stroke('none')
+      .attr('shape-rendering', 'geometricPrecision')
+      .attr('vector-effect', 'non-scaling-stroke');
+    draw
+      .path(pathData)
+      .fill('none')
+      .stroke({ color: curveColor, width: 2 })
+      .attr('shape-rendering', 'geometricPrecision')
+      .attr('vector-effect', 'non-scaling-stroke');
 
     // --- Interaction Elements (Hover/Touch for Blue Dot) ---
     const interactionGroup = draw
@@ -554,7 +591,7 @@ export class GraphRenderer {
       .fill('var(--info-color, blue)')
       .attr('pointer-events', 'none') as Circle; // Type assertion
 
-    // Draw X Axis Labels
+    // Draw X Axis Labels (at height = 0, using previously calculated yOfZero)
     xTicks.forEach((tick) => {
       if (tick.label) {
         const textEl = draw
@@ -565,7 +602,7 @@ export class GraphRenderer {
             anchor: 'middle',
             weight: 'normal',
           })
-          .move(tick.x, xAxisY + 10);
+          .move(tick.x, yOfZero + axisFontSize * 0.8); // Position labels relative to 0-meter line
         this.elementsToKeepSize.push(textEl);
       }
     });
@@ -644,19 +681,18 @@ export class GraphRenderer {
 
         // Arrow & Text Group
         try { // Add specific try-catch for arrow/text
-          const arrowYOffset = marker.isHigh ? arrowSize * 2.0 : -arrowSize * 2.2;
-          const textLineHeight = tideTimeFontSize * 1.1;
-          const visualPadding = 8; // Padding between arrow and text
+          // Use consistent spacing for both high and low tides
+          const TEXT_SPACING = 16; // Standard spacing from curve for both high and low
+          const arrowYOffset = marker.isHigh ? arrowSize * 2.1 : -arrowSize * 2.1; // Same magnitude for both
+          const textLineHeight = tideTimeFontSize * 1.2; // Slightly increased for better readability
           const arrowGroup = draw.group() as G;
 
           let arrowPathData: string;
           const arrowY = marker.y + arrowYOffset;
-          // Revert arrow path logic to match original JS (High tide points UP, Low tide points DOWN)
+          // Arrow path with consistent proportions
           if (marker.isHigh) {
-            // Pointing UP (Original JS logic for High Tide)
             arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${marker.x},${arrowY - arrowSize * 0.4} Z`;
           } else {
-            // Pointing DOWN (Original JS logic for Low Tide)
             arrowPathData = `M ${marker.x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${marker.x},${arrowY + arrowSize * 0.4} Z`;
           }
 
@@ -669,16 +705,14 @@ export class GraphRenderer {
 
           let timeTextY: number, heightTextY: number;
           const arrowTipOffset = arrowSize * 0.4;
-          const timeAscent = tideTimeFontSize * 0.8; // Approximate ascent
-          const heightDescent = tideHeightFontSize * 0.2; // Approximate descent
 
           if (marker.isHigh) { // Arrow points up, text below
             const arrowTipY = arrowY - arrowTipOffset;
-            timeTextY = arrowTipY + visualPadding + timeAscent - 10;
+            timeTextY = arrowTipY + TEXT_SPACING;
             heightTextY = timeTextY + textLineHeight;
           } else { // Arrow points down, text above
             const arrowTipY = arrowY + arrowTipOffset;
-            heightTextY = arrowTipY - visualPadding - heightDescent - 22;
+            heightTextY = arrowTipY - TEXT_SPACING - textLineHeight;
             timeTextY = heightTextY - textLineHeight;
           }
 
@@ -983,6 +1017,7 @@ export class GraphRenderer {
     this.currentTimeDotElement = null; // Clear reference
     this.interactionLine = null; // Clear reference
     this.tooltipBottomSvgY = null; // Clear reference
+    this.yDomainMax = null; // Clear yDomainMax reference
   } // End of destroy method
 
   /**
