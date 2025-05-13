@@ -408,32 +408,52 @@ export class GraphRenderer {
     const TEXT_SPACING = 16; // Pixels for text spacing from curve
     const MIN_RANGE_RATIO = 1.2; // Minimum ratio between max and min height
 
-    // Calculate initial domain with padding
-    this.yDomainMax = maxHeight + DEFAULT_Y_PADDING_METERS;
-    this.yDomainMin = Math.max(0, minHeight - DEFAULT_Y_PADDING_METERS);
+    // --- Y-Axis Scaling: Center Median Height ---
 
-    // Ensure minimum range ratio for small variations
-    const range = this.yDomainMax - this.yDomainMin;
-    const minRange = maxHeight / MIN_RANGE_RATIO;
-    if (range < minRange) {
-      // Expand range while keeping center point
-      const center = (maxHeight + minHeight) / 2;
-      const halfRange = Math.max(minRange, range) / 2;
-      this.yDomainMax = center + halfRange + DEFAULT_Y_PADDING_METERS;
-      this.yDomainMin = Math.max(0, center - halfRange - DEFAULT_Y_PADDING_METERS);
+    // 1. Calculate Key Heights
+    const medianHeight = (minHeight + maxHeight) / 2;
+
+    // 2. Determine Necessary `halfSpan` for Y-Axis
+    // Span for Data & Padding
+    const spanToCoverMax = (maxHeight + DEFAULT_Y_PADDING_METERS) - medianHeight;
+    const spanToCoverMin = medianHeight - Math.max(0, minHeight - DEFAULT_Y_PADDING_METERS);
+    const dataRequiredHalfSpan = Math.max(spanToCoverMax, spanToCoverMin, 0.005); // Miniscule default if all heights are equal
+
+    // Span for MIN_RANGE_RATIO
+    const minTotalSpanFromRatio = (maxHeight > 0) ? maxHeight / MIN_RANGE_RATIO : 0.01; // Ensure maxHeight > 0
+    const minRatioHalfSpan = minTotalSpanFromRatio / 2;
+
+    // Final halfSpan
+    const finalHalfSpan = Math.max(dataRequiredHalfSpan, minRatioHalfSpan);
+
+    // 3. Set Initial `yDomainMin` and `yDomainMax` Centered on `medianHeight`
+    this.yDomainMin = medianHeight - finalHalfSpan;
+    this.yDomainMax = medianHeight + finalHalfSpan;
+
+    // 4. Adjust if `this.yDomainMin` is Below Zero
+    if (this.yDomainMin < 0) {
+      const shiftAmount = -this.yDomainMin;
+      this.yDomainMin = 0;
+      this.yDomainMax += shiftAmount;
     }
 
-    // Ensure text spacing by adjusting domain if needed
-    const textSpacingInMeters = (TEXT_SPACING / this.graphHeight) * range;
-    if (minHeight > 0 && minHeight - this.yDomainMin < textSpacingInMeters) {
-      this.yDomainMin = Math.max(0, minHeight - textSpacingInMeters);
+    // 5. Adjust for Text Spacing Below Low Tides (Symmetrically)
+    // This ensures enough space for text labels below the curve if minHeight is close to yDomainMin.
+    let currentRangeForTextCalc = this.yDomainMax - this.yDomainMin;
+    const textSpacingInMeters = (this.graphHeight !== null && this.graphHeight > 0 && currentRangeForTextCalc > 0)
+                                  ? (TEXT_SPACING / this.graphHeight) * currentRangeForTextCalc
+                                  : 0;
+    const targetMinDomainForText = Math.max(0, minHeight - textSpacingInMeters);
+
+    if (this.yDomainMin > targetMinDomainForText) { // yDomainMin is too high, not enough space
+      const adjustmentNeeded = this.yDomainMin - targetMinDomainForText;
+      this.yDomainMin -= adjustmentNeeded;
+      this.yDomainMax += adjustmentNeeded; // Symmetrically adjust yDomainMax
     }
 
-    // Calculate final range
+    // 6. Calculate Final `this.yRange`
     this.yRange = this.yDomainMax - this.yDomainMin;
-
-    // Ensure non-zero range
-    this.yRange = Math.max(0.01, this.yRange);
+    this.yRange = Math.max(0.01, this.yRange); // Ensure non-zero range
 
     // --- Generate SVG Path Data Strings ---
     // Calculate Y coordinate for height = 0 (sea level) - used for both fill path and axis labels
