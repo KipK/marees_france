@@ -16,11 +16,11 @@
   "loggers": [
     "marees_france"
   ],
-  "quality_scale": "silver",
+  "quality_scale": "platinium",
   "requirements": [
     "aiohttp>=3.9.0"
   ],
-  "version": "v1.1.2"
+  "version": "v1.1.2.1"
   
 
   
