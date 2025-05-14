@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import asyncio
 from datetime import date, timedelta
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any
 
 import aiohttp
 

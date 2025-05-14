@@ -222,8 +222,8 @@ def reduce_timeouts():
     # when it's instantiated
     original_init = MareesFranceUpdateCoordinator.__init__
 
-    def patched_init(self, hass, entry, tides_store, coeff_store, water_level_store):
-        original_init(self, hass, entry, tides_store, coeff_store, water_level_store)
+    def patched_init(self, hass, entry, tides_store, coeff_store, water_level_store, websession=None):
+        original_init(self, hass, entry, tides_store, coeff_store, water_level_store, websession=websession)
         self.update_interval = timedelta(seconds=0.1)
 
     with (

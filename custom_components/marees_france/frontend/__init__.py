@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
