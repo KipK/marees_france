@@ -82,7 +82,7 @@ Same attributes as above, for the last tide event.
 
 ## 🛠️ Available Services
 
-Three services are available:
+Four services are available:
 
 ### 1. Fetch tide data
 
@@ -110,6 +110,33 @@ data:
   date: "2025-04-26"
   days: 10
 ```
+
+### 4. Reset harbor data
+
+```yaml
+action: marees_france.reinitialize_harbor_data
+data:
+  device_id: xxxxxxxxxx
+```
+
+---
+
+## Troubleshooting
+
+After updating the integration, refresh your browser to load the new custom card.
+If you've not installed it with HACS, you will perhaps have to clear your browser cache first.
+
+## Fetch policy
+
+Integration coordinator fetch data from Shom.fr and stores them in cache.
+It then sabity check the cache everyday at a random time, if there's missing or corrupted data it will get missing ones autonomously.
+
+---
+
+## Uninstall
+
+Delete all harbors from Settings/Devices/Marées France
+Then remove the integration from HACS or delete the custom_components/marees_france folder
 
 ---
 
@@ -141,12 +168,14 @@ To generate documentation:
 npm run docs
 ```
 
-### Unit Tests ###
+### Unit Tests
 
 ```bash
 pip install -r requirements-test.txt
 npm run test
 ```
+
+---
 
 ## 🎯 Notes
 

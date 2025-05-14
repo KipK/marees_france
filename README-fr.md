@@ -82,8 +82,7 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 
 ## 🛠️ Services disponibles
 
-
-Trois services sont disponibles :
+Quatres services sont disponibles :
 
 ### 1. Récupérer les données de marées
 
@@ -112,7 +111,20 @@ data:
   days: 10
 ```
 
+### 4. Réinitialiser les données du port
+
+```yaml
+action: marees_france.reinitialize_harbor_data
+data:
+  device_id: xxxxxxxxxx
+```
+
 ---
+
+## Dépannage
+
+Après avoir mis à jour l'intégration, rafraîchissez votre navigateur pour charger la nouvelle carte personnalisée.
+Si vous ne l'avez pas installée avec HACS, vous devrez peut-être d'abord vider le cache de votre navigateur.
 
 ## 🛠️ Développement
 
@@ -132,7 +144,6 @@ npm run build
 Le build sera généré dans :  
 `custom_components/marees_info/frontend`
 
-
 ### Documentation build
 
 Pour générer la documentation:
@@ -141,12 +152,26 @@ Pour générer la documentation:
 npm run docs
 ```
 
-### Tests Unitaires ###
+### Tests Unitaires
 
 ```bash
 pip install -r requirements-test.txt
 npm run test
 ```
+
+---
+
+## Politique de récupération des données
+
+Le coordinateur de l'intégration récupère les données depuis Shom.fr et les stocke en cache.
+Il effectue ensuite une vérification de l'intégrité du cache quotidiennement à une heure aléatoire. S'il y a des données manquantes ou corrompues, il récupérera automatiquement les données manquantes de façon autonome.
+
+---
+
+## Désinstaller
+
+Supprimez les ports dans Paramètres/Appareils/Marées France
+Puis retirez l'intégration depuis HACS ou effacez le dossier custom_components/marees_france folder.
 
 ---
 
