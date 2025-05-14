@@ -16,7 +16,7 @@
   "loggers": [
     "marees_france"
   ],
-  "quality_scale": "platinium",
+  "quality_scale": "platinum",
   "requirements": [
     "aiohttp>=3.9.0"
   ],
