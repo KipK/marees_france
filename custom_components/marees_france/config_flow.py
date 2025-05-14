@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, Mapping, cast
 
 import voluptuous as vol
 
@@ -92,7 +92,7 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-        harbor_options = {
+        harbor_options: dict[str, str] = {
             k: v.get("display", v.get("name", k))
             for k, v in (self._harbors_cache or {}).items()
             if isinstance(v, dict)

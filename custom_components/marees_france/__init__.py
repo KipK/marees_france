@@ -11,7 +11,7 @@ import logging
 import asyncio
 from datetime import date, timedelta
 import random
-from typing import Any
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, cast
 
 # Third-party imports
 import aiohttp
@@ -1034,7 +1034,7 @@ async def async_register_frontend_modules_when_ready(hass: HomeAssistant):
     _LOGGER.debug("Marées France: Registered Marées France frontend module.")
 
 
-async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
+async def async_setup(hass: HomeAssistant, _config: dict[str, Any]) -> bool:
     """Set up the Marées France component.
 
     This function is called by Home Assistant during the setup phase.
@@ -1048,7 +1048,7 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
         True, indicating successful setup.
     """
 
-    async def _setup_frontend(_event=None):
+    async def _setup_frontend(_event: Any = None) -> None:
         """Inner function to register frontend modules."""
         await async_register_frontend_modules_when_ready(hass)
 
@@ -1162,7 +1162,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     listeners = []
 
-    async def _daily_water_level_prefetch_job(*_):
+    async def _daily_water_level_prefetch_job(*_: Any) -> None:
         _LOGGER.debug("Marées France: Running daily water level prefetch job.")
         await async_check_and_prefetch_water_levels(hass, entry, water_level_store)
 
@@ -1183,7 +1183,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
 
-    async def _daily_tides_prefetch_job(*_):
+    async def _daily_tides_prefetch_job(*_: Any) -> None:
         _LOGGER.debug("Marées France: Running daily tides prefetch job.")
         await async_check_and_prefetch_tides(hass, entry, tides_store)
 
@@ -1206,7 +1206,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
 
-    async def _daily_coefficients_prefetch_job(*_):
+    async def _daily_coefficients_prefetch_job(*_: Any) -> None:
         _LOGGER.debug("Marées France: Running daily coefficients prefetch job.")
         try:
             await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
@@ -1244,7 +1244,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
 
-    def _unload_listeners():
+    def _unload_listeners() -> None:
         _LOGGER.debug("Marées France: Removing daily prefetch listeners.")
         for remove_listener in listeners:
             remove_listener()

@@ -3,6 +3,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, cast
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
@@ -21,14 +22,14 @@ class JSModuleRegistration:
         self.hass = hass
         self.lovelace = self.hass.data.get("lovelace")
 
-    async def async_register(self):
+    async def async_register(self) -> None:
         """Register view_assist path."""
         await self._async_register_path()
         if self.lovelace.mode == "storage":
             await self._async_wait_for_lovelace_resources()
 
     # install card resources
-    async def _async_register_path(self):
+    async def _async_register_path(self) -> None:
         """Register resource path if not already registered."""
         try:
             await self.hass.http.async_register_static_paths(
@@ -42,7 +43,7 @@ class JSModuleRegistration:
     async def _async_wait_for_lovelace_resources(self) -> None:
         """Wait for lovelace resources to have loaded."""
 
-        async def _check_lovelace_resources_loaded(_now):
+        async def _check_lovelace_resources_loaded(_now: Any) -> None:
             if self.lovelace.resources.loaded:
                 await self._async_register_modules()
             else:
@@ -54,7 +55,7 @@ class JSModuleRegistration:
 
         await _check_lovelace_resources_loaded(0)
 
-    async def _async_register_modules(self):
+    async def _async_register_modules(self) -> None:
         """Register modules if not already registered."""
         _LOGGER.debug("Installing javascript modules")
 
@@ -109,15 +110,15 @@ class JSModuleRegistration:
                     {"res_type": "module", "url": url + "?v=" + module.get("version")}
                 )
 
-    def _get_resource_path(self, url: str):
+    def _get_resource_path(self, url: str) -> str:
         return url.split("?")[0]
 
-    def _get_resource_version(self, url: str):
+    def _get_resource_version(self, url: str) -> str:
         if version := url.split("?")[1].replace("v=", ""):
             return version
         return 0
 
-    async def async_unregister(self):
+    async def async_unregister(self) -> None:
         """Unload lovelace module resource."""
         if self.lovelace.mode == "storage":
             for module in JSMODULES:
@@ -131,11 +132,11 @@ class JSModuleRegistration:
                 for resource in integration_resources:
                     await self.lovelace.resources.async_delete_item(resource.get("id"))
 
-    async def async_remove_gzip_files(self):
+    async def async_remove_gzip_files(self) -> None:
         """Remove cached gzip files."""
         await self.hass.async_add_executor_job(self.remove_gzip_files)
 
-    def remove_gzip_files(self):
+    def remove_gzip_files(self) -> None:
         """Remove cached gzip files."""
         # Corrected path for marees_france
         path = self.hass.config.path("custom_components/marees_france/frontend")

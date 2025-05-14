@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 import logging
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, TypeVar, cast
 
+import aiohttp
 import pytz
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -40,6 +42,7 @@ from .api_helpers import (
 
 _LOGGER = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
 class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Manages fetching, caching, and processing of Marées France data.
@@ -101,11 +104,12 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 Store[dict[str, dict[str, Any]]],
                 dict[str, dict[str, Any]],
                 str,
-                Any,
+                *Any,
+                aiohttp.ClientSession | None,
             ],
-            Coroutine[Any, Any, bool | Any | None],
+            Coroutine[Any, Any, bool | dict[str, Any] | None],
         ],
-        fetch_args: tuple,
+        fetch_args: tuple[Any, ...],
     ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
         """Validate cache for the harbor, repair if needed, and return caches.
 
@@ -411,7 +415,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self,
         tides_raw_data: dict[str, list[list[str]]],
         coeff_raw_data: dict[str, list[str]],
-        water_level_raw_data: dict | None,
+        water_level_raw_data: dict[str, list[list[str]]] | None,
         _translation_high: str,  # Parameter kept for signature, but not used directly
         _translation_low: str,  # Parameter kept for signature, but not used directly
     ) -> dict[str, Any]:
@@ -594,7 +598,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "calculation. Received data: %s",
             water_level_raw_data,
         )
-        water_levels = None
+        water_levels: list[list[str]] | None = None
         today_str_key = date.today().strftime(DATE_FORMAT)
 
         if isinstance(water_level_raw_data, dict) and isinstance(
@@ -604,7 +608,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "Marées France Coordinator: Extracting water levels using key '%s'.",
                 today_str_key,
             )
-            water_levels = water_level_raw_data[today_str_key]
+            water_levels = cast(list[list[str]], water_level_raw_data[today_str_key])
         elif (
             water_level_raw_data is not None
         ):  # Log if data is present but not in expected format

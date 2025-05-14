@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import asyncio
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, Dict, List, Optional, Union, cast
 
 import aiohttp
 
@@ -28,11 +28,11 @@ _LOGGER = logging.getLogger(__name__)
 async def _async_fetch_with_retry(
     session: aiohttp.ClientSession,
     url: str,
-    headers: dict,
+    headers: dict[str, str],
     timeout: int,
     harbor_id: str,
     data_type: str,
-) -> dict | list | None:
+) -> dict[str, Any] | list[Any] | None:
     """Fetch data from a URL with retry logic and a mandatory delay.
 
     This function attempts to fetch data from the given URL up to `max_retries`
@@ -142,7 +142,7 @@ async def _async_fetch_and_store_water_level(
     harbor_name: str,
     date_str: str,
     websession: aiohttp.ClientSession | None = None,
-) -> Any | None:
+) -> dict[str, list[list[str]]] | None:
     """Fetch water level data, validate, store in cache, and save.
 
     Args:

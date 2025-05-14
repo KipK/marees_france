@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable, Dict, List, Mapping, Optional, Set, cast
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -176,7 +176,9 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
     @property
     def _sensor_data(self) -> dict[str, Any] | None:
         """Helper to get the 'now_data' block from the coordinator."""
-        return self.coordinator.data.get("now_data") if self.coordinator.data else None
+        if not self.coordinator.data:
+            return None
+        return cast(dict[str, Any] | None, self.coordinator.data.get("now_data"))
 
     @property
     def native_value(self) -> str | None:
@@ -189,7 +191,7 @@ class MareesFranceNowSensor(MareesFranceBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attributes like current height, coefficient, start/end times and heights."""
         if self.available and self._sensor_data:
-            attrs = {}
+            attrs: dict[str, Any] = {}
             for key in [
                 ATTR_TIDE_TREND,
                 ATTR_CURRENT_HEIGHT,
@@ -241,7 +243,7 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     def _sensor_data(self) -> dict[str, Any] | None:
         """Helper to get the specific data block (e.g., 'next_data') from coordinator."""
         if self.coordinator.data:
-            return self.coordinator.data.get(f"{self._sensor_key_suffix}_data")
+            return cast(dict[str, Any] | None, self.coordinator.data.get(f"{self._sensor_key_suffix}_data"))
         return None
 
     @property
@@ -265,7 +267,7 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attributes like tide type, height, coefficient."""
         if self.available and self._sensor_data:
-            return self._sensor_data  # The whole block is relevant
+            return cast(dict[str, Any], self._sensor_data)  # The whole block is relevant
         return None
 
 
@@ -343,7 +345,7 @@ class MareesFranceNextSpecialTideSensor(MareesFranceBaseSensor):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return the coefficient as an attribute."""
-        if self.available:
+        if self.available and self.coordinator.data:
             # Determine attribute key based on sensor type
             coeff_key = (
                 "next_spring_coeff"
