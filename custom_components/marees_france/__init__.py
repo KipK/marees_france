@@ -379,7 +379,12 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
 
         today_str = today.strftime(DATE_FORMAT)
         if not await _async_fetch_and_store_water_level(
-            hass, water_level_store, water_level_cache_full, harbor_id, today_str, websession=websession
+            hass,
+            water_level_store,
+            water_level_cache_full,
+            harbor_id,
+            today_str,
+            websession=websession,
         ):
             fetch_errors.append("water levels")
 
@@ -626,7 +631,13 @@ async def async_check_and_prefetch_tides(
     if needs_fetch:
         websession = async_get_clientsession(hass)
         fetch_successful = await _async_fetch_and_store_tides(
-            hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration, websession=websession
+            hass,
+            store,
+            cache,
+            harbor_id,
+            yesterday_str,
+            duration=fetch_duration,
+            websession=websession,
         )
         if fetch_successful:
             _LOGGER.info(
@@ -874,7 +885,13 @@ async def async_check_and_prefetch_coefficients(
 
         websession = async_get_clientsession(hass)
         fetch_successful = await _async_fetch_and_store_coefficients(
-            hass, store, cache, harbor_id, fetch_start_date, fetch_days, websession=websession
+            hass,
+            store,
+            cache,
+            harbor_id,
+            fetch_start_date,
+            fetch_days,
+            websession=websession,
         )
         if fetch_successful:
             _LOGGER.info(

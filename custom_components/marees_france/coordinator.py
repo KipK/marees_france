@@ -44,6 +44,7 @@ _LOGGER = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+
 class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Manages fetching, caching, and processing of Marées France data.
 
@@ -210,7 +211,12 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.harbor_id,
                 )
                 fetch_successful = await fetch_function(
-                    self.hass, store, cache_full, self.harbor_id, *fetch_args, websession=self.websession
+                    self.hass,
+                    store,
+                    cache_full,
+                    self.harbor_id,
+                    *fetch_args,
+                    websession=self.websession,
                 )
 
                 if fetch_successful:

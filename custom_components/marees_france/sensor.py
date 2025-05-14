@@ -243,7 +243,10 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     def _sensor_data(self) -> dict[str, Any] | None:
         """Helper to get the specific data block (e.g., 'next_data') from coordinator."""
         if self.coordinator.data:
-            return cast(dict[str, Any] | None, self.coordinator.data.get(f"{self._sensor_key_suffix}_data"))
+            return cast(
+                dict[str, Any] | None,
+                self.coordinator.data.get(f"{self._sensor_key_suffix}_data"),
+            )
         return None
 
     @property
@@ -267,7 +270,9 @@ class MareesFranceTimestampSensor(MareesFranceBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attributes like tide type, height, coefficient."""
         if self.available and self._sensor_data:
-            return cast(dict[str, Any], self._sensor_data)  # The whole block is relevant
+            return cast(
+                dict[str, Any], self._sensor_data
+            )  # The whole block is relevant
         return None
 
 
