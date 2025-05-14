@@ -352,6 +352,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         yesterday = today - timedelta(days=1)
         yesterday_str = yesterday.strftime(DATE_FORMAT)
         fetch_duration = 8
+        websession = async_get_clientsession(hass)
         if not await _async_fetch_and_store_tides(
             hass,
             tides_store,
@@ -359,6 +360,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             harbor_id,
             yesterday_str,
             fetch_duration,
+            websession=websession,
         ):
             fetch_errors.append("tides")
 
@@ -371,12 +373,13 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             harbor_id,
             first_day_of_current_month,
             coeff_fetch_days,
+            websession=websession,
         ):
             fetch_errors.append("coefficients")
 
         today_str = today.strftime(DATE_FORMAT)
         if not await _async_fetch_and_store_water_level(
-            hass, water_level_store, water_level_cache_full, harbor_id, today_str
+            hass, water_level_store, water_level_cache_full, harbor_id, today_str, websession=websession
         ):
             fetch_errors.append("water levels")
 
@@ -457,8 +460,9 @@ async def async_check_and_prefetch_water_levels(
     )
 
     for i, date_str in enumerate(missing_dates):
+        websession = async_get_clientsession(hass)
         await _async_fetch_and_store_water_level(
-            hass, store, cache, harbor_id, date_str
+            hass, store, cache, harbor_id, date_str, websession=websession
         )
         if i < len(missing_dates) - 1:
             await asyncio.sleep(2)
@@ -568,8 +572,9 @@ async def async_handle_get_water_levels(call: ServiceCall) -> ServiceResponse:
         await store.async_save(cache)
         _LOGGER.debug("Marées France: Saved pruned cache before fallback fetch")
 
+    websession = async_get_clientsession(hass)
     fetched_data = await _async_fetch_and_store_water_level(
-        hass, store, cache, harbor_id, date_str
+        hass, store, cache, harbor_id, date_str, websession=websession
     )
 
     if fetched_data is None:
@@ -619,8 +624,9 @@ async def async_check_and_prefetch_tides(
             break
 
     if needs_fetch:
+        websession = async_get_clientsession(hass)
         fetch_successful = await _async_fetch_and_store_tides(
-            hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration
+            hass, store, cache, harbor_id, yesterday_str, duration=fetch_duration, websession=websession
         )
         if fetch_successful:
             _LOGGER.info(
@@ -866,8 +872,9 @@ async def async_check_and_prefetch_coefficients(
             fetch_days,
         )
 
+        websession = async_get_clientsession(hass)
         fetch_successful = await _async_fetch_and_store_coefficients(
-            hass, store, cache, harbor_id, fetch_start_date, fetch_days
+            hass, store, cache, harbor_id, fetch_start_date, fetch_days, websession=websession
         )
         if fetch_successful:
             _LOGGER.info(
@@ -1086,8 +1093,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY
     )
 
+    websession = async_get_clientsession(hass)
     coordinator = MareesFranceUpdateCoordinator(
-        hass, entry, tides_store, coeff_store, water_level_store
+        hass, entry, tides_store, coeff_store, water_level_store, websession=websession
     )
 
     await async_check_and_prefetch_coefficients(hass, entry, coeff_store)

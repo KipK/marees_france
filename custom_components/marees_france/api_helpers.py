@@ -141,6 +141,7 @@ async def _async_fetch_and_store_water_level(
     cache: dict[str, dict[str, Any]],
     harbor_name: str,
     date_str: str,
+    websession: aiohttp.ClientSession | None = None,
 ) -> Any | None:
     """Fetch water level data, validate, store in cache, and save.
 
@@ -150,12 +151,13 @@ async def _async_fetch_and_store_water_level(
         cache: The current cache dictionary.
         harbor_name: The name/ID of the harbor for the API request.
         date_str: The date string (YYYY-MM-DD) for which to fetch data.
+        websession: Optional aiohttp ClientSession. If not provided, one will be created.
 
     Returns:
         The fetched data if successful and valid, otherwise None.
     """
     url = WATERLEVELS_URL_TEMPLATE.format(harbor_name=harbor_name, date=date_str)
-    session = async_get_clientsession(hass)
+    session = websession or async_get_clientsession(hass)
     timeout_seconds = 30
 
     data = await _async_fetch_with_retry(
@@ -209,6 +211,7 @@ async def _async_fetch_and_store_tides(
     harbor_id: str,
     start_date_str: str,
     duration: int = 8,
+    websession: aiohttp.ClientSession | None = None,
 ) -> bool:
     """Fetch tide data, parse, store in cache, and save.
 
@@ -219,6 +222,7 @@ async def _async_fetch_and_store_tides(
         harbor_id: The ID of the harbor for the API request.
         start_date_str: The start date string (YYYY-MM-DD) for fetching data.
         duration: The number of days of tide data to fetch.
+        websession: Optional aiohttp ClientSession. If not provided, one will be created.
 
     Returns:
         True if fetching and storing were successful, False otherwise.
@@ -227,7 +231,7 @@ async def _async_fetch_and_store_tides(
         f"{TIDESURL_TEMPLATE.format(harbor_id=harbor_id, date=start_date_str)}"
         f"&duration={duration}"
     )
-    session = async_get_clientsession(hass)
+    session = websession or async_get_clientsession(hass)
     timeout_seconds = 15 + (duration * 5)
 
     fetched_data_dict = await _async_fetch_with_retry(
@@ -279,6 +283,7 @@ async def _async_fetch_and_store_coefficients(
     harbor_id: str,
     start_date: date,
     days: int,
+    websession: aiohttp.ClientSession | None = None,
 ) -> bool:
     """Fetch coefficient data, parse, store daily entries in cache, and save.
 
@@ -289,6 +294,7 @@ async def _async_fetch_and_store_coefficients(
         harbor_id: The ID of the harbor for the API request.
         start_date: The start date (datetime.date object) for fetching data.
         days: The number of days of coefficient data to fetch.
+        websession: Optional aiohttp ClientSession. If not provided, one will be created.
 
     Returns:
         True if fetching and storing were successful for the expected number
@@ -298,7 +304,7 @@ async def _async_fetch_and_store_coefficients(
     url = COEFF_URL_TEMPLATE.format(
         harbor_name=harbor_id, date=start_date_str, days=days
     )
-    session = async_get_clientsession(hass)
+    session = websession or async_get_clientsession(hass)
     timeout_seconds = 60
 
     fetched_data_list = await _async_fetch_with_retry(

@@ -61,6 +61,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         tides_store: Store[dict[str, dict[str, Any]]],
         coeff_store: Store[dict[str, dict[str, Any]]],
         water_level_store: Store[dict[str, dict[str, Any]]],
+        websession: aiohttp.ClientSession | None = None,
     ) -> None:
         """Initialize the data update coordinator.
 
@@ -70,6 +71,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             tides_store: The store for caching tide data.
             coeff_store: The store for caching coefficient data.
             water_level_store: The store for caching water level data.
+            websession: Optional aiohttp ClientSession. If not provided, one will be created.
         """
         self.hass = hass
         self.config_entry = entry
@@ -77,6 +79,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.tides_store = tides_store
         self.coeff_store = coeff_store
         self.water_level_store = water_level_store
+        self.websession = websession or async_get_clientsession(hass)
 
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
 
@@ -203,7 +206,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.harbor_id,
                 )
                 fetch_successful = await fetch_function(
-                    self.hass, store, cache_full, self.harbor_id, *fetch_args
+                    self.hass, store, cache_full, self.harbor_id, *fetch_args, websession=self.websession
                 )
 
                 if fetch_successful:
@@ -316,6 +319,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 water_level_cache_full,
                 self.harbor_id,
                 today_str,
+                websession=self.websession,
             )
             if fetched_data:
                 _LOGGER.info(
