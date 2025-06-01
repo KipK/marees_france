@@ -12,9 +12,9 @@
 
 ## 🚀 Installation
 
-### Automatic via HACS
+Search for and install the "Marees France" integration in HACS.
 
-[![Add to Home Assistant via HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
+Once the integration is installed and configured, refresh your browser so that Home Assistant displays the card in the card selector.
 
 ### Manual
 

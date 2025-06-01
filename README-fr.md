@@ -12,14 +12,9 @@
 
 ## 🚀 Installation
 
-### Automatique via HACS
+Recherchez dans HACS et installez l'intégration "Marées france".
 
-[![Ajouter à Home Assistant via HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=KipK&category=integration&repository=marees_france)
-
-### Manuelle
-
-1. Ajouter le dépôt `KipK/marees_france` dans HACS.
-2. Rechercher **Marées France** dans HACS et installer l’intégration.
+Une fois l'intégration installée et configurée, rafraichissez le navigateur pour que Home Assitant affiche la carte dans le sélecteur de carte.
 
 ---
 
