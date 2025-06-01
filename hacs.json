@@ -3,6 +3,5 @@
     "homeassistant": "2024.0.0b0",
     "zip_release": true,
     "filename": "marees_france.zip",
-    "render_readme": true,
-    "country": "FR"
+    "render_readme": true
 }

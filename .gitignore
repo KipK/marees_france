@@ -6,3 +6,5 @@ plans
 __pycache__/
 /node_modules
 /frontend/node_modules/
+/context_portal
+.roo
