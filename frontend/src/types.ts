@@ -60,51 +60,8 @@ export interface MareesFranceCardConfig extends LovelaceCardConfig {
 // --- Home Assistant Object Subset ---
 // Removed HassObject interface as it was empty and redundant. Use HomeAssistant directly.
 
-// --- Service Call Response Wrapper ---
-// Generic wrapper for the structure returned by hass.callService with return_response: true
-/**
- * Generic wrapper for service responses when `response_variable` is used
- * with `hass.callService` or similar script execution that nests the actual response.
- * The actual data from the service is expected under the `response` property.
- */
-export interface ServiceResponseWrapper<T> {
-  response: T | { error?: string }; // Data is nested under 'response'
-  // Potentially add context if needed
-}
-// --- Service Call Request and Response for sendMessagePromise ---
-// Based on the structure used for hass.connection.sendMessagePromise with execute_script
-/**
- * Defines the structure for a service call request,
- * particularly when using `hass.connection.sendMessagePromise` with `execute_script`.
- */
-export interface ServiceCallRequest {
-  domain: string;
-  service: string;
-  serviceData?: Record<string, unknown>;
-  target?: {
-    entity_id?: string | string[];
-    device_id?: string | string[];
-    area_id?: string | string[];
-  };
-}
-
-/**
- * Defines the expected structure of a response from `hass.connection.sendMessagePromise`
- * when using `execute_script` with a `response_variable`.
- * The `response` property holds the actual data returned by the service.
- */
-export interface ServiceCallResponse<T = Record<string, unknown>> {
-  success: boolean;
-  response: T; // The actual data is directly here when using response_variable with execute_script
-  context: {
-    id: string;
-    parent_id?: string | null;
-    user_id?: string | null;
-    [key: string]: unknown; // Allow other properties in context
-  };
-  // Allow other top-level properties if any
-  [key: string]: unknown;
-}
+// --- Websocket API Response Data ---
+// Direct data structures returned by websocket commands (no wrapper needed)
 
 // --- Raw Data Structures from Services ---
 /** Represents a raw tide event as an array: [type, time, height, coefficient] */

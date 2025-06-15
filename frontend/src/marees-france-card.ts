@@ -5,7 +5,6 @@ import { getNextTideStatus } from './utils';
 import {
   HomeAssistant,
   MareesFranceCardConfig,
-  ServiceResponseWrapper,
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   GetCoefficientsDataResponseData,
@@ -43,9 +42,9 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
 
   // --- State Properties ---
   @state() _selectedDay: string = ''; // YYYY-MM-DD format
-  @state() _waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | { error: string } | null = null;
-  @state() _tideData: ServiceResponseWrapper<GetTidesDataResponseData> | { error: string } | null = null;
-  @state() _coefficientsData: ServiceResponseWrapper<GetCoefficientsDataResponseData> | { error: string } | null = null;
+  @state() _waterLevels: GetWaterLevelsResponseData | { error: string } | null = null;
+  @state() _tideData: GetTidesDataResponseData | { error: string } | null = null;
+  @state() _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null = null;
   @state() _isLoadingWater: boolean = true;
   @state() _isLoadingTides: boolean = true;
   @state() _isLoadingCoefficients: boolean = true;
@@ -250,7 +249,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     }
 
     // Type guard for tide data response
-    const tideDataResponse = (this._tideData && 'response' in this._tideData) ? this._tideData.response : null;
+    const tideDataResponse = (this._tideData && !('error' in this._tideData)) ? this._tideData : null;
     if (!tideDataResponse || typeof tideDataResponse !== 'object') {
       return html`
         <ha-card>
@@ -265,7 +264,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     }
 
     // Data is valid, proceed with rendering
-    const tideDataForStatus = this._tideData as ServiceResponseWrapper<GetTidesDataResponseData>; // Safe cast after checks
+    const tideDataForStatus = this._tideData as GetTidesDataResponseData; // Safe cast after checks
     const nextTideInfo: NextTideStatus | null = getNextTideStatus(tideDataForStatus, this.hass);
     const locale = this.hass.language || 'en';
     const today = new Date();

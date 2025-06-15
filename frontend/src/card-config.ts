@@ -2,7 +2,7 @@
 // including setConfig, getStubConfig, and getConfigElement.
 // It will be responsible for validating and applying the card configuration.
 
-import { HomeAssistant, MareesFranceCardConfig, ServiceResponseWrapper, GetWaterLevelsResponseData, GetTidesDataResponseData, GetCoefficientsDataResponseData } from './types';
+import { HomeAssistant, MareesFranceCardConfig, GetWaterLevelsResponseData, GetTidesDataResponseData, GetCoefficientsDataResponseData } from './types';
 import { localizeCard } from './localize';
 
 // Define an interface for the card instance properties and methods
@@ -12,9 +12,9 @@ export interface CardInstanceForSetConfig {
   hass: HomeAssistant;
   config: MareesFranceCardConfig; // This will be assigned by setCardConfig
   _selectedDay: string;
-  _waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | { error: string } | null;
-  _tideData: ServiceResponseWrapper<GetTidesDataResponseData> | { error: string } | null;
-  _coefficientsData: ServiceResponseWrapper<GetCoefficientsDataResponseData> | { error: string } | null;
+  _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
+  _tideData: GetTidesDataResponseData | { error: string } | null;
+  _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _isLoadingCoefficients: boolean;

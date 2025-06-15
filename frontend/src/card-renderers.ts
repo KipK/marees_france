@@ -11,7 +11,6 @@ import {
   HomeAssistant,
   MareesFranceCardConfig,
   NextTideStatus,
-  ServiceResponseWrapper,
   GetTidesDataResponseData,
 } from './types';
 import { localizeCard } from './localize';
@@ -25,7 +24,7 @@ export interface CardInstanceForRenderers {
   _selectedDay: string;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
-  _tideData: ServiceResponseWrapper<GetTidesDataResponseData> | { error: string } | null; // For nextTideInfo
+  _tideData: GetTidesDataResponseData | { error: string } | null; // For nextTideInfo
   // Methods
   _handleTabClick: (ev: MouseEvent) => void;
   _calendarDialogManager: CalendarDialogManager | null; // To open the dialog

@@ -2,7 +2,6 @@ import { SVG, Svg, Element as SvgElement, Circle, G, Rect, Text, Path, Line } fr
 import { localizeCard } from './localize';
 import {
   HomeAssistant,
-  ServiceResponseWrapper,
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   WaterLevelTuple,
@@ -279,8 +278,8 @@ export class GraphRenderer {
    * @param selectedDay The currently selected day string (YYYY-MM-DD) for which to draw the graph.
    */
   public drawGraph(
-    tideData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
-    waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | null,
+    tideData: GetTidesDataResponseData | null,
+    waterLevels: GetWaterLevelsResponseData | null,
     selectedDay: string
   ): void {
     if (!this.svgDraw || !this.svgContainer || !this.hass) {
@@ -298,8 +297,7 @@ export class GraphRenderer {
     const locale = this.hass.language || 'en';
 
     // --- 1. Check for Errors or Missing Data ---
-    const tideResponse = tideData?.response;
-    if (!tideResponse || typeof tideResponse !== 'object') {
+    if (!tideData || typeof tideData !== 'object') {
       // Handle null, undefined, or non-object responses
       const errorMessage = localizeCard('ui.card.marees_france.no_tide_data', this.hass);
       const errorText = this.svgDraw
@@ -308,9 +306,9 @@ export class GraphRenderer {
         .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
       this.elementsToKeepSize.push(errorText);
       return;
-    } else if ('error' in tideResponse && tideResponse.error) {
+    } else if ('error' in tideData && tideData.error) {
       // Handle responses that are objects but contain an error property
-      const errorMessage = `Tide Error: ${tideResponse.error}`;
+      const errorMessage = `Tide Error: ${tideData.error}`;
       const errorText = this.svgDraw
         .text(errorMessage)
         .move(viewBoxWidth / 2, viewBoxHeight / 2)
@@ -318,11 +316,8 @@ export class GraphRenderer {
       this.elementsToKeepSize.push(errorText);
       return;
     }
-    // Type assertion after checks
-    const typedTideResponse = tideResponse as GetTidesDataResponseData;
 
-    const waterLevelResponse = waterLevels?.response;
-    if (!waterLevelResponse || typeof waterLevelResponse !== 'object') {
+    if (!waterLevels || typeof waterLevels !== 'object') {
        // Handle null, undefined, or non-object responses
       const errorMessage = localizeCard('ui.card.marees_france.no_water_level_data', this.hass);
       const errorText = this.svgDraw
@@ -331,9 +326,9 @@ export class GraphRenderer {
         .font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
       this.elementsToKeepSize.push(errorText);
       return;
-    } else if ('error' in waterLevelResponse && waterLevelResponse.error) {
+    } else if ('error' in waterLevels && waterLevels.error) {
       // Handle responses that are objects but contain an error property
-      const errorMessage = `Water Level Error: ${waterLevelResponse.error}`;
+      const errorMessage = `Water Level Error: ${waterLevels.error}`;
       const errorText = this.svgDraw
         .text(errorMessage)
         .move(viewBoxWidth / 2, viewBoxHeight / 2)
@@ -341,9 +336,8 @@ export class GraphRenderer {
       this.elementsToKeepSize.push(errorText);
       return;
     }
-     // Type assertion after checks
-    const typedWaterLevelResponse = waterLevelResponse as GetWaterLevelsResponseData;
-    const levelsData: WaterLevelTuple[] | undefined = typedWaterLevelResponse[selectedDay];
+
+    const levelsData: WaterLevelTuple[] | undefined = waterLevels[selectedDay];
 
     // --- 2. Check for Water Level Data for the Selected Day ---
     if (!Array.isArray(levelsData) || levelsData.length === 0) {
@@ -490,7 +484,7 @@ export class GraphRenderer {
       xTicks.push({ x: x, label: label });
     }
 
-    const tideEventsForDay: TideEventTuple[] | undefined = typedTideResponse[selectedDay];
+    const tideEventsForDay: TideEventTuple[] | undefined = tideData[selectedDay];
     const tideMarkers: TideMarkerData[] = [];
     if (Array.isArray(tideEventsForDay)) {
       tideEventsForDay.forEach((tideArr: TideEventTuple) => {

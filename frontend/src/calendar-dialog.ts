@@ -1,7 +1,6 @@
 // This file will manage all calendar dialog logic for the card.
 import {
   HomeAssistant,
-  ServiceResponseWrapper,
   GetCoefficientsDataResponseData
 } from './types';
 import { localizeCard } from './localize';
@@ -26,7 +25,7 @@ interface PopStateEventState {
 // Interface for the card instance properties and methods CalendarDialogManager needs.
 export interface CardInstanceForCalendarDialog {
   hass: HomeAssistant;
-  _coefficientsData: ServiceResponseWrapper<GetCoefficientsDataResponseData> | { error: string } | null;
+  _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null;
   _isLoadingCoefficients: boolean;
   _dataManager: DataManager | null; // To call fetchCoefficientsData if needed
   requestUpdate: () => void;
@@ -247,13 +246,12 @@ export class CalendarDialogManager {
         return html`<div class="dialog-warning">${String(coeffData.error)}</div>`;
     }
 
-    const coeffResponse = (coeffData && 'response' in coeffData) ? coeffData.response : null;
-    if (!coeffResponse || typeof coeffResponse !== 'object') {
+    if (!coeffData || typeof coeffData !== 'object') {
         this._calendarHasPrevData = false; this._calendarHasNextData = false;
         return html`<div class="dialog-warning">${localizeCard('ui.card.marees_france.no_coefficient_data', this.card.hass)}</div>`;
     }
 
-    const actualCoeffData = coeffResponse as GetCoefficientsDataResponseData;
+    const actualCoeffData = coeffData as GetCoefficientsDataResponseData;
     const locale = this.card.hass.language || 'en';
     const currentMonthDate = this._calendarSelectedMonth;
     const currentYear = currentMonthDate.getFullYear();

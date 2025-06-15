@@ -8,7 +8,6 @@
 
 import {
   HomeAssistant,
-  ServiceResponseWrapper,
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
 } from './types';
@@ -28,8 +27,8 @@ export interface CardInstanceForGraphManager {
   shadowRoot: ShadowRoot | null;
   // Data properties needed for drawing the graph
   _selectedDay: string;
-  _waterLevels: ServiceResponseWrapper<GetWaterLevelsResponseData> | { error: string } | null;
-  _tideData: ServiceResponseWrapper<GetTidesDataResponseData> | { error: string } | null;
+  _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
+  _tideData: GetTidesDataResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   // Method to get bounding client rect for tooltip positioning
@@ -116,16 +115,16 @@ export class GraphInteractionManager implements TooltipDelegate {
    * Called when data changes or the graph container becomes available.
    */
   public drawGraphIfReady(): void {
-    const waterDataValid = this.card._waterLevels && 'response' in this.card._waterLevels && this.card._waterLevels.response;
-    const tideDataValid = this.card._tideData && 'response' in this.card._tideData && this.card._tideData.response;
+    const waterDataValid = this.card._waterLevels && !('error' in this.card._waterLevels);
+    const tideDataValid = this.card._tideData && !('error' in this.card._tideData);
     const dataIsReady = !this.card._isLoadingWater && !this.card._isLoadingTides && waterDataValid && tideDataValid;
     const containerStillExists = this.svgContainer && this.card.shadowRoot?.contains(this.svgContainer);
 
     if (this.graphRenderer && containerStillExists && dataIsReady) {
       try {
         this.graphRenderer.drawGraph(
-          this.card._tideData as ServiceResponseWrapper<GetTidesDataResponseData>,
-          this.card._waterLevels as ServiceResponseWrapper<GetWaterLevelsResponseData>,
+          this.card._tideData as GetTidesDataResponseData,
+          this.card._waterLevels as GetWaterLevelsResponseData,
           this.card._selectedDay
         );
         this.graphRenderer.refreshDimensionsAndScale();

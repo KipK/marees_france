@@ -1,6 +1,5 @@
 import {
   HomeAssistant,
-  ServiceResponseWrapper,
   GetTidesDataResponseData,
   ParsedTideEvent,
   NextTideStatus,
@@ -42,29 +41,28 @@ export function getWeekdayShort3Letters(
  * Calculates and returns the status for the next tide peak display.
  * It processes tide data for today and the next two days to determine the upcoming tide,
  * current trend (rising/falling), and the relevant coefficient.
- * Adapts to the service call format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
+ * Adapts to the websocket command format: { "YYYY-MM-DD": [ ["tide.type", "HH:MM", "H.HH", "CC"], ... ] }
  *
- * @param tideServiceData The raw tide data from the service, wrapped in a response structure.
+ * @param tideServiceData The raw tide data from the websocket command.
  * @param hass The HomeAssistant object, used for localization or other HA context if needed.
  * @returns An object containing information about the next tide, or null if data is insufficient.
  */
 export function getNextTideStatus(
-  tideServiceData: ServiceResponseWrapper<GetTidesDataResponseData> | null,
+  tideServiceData: GetTidesDataResponseData | null,
   hass: HomeAssistant | null
 ): NextTideStatus | null {
-  // Check if the main data object and the 'response' property exist
+  // Check if the main data object exists and is valid
   if (
     !tideServiceData ||
-    !tideServiceData.response ||
-    typeof tideServiceData.response !== 'object' || // Ensure response is an object
-    tideServiceData.response.error || // Check for explicit error in response
+    typeof tideServiceData !== 'object' || // Ensure data is an object
+    ('error' in tideServiceData) || // Check for explicit error in data
     !hass
   ) {
     return null; // Return null if data is invalid or hass is missing
   }
 
-  // Type assertion after checks
-  const tideData = tideServiceData.response as GetTidesDataResponseData;
+  // Use the data directly (no wrapper)
+  const tideData = tideServiceData as GetTidesDataResponseData;
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
