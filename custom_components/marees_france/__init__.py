@@ -359,9 +359,7 @@ async def _get_water_levels_data(
     return fetched_data
 
 
-async def _get_tides_data(
-    hass: HomeAssistant, harbor_id: str
-) -> dict[str, Any]:
+async def _get_tides_data(hass: HomeAssistant, harbor_id: str) -> dict[str, Any]:
     """Get tides data for harbor. Returns the same format as service."""
     tides_store = Store[dict[str, dict[str, Any]]](
         hass, TIDES_STORAGE_VERSION, TIDES_STORAGE_KEY
@@ -480,19 +478,19 @@ async def ws_handle_get_water_levels(
     try:
         device_id = msg["device_id"]
         date_str = msg["date"]
-        
+
         harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
-        
+
         _LOGGER.debug(
             "Websocket command get_water_levels for device %s (harbor: %s), date: %s",
             device_id,
             harbor_id,
             date_str,
         )
-        
+
         result = await _get_water_levels_data(hass, harbor_id, date_str)
         connection.send_result(msg["id"], result)
-        
+
     except HomeAssistantError as err:
         _LOGGER.error("Websocket get_water_levels error: %s", err)
         connection.send_error(msg["id"], "home_assistant_error", str(err))
@@ -508,18 +506,18 @@ async def ws_handle_get_tides_data(
     """Handle websocket command for getting tides data."""
     try:
         device_id = msg["device_id"]
-        
+
         harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
-        
+
         _LOGGER.debug(
             "Websocket command get_tides_data for device %s (harbor: %s)",
             device_id,
             harbor_id,
         )
-        
+
         result = await _get_tides_data(hass, harbor_id)
         connection.send_result(msg["id"], result)
-        
+
     except HomeAssistantError as err:
         _LOGGER.error("Websocket get_tides_data error: %s", err)
         connection.send_error(msg["id"], "home_assistant_error", str(err))
@@ -537,9 +535,9 @@ async def ws_handle_get_coefficients_data(
         device_id = msg["device_id"]
         date_str = msg.get("date")
         days = msg.get("days")
-        
+
         harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
-        
+
         _LOGGER.debug(
             "Websocket command get_coefficients_data for device %s (harbor: %s), "
             "date: %s, days: %s",
@@ -548,10 +546,10 @@ async def ws_handle_get_coefficients_data(
             date_str,
             days,
         )
-        
+
         result = await _get_coefficients_data(hass, harbor_id, date_str, days)
         connection.send_result(msg["id"], result)
-        
+
     except HomeAssistantError as err:
         _LOGGER.error("Websocket get_coefficients_data error: %s", err)
         connection.send_error(msg["id"], "home_assistant_error", str(err))
