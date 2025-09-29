@@ -1227,15 +1227,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, entry, tides_store, coeff_store, water_level_store, websession=websession
     )
 
-    hass.async_create_task(async_check_and_prefetch_coefficients(hass, entry, coeff_store))
-    hass.async_create_task(async_check_and_prefetch_tides(hass, entry, tides_store))
-    hass.async_create_task(
-        async_check_and_prefetch_water_levels(hass, entry, water_level_store)
-    )
-
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    hass.async_create_task(coordinator.async_config_entry_first_refresh())
     _LOGGER.debug("Marées France: Forwarded entry setup for platforms: %s", PLATFORMS)
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
