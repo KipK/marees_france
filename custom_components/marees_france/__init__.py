@@ -105,6 +105,8 @@ async def fetch_harbors(
         for feature in data.get("features", []):
             properties = feature.get("properties")
             if properties and "cst" in properties and "toponyme" in properties:
+                if properties.get("ut") is None or properties.get("nota") == 6:
+                    continue
                 harbor_id = properties["cst"]
                 harbor_name = properties["toponyme"]
                 harbors[harbor_id] = {
