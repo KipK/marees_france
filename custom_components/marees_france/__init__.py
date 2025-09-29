@@ -1227,9 +1227,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, entry, tides_store, coeff_store, water_level_store, websession=websession
     )
 
-    await async_check_and_prefetch_coefficients(hass, entry, coeff_store)
-    await async_check_and_prefetch_tides(hass, entry, tides_store)
-    await async_check_and_prefetch_water_levels(hass, entry, water_level_store)
+    hass.async_create_task(async_check_and_prefetch_coefficients(hass, entry, coeff_store))
+    hass.async_create_task(async_check_and_prefetch_tides(hass, entry, tides_store))
+    hass.async_create_task(
+        async_check_and_prefetch_water_levels(hass, entry, water_level_store)
+    )
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
