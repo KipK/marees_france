@@ -68,3 +68,20 @@ reinitialize_harbor_data:
       selector:
         device:
           integration: marees_france # Filter by integration
+get_water_temp:
+  name: Get Water Temperature
+  description: Retrieves cached water temperature data for a specific harbor device. Allows filtering by date.
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to get water temperature for.
+      required: true
+      selector:
+        device:
+          integration: marees_france
+    date:
+      name: Date (Optional)
+      description: The date for which to fetch water temperature (YYYY-MM-DD format). If omitted, returns all cached data.
+      required: false
+      selector:
+        date:

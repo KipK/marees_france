@@ -254,6 +254,7 @@ SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA = vol.Schema(
 SERVICE_GET_WATER_TEMP_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): cv.string,
+        vol.Optional(ATTR_DATE): vol.Match(r"^\d{4}-\d{2}-\d{2}$"),
     }
 )
 
@@ -285,6 +286,7 @@ WS_GET_WATER_TEMP_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
     {
         vol.Required("type"): "marees_france/get_water_temp",
         vol.Required("device_id"): cv.string,
+        vol.Optional("date"): vol.Match(r"^\d{4}-\d{2}-\d{2}$"),
     }
 )
 
@@ -500,13 +502,15 @@ async def ws_handle_get_water_temp(
     """Handle websocket command for getting water temperature data."""
     try:
         device_id = msg["device_id"]
+        date_str = msg.get("date")
         harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
         _LOGGER.debug(
-            "Websocket command get_water_temp for device %s (harbor: %s)",
+            "Websocket command get_water_temp for device %s (harbor: %s), date: %s",
             device_id,
             harbor_id,
+            date_str,
         )
-        result = await _get_water_temp_data(hass, harbor_id)
+        result = await _get_water_temp_data(hass, harbor_id, date_str)
         connection.send_result(msg["id"], result)
     except HomeAssistantError as err:
         _LOGGER.error("Websocket get_water_temp error: %s", err)
@@ -1228,27 +1232,35 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
     return await _get_coefficients_data(hass, harbor_id, req_date_str, req_days)
 
 
-async def _get_water_temp_data(hass: HomeAssistant, harbor_id: str) -> dict[str, Any]:
-    """Get water temperature data for harbor. Returns the same format as service."""
+async def _get_water_temp_data(
+    hass: HomeAssistant, harbor_id: str, date_str: str | None = None
+) -> dict[str, Any]:
+    """Get water temperature data for a harbor, optionally filtered by date."""
     watertemp_store = Store[dict[str, dict[str, Any]]](
         hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
     )
     cache = await watertemp_store.async_load() or {}
     harbor_cache = cache.get(harbor_id, {})
+
+    if date_str:
+        return {date_str: harbor_cache.get(date_str, [])}
+
     return harbor_cache
 
 
 async def async_handle_get_water_temp(call: ServiceCall) -> ServiceResponse:
     """Handle the service call to get water temperature for a device, using caching."""
     device_id = call.data["device_id"]
+    date_str = call.data.get(ATTR_DATE)
     hass = call.hass
     harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
     _LOGGER.debug(
-        "Service call get_water_temp for device %s (harbor: %s)",
+        "Service call get_water_temp for device %s (harbor: %s), date: %s",
         device_id,
         harbor_id,
+        date_str,
     )
-    return await _get_water_temp_data(hass, harbor_id)
+    return await _get_water_temp_data(hass, harbor_id, date_str)
 
 
 async def async_check_and_prefetch_watertemp(
