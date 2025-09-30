@@ -19,7 +19,8 @@ export interface TooltipDelegate {
     svgY: number,
     timeMinutes: number,
     height: number,
-    isSnapped?: boolean // Optional, as it was in the original card method
+    waterTemp: number | undefined,
+    isSnapped?: boolean
   ): void;
   hideInteractionTooltip(): void;
 }
@@ -929,7 +930,11 @@ export class GraphRenderer {
       }
 
       // Determine which data to show in the tooltip based on snap status
-      let tooltipX: number, tooltipY: number, tooltipTimeValue: number, tooltipHeightValue: number;
+      let tooltipX: number,
+        tooltipY: number,
+        tooltipTimeValue: number,
+        tooltipHeightValue: number,
+        tooltipWaterTempValue: number | undefined;
 
       if (isSnapped && this.currentTimeMarkerData) {
         // Use yellow dot's data when snapped
@@ -937,12 +942,14 @@ export class GraphRenderer {
         tooltipY = this.currentTimeMarkerData.y;
         tooltipTimeValue = this.currentTimeMarkerData.totalMinutes;
         tooltipHeightValue = this.currentTimeMarkerData.height;
+        tooltipWaterTempValue = this.currentTimeMarkerData.water_temp;
       } else {
         // Use interpolated data when not snapped
         tooltipX = finalX;
         tooltipY = finalY;
         tooltipTimeValue = clampedTotalMinutes;
         tooltipHeightValue = height;
+        tooltipWaterTempValue = undefined; // Not available for interpolated points
       }
 
       // Call the delegate's method to update the HTML tooltip
@@ -952,6 +959,7 @@ export class GraphRenderer {
           tooltipY,
           tooltipTimeValue,
           tooltipHeightValue,
+          tooltipWaterTempValue,
           isSnapped
         );
       }

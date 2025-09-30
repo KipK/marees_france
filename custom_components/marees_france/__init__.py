@@ -44,6 +44,8 @@ from .const import (
     CONF_HARBOR_NAME,
     DATE_FORMAT,
     DOMAIN,
+    CONF_HARBOR_LAT,
+    CONF_HARBOR_LON,
     HARBORSURL,
     HEADERS,
     PLATFORMS,
@@ -51,10 +53,13 @@ from .const import (
     SERVICE_GET_TIDES_DATA,
     SERVICE_GET_WATER_LEVELS,
     SERVICE_REINITIALIZE_HARBOR_DATA,
+    SERVICE_GET_WATER_TEMP,
     TIDES_STORAGE_KEY,
     TIDES_STORAGE_VERSION,
     WATERLEVELS_STORAGE_KEY,
     WATERLEVELS_STORAGE_VERSION,
+    WATERTEMP_STORAGE_KEY,
+    WATERTEMP_STORAGE_VERSION,
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration
@@ -62,6 +67,7 @@ from .api_helpers import (
     _async_fetch_and_store_water_level,
     _async_fetch_and_store_tides,
     _async_fetch_and_store_coefficients,
+    _async_fetch_and_store_water_temp,
 )
 
 
@@ -109,9 +115,13 @@ async def fetch_harbors(
                     continue
                 harbor_id = properties["cst"]
                 harbor_name = properties["toponyme"]
+                lat = properties.get("lat")
+                lon = properties.get("lon")
                 harbors[harbor_id] = {
                     "display": f"{harbor_name} ({harbor_id})",
                     "name": harbor_name,
+                    "lat": lat,
+                    "lon": lon,
                 }
 
         if not harbors:
@@ -194,6 +204,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         harbor_name = harbor_details["name"]
         new_data[CONF_HARBOR_NAME] = harbor_name
+        new_data[CONF_HARBOR_LAT] = harbor_details.get("lat")
+        new_data[CONF_HARBOR_LON] = harbor_details.get("lon")
 
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
         _LOGGER.info(
@@ -239,6 +251,11 @@ SERVICE_REINITIALIZE_HARBOR_DATA_SCHEMA = vol.Schema(
         vol.Required("device_id"): cv.string,
     }
 )
+SERVICE_GET_WATER_TEMP_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+    }
+)
 
 # Websocket Command Schemas
 WS_GET_WATER_LEVELS_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
@@ -264,7 +281,12 @@ WS_GET_COEFFICIENTS_DATA_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.exte
         vol.Optional("days"): cv.positive_int,
     }
 )
-
+WS_GET_WATER_TEMP_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
+    {
+        vol.Required("type"): "marees_france/get_water_temp",
+        vol.Required("device_id"): cv.string,
+    }
+)
 
 # Shared Helper Functions for Services and Websocket Commands
 async def _get_device_and_harbor_id(
@@ -471,6 +493,28 @@ async def _get_coefficients_data(
     return results
 
 
+@websocket_api.async_response
+async def ws_handle_get_water_temp(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+) -> None:
+    """Handle websocket command for getting water temperature data."""
+    try:
+        device_id = msg["device_id"]
+        harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
+        _LOGGER.debug(
+            "Websocket command get_water_temp for device %s (harbor: %s)",
+            device_id,
+            harbor_id,
+        )
+        result = await _get_water_temp_data(hass, harbor_id)
+        connection.send_result(msg["id"], result)
+    except HomeAssistantError as err:
+        _LOGGER.error("Websocket get_water_temp error: %s", err)
+        connection.send_error(msg["id"], "home_assistant_error", str(err))
+    except Exception as err:
+        _LOGGER.exception("Unexpected error in websocket get_water_temp")
+        connection.send_error(msg["id"], "unknown_error", str(err))
+
 # Websocket Command Handlers
 @websocket_api.async_response
 async def ws_handle_get_water_levels(
@@ -615,7 +659,10 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
     water_level_store = Store[dict[str, dict[str, Any]]](
         hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
     )
-
+    watertemp_store = Store[dict[str, dict[str, Any]]](
+        hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
+    )
+ 
     caches_cleared = []
     try:
         tides_cache_full = await tides_store.async_load() or {}
@@ -624,7 +671,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             await tides_store.async_save(tides_cache_full)
             caches_cleared.append("tides")
             _LOGGER.debug("Reinitialize Service: Cleared tides cache for %s", harbor_id)
-
+ 
         coeff_cache_full = await coeff_store.async_load() or {}
         if harbor_id in coeff_cache_full:
             del coeff_cache_full[harbor_id]
@@ -633,7 +680,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             _LOGGER.debug(
                 "Reinitialize Service: Cleared coefficients cache for %s", harbor_id
             )
-
+ 
         water_level_cache_full = await water_level_store.async_load() or {}
         if harbor_id in water_level_cache_full:
             del water_level_cache_full[harbor_id]
@@ -641,6 +688,16 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             caches_cleared.append("water levels")
             _LOGGER.debug(
                 "Reinitialize Service: Cleared water levels cache for %s", harbor_id
+            )
+ 
+        watertemp_cache_full = await watertemp_store.async_load() or {}
+        if harbor_id in watertemp_cache_full:
+            del watertemp_cache_full[harbor_id]
+            await watertemp_store.async_save(watertemp_cache_full)
+            caches_cleared.append("water temperature")
+            _LOGGER.debug(
+                "Reinitialize Service: Cleared water temperature cache for %s",
+                harbor_id,
             )
 
         if caches_cleared:
@@ -669,7 +726,8 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         tides_cache_full = await tides_store.async_load() or {}
         coeff_cache_full = await coeff_store.async_load() or {}
         water_level_cache_full = await water_level_store.async_load() or {}
-
+        watertemp_cache_full = await watertemp_store.async_load() or {}
+ 
         today = date.today()
         yesterday = today - timedelta(days=1)
         yesterday_str = yesterday.strftime(DATE_FORMAT)
@@ -685,7 +743,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("tides")
-
+ 
         first_day_of_current_month = today.replace(day=1)
         coeff_fetch_days = 365
         if not await _async_fetch_and_store_coefficients(
@@ -698,7 +756,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("coefficients")
-
+ 
         today_str = today.strftime(DATE_FORMAT)
         if not await _async_fetch_and_store_water_level(
             hass,
@@ -709,6 +767,25 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("water levels")
+ 
+        lat = config_entry.data.get(CONF_HARBOR_LAT)
+        lon = config_entry.data.get(CONF_HARBOR_LON)
+        if lat and lon:
+            if not await _async_fetch_and_store_water_temp(
+                hass,
+                watertemp_store,
+                watertemp_cache_full,
+                harbor_id,
+                lat,
+                lon,
+                websession=websession,
+            ):
+                fetch_errors.append("water temperature")
+        else:
+            _LOGGER.warning(
+                "Reinitialize Service: Lat/lon missing for harbor %s, cannot refetch water temperature.",
+                harbor_id,
+            )
 
     except Exception as e:
         _LOGGER.exception(
@@ -1151,6 +1228,70 @@ async def async_handle_get_coefficients_data(call: ServiceCall) -> ServiceRespon
     return await _get_coefficients_data(hass, harbor_id, req_date_str, req_days)
 
 
+async def _get_water_temp_data(hass: HomeAssistant, harbor_id: str) -> dict[str, Any]:
+    """Get water temperature data for harbor. Returns the same format as service."""
+    watertemp_store = Store[dict[str, dict[str, Any]]](
+        hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
+    )
+    cache = await watertemp_store.async_load() or {}
+    harbor_cache = cache.get(harbor_id, {})
+    return harbor_cache
+
+
+async def async_handle_get_water_temp(call: ServiceCall) -> ServiceResponse:
+    """Handle the service call to get water temperature for a device, using caching."""
+    device_id = call.data["device_id"]
+    hass = call.hass
+    harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
+    _LOGGER.debug(
+        "Service call get_water_temp for device %s (harbor: %s)",
+        device_id,
+        harbor_id,
+    )
+    return await _get_water_temp_data(hass, harbor_id)
+
+
+async def async_check_and_prefetch_watertemp(
+    hass: HomeAssistant, entry: ConfigEntry, store: Store[dict[str, dict[str, Any]]]
+) -> None:
+    """Check water temperature cache and prefetch if needed."""
+    harbor_id = entry.data[CONF_HARBOR_ID]
+    lat = entry.data.get(CONF_HARBOR_LAT)
+    lon = entry.data.get(CONF_HARBOR_LON)
+
+    if not lat or not lon:
+        _LOGGER.warning(
+            "Marées France: Lat/lon missing for harbor %s, cannot prefetch water temperature.",
+            harbor_id,
+        )
+        return
+
+    _LOGGER.info(
+        "Marées France: Starting water temperature prefetch check for harbor: %s",
+        harbor_id,
+    )
+    cache = await store.async_load() or {}
+    today = date.today()
+    needs_fetch = False
+
+    for i in range(7):  # Check today + next 6 days
+        check_date = today + timedelta(days=i)
+        check_date_str = check_date.strftime(DATE_FORMAT)
+        if check_date_str not in cache.get(harbor_id, {}):
+            needs_fetch = True
+            break
+
+    if needs_fetch:
+        websession = async_get_clientsession(hass)
+        await _async_fetch_and_store_water_temp(
+            hass, store, cache, harbor_id, lat, lon, websession=websession
+        )
+    else:
+        _LOGGER.info(
+            "Marées France: Water temperature cache is up to date for %s.", harbor_id
+        )
+
+
 async def async_register_frontend_modules_when_ready(hass: HomeAssistant):
     """Register frontend modules once Home Assistant has fully started.
 
@@ -1221,10 +1362,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coeff_store = Store[dict[str, dict[str, Any]]](
         hass, COEFF_STORAGE_VERSION, COEFF_STORAGE_KEY
     )
+    watertemp_store = Store[dict[str, dict[str, Any]]](
+        hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
+    )
 
     websession = async_get_clientsession(hass)
     coordinator = MareesFranceUpdateCoordinator(
-        hass, entry, tides_store, coeff_store, water_level_store, websession=websession
+        hass,
+        entry,
+        tides_store,
+        coeff_store,
+        water_level_store,
+        watertemp_store,
+        websession=websession,
     )
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
@@ -1287,6 +1437,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             SERVICE_REINITIALIZE_HARBOR_DATA,
         )
 
+    if not hass.services.has_service(DOMAIN, SERVICE_GET_WATER_TEMP):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_GET_WATER_TEMP,
+            async_handle_get_water_temp,
+            schema=SERVICE_GET_WATER_TEMP_SCHEMA,
+            supports_response=SupportsResponse.ONLY,
+        )
+        _LOGGER.debug(
+            "Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_WATER_TEMP
+        )
     # Register websocket commands
     websocket_api.async_register_command(
         hass,
@@ -1305,6 +1466,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "marees_france/get_coefficients_data",
         ws_handle_get_coefficients_data,
         WS_GET_COEFFICIENTS_DATA_SCHEMA,
+    )
+    websocket_api.async_register_command(
+        hass,
+        "marees_france/get_water_temp",
+        ws_handle_get_water_temp,
+        WS_GET_WATER_TEMP_SCHEMA,
     )
     _LOGGER.debug("Marées France: Registered websocket commands")
 
@@ -1391,14 +1558,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             second=0,
         )
     )
+    
+    
+    async def _daily_watertemp_prefetch_job(*_: Any) -> None:
+        """Run daily job to prefetch water temperature data."""
+        _LOGGER.debug("Marées France: Running daily water temperature prefetch job.")
+        try:
+            await async_check_and_prefetch_watertemp(hass, entry, watertemp_store)
+        except Exception as e:
+            _LOGGER.exception(
+                "Marées France: Error during scheduled water temperature prefetch job: %s",
+                e,
+            )
+
+    rand_wt_hour = random.randint(1, 5)
+    rand_wt_min = random.randint(0, 59)
+    listeners.append(
+        async_track_time_change(
+            hass,
+            _daily_watertemp_prefetch_job,
+            hour=rand_wt_hour,
+            minute=rand_wt_min,
+            second=0,
+        )
+    )
 
     def _unload_listeners() -> None:
         _LOGGER.debug("Marées France: Removing daily prefetch listeners.")
         for remove_listener in listeners:
             remove_listener()
-
+    
     entry.async_on_unload(_unload_listeners)
-
+    
     return True
 
 
@@ -1482,6 +1673,9 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         ),
         "water_levels": Store[dict[str, dict[str, Any]]](
             hass, WATERLEVELS_STORAGE_VERSION, WATERLEVELS_STORAGE_KEY
+        ),
+        "water_temp": Store[dict[str, dict[str, Any]]](
+            hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
         ),
     }
 

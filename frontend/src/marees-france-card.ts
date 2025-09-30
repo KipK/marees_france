@@ -8,6 +8,7 @@ import {
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   GetCoefficientsDataResponseData,
+  GetWaterTempResponseData,
   NextTideStatus,
 } from './types';
 import { cardStyles } from './card-styles';
@@ -45,6 +46,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   @state() _waterLevels: GetWaterLevelsResponseData | { error: string } | null = null;
   @state() _tideData: GetTidesDataResponseData | { error: string } | null = null;
   @state() _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null = null;
+  @state() _waterTempData: GetWaterTempResponseData | { error: string } | null = null;
   @state() _isLoadingWater: boolean = true;
   @state() _isLoadingTides: boolean = true;
   @state() _isLoadingCoefficients: boolean = true;

@@ -143,7 +143,14 @@ export class GraphInteractionManager implements TooltipDelegate {
    * @param height The water height at that time.
    * @param isSnapped True if the interaction point is snapped to the current time marker.
    */
-  public updateInteractionTooltip(svgX: number, svgY: number, timeMinutes: number, height: number, isSnapped: boolean = false): void {
+  public updateInteractionTooltip(
+    svgX: number,
+    svgY: number,
+    timeMinutes: number,
+    height: number,
+    waterTemp: number | undefined,
+    isSnapped: boolean = false
+  ): void {
     if (this.card.hass?.editMode) return;
     const svg = this.svgContainer?.querySelector('svg');
     if (!svg) return;
@@ -152,6 +159,7 @@ export class GraphInteractionManager implements TooltipDelegate {
     const minutes = Math.floor(timeMinutes % 60);
     const formattedTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     const formattedHeightStr = height.toFixed(2);
+    const formattedWaterTempStr = waterTemp ? waterTemp.toFixed(1) : undefined;
 
     try {
       const ctm = svg.getScreenCTM();
@@ -163,7 +171,7 @@ export class GraphInteractionManager implements TooltipDelegate {
       const syntheticEvent: SyntheticPositionEvent = { clientX: screenPt.x, clientY: screenPt.y, type: 'interactionMove' };
       const tooltip = this.card.shadowRoot?.getElementById('marees-html-tooltip');
       if (tooltip) tooltip.classList.toggle('snapped-tooltip', isSnapped);
-      this.showHtmlTooltip(syntheticEvent, formattedTimeStr, formattedHeightStr);
+      this.showHtmlTooltip(syntheticEvent, formattedTimeStr, formattedHeightStr, formattedWaterTempStr);
 
       if (tooltip && svg && this.graphRenderer) {
         const tooltipRect = tooltip.getBoundingClientRect();
@@ -199,13 +207,23 @@ export class GraphInteractionManager implements TooltipDelegate {
     this.hideHtmlTooltip();
   }
 
-  private showHtmlTooltip(evt: SyntheticPositionEvent, time: string, height: string): void {
+  private showHtmlTooltip(
+    evt: SyntheticPositionEvent,
+    time: string,
+    height: string,
+    waterTemp?: string
+  ): void {
     const tooltip = this.card.shadowRoot?.getElementById('marees-html-tooltip');
     if (!tooltip) return;
 
     tooltip.style.visibility = 'visible';
     tooltip.style.display = 'block';
-    tooltip.innerHTML = `<strong>${time}</strong><br>${height} m`;
+
+    let content = `<strong>${time}</strong><br>${height} m`;
+    if (waterTemp) {
+      content += `<br>${waterTemp} °C`;
+    }
+    tooltip.innerHTML = content;
 
     if (evt.clientX === undefined || evt.clientY === undefined) { this.hideHtmlTooltip(); return; }
 

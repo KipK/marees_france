@@ -24,7 +24,10 @@ from .const import (
     ATTR_STARTING_HEIGHT,
     ATTR_STARTING_TIME,
     ATTR_TIDE_TREND,
+    ATTR_WATER_TEMP,
     CONF_HARBOR_ID,
+    CONF_HARBOR_LAT,
+    CONF_HARBOR_LON,
     DATE_FORMAT,
     DOMAIN,
     NEAP_TIDE_THRESHOLD,
@@ -38,6 +41,7 @@ from .api_helpers import (
     _async_fetch_and_store_water_level,
     _async_fetch_and_store_tides,
     _async_fetch_and_store_coefficients,
+    _async_fetch_and_store_water_temp,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,16 +69,17 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         tides_store: Store[dict[str, dict[str, Any]]],
         coeff_store: Store[dict[str, dict[str, Any]]],
         water_level_store: Store[dict[str, dict[str, Any]]],
+        watertemp_store: Store[dict[str, dict[str, Any]]],
         websession: aiohttp.ClientSession | None = None,
     ) -> None:
         """Initialize the data update coordinator.
-
         Args:
             hass: The Home Assistant instance.
             entry: The config entry for this coordinator instance.
             tides_store: The store for caching tide data.
             coeff_store: The store for caching coefficient data.
             water_level_store: The store for caching water level data.
+            watertemp_store: The store for caching water temperature data.
             websession: Optional aiohttp ClientSession. If not provided, one will be created.
         """
         self.hass = hass
@@ -83,6 +88,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.tides_store = tides_store
         self.coeff_store = coeff_store
         self.water_level_store = water_level_store
+        self.watertemp_store = watertemp_store
         self.websession = websession or async_get_clientsession(hass)
 
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
@@ -93,7 +99,38 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=f"{DOMAIN}_{self.harbor_id}",
             update_interval=update_interval,
         )
-
+ 
+    async def prune_watertemp_cache(self) -> None:
+        """Remove water temperature entries older than today."""
+        try:
+            cache = await self.watertemp_store.async_load() or {}
+            harbor_cache = cache.get(self.harbor_id)
+            if not harbor_cache:
+                return
+ 
+            today = date.today()
+            keys_to_prune = [
+                key
+                for key in harbor_cache
+                if date.fromisoformat(key.split("T")[0]) < today
+            ]
+ 
+            if keys_to_prune:
+                for key in keys_to_prune:
+                    del harbor_cache[key]
+                await self.watertemp_store.async_save(cache)
+                _LOGGER.debug(
+                    "Marées France Coordinator: Pruned %d old water temperature entries for %s",
+                    len(keys_to_prune),
+                    self.harbor_id,
+                )
+        except Exception as e:
+            _LOGGER.exception(
+                "Marées France Coordinator: Error pruning water temperature cache for %s: %s",
+                self.harbor_id,
+                e,
+            )
+ 
     async def _validate_and_repair_cache(
         self,
         store: Store[dict[str, dict[str, Any]]],
@@ -113,11 +150,11 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         fetch_args: tuple[Any, ...],
     ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
         """Validate cache for the harbor, repair if needed, and return caches.
-
+ 
         Checks if the cache for the specific harbor and data type is present and
         has a valid basic structure. If not, it attempts to clear the invalid
         entry and re-fetch the data using the provided `fetch_function`.
-
+ 
         Args:
             store: The data store instance (tides, coefficients, or water levels).
             cache_full: The entire cache dictionary loaded from the store.
@@ -128,7 +165,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             fetch_args: A tuple of arguments to pass to the `fetch_function`
                         (excluding hass, store, cache_full, harbor_id which are
                         passed automatically).
-
+ 
         Returns:
             A tuple containing:
                 - The (potentially modified) full cache dictionary.
@@ -173,6 +210,21 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         )
                         needs_repair = True
                         break
+            elif data_type == "watertemp":
+               for date_key, daily_data in harbor_cache.items():
+                   if not isinstance(daily_data, list) or not all(
+                       isinstance(item, dict) for item in daily_data
+                   ):
+                       _LOGGER.warning(
+                           "Marées France Coordinator: Invalid %s cache data for harbor '%s', "
+                           "date '%s': Expected list of dicts, got %s.",
+                           data_type,
+                           self.harbor_id,
+                           date_key,
+                           type(daily_data).__name__,
+                       )
+                       needs_repair = True
+                       break
             else:  # Tides and Coefficients expect a list of items per date
                 for date_key, daily_data in harbor_cache.items():
                     if not isinstance(daily_data, list):
@@ -267,12 +319,57 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             tides_cache_full = await self.tides_store.async_load() or {}
             coeff_cache_full = await self.coeff_store.async_load() or {}
             water_level_cache_full = await self.water_level_store.async_load() or {}
+            watertemp_cache_full = await self.watertemp_store.async_load() or {}
         except Exception as e:
             _LOGGER.exception(
                 "Marées France Coordinator: Failed to load cache stores for %s",
                 self.harbor_id,
             )
             raise UpdateFailed(f"Failed to load cache: {e}") from e
+
+        await self.prune_watertemp_cache()
+ 
+        if not all(
+            k in self.config_entry.data for k in [CONF_HARBOR_LAT, CONF_HARBOR_LON]
+        ):
+            _LOGGER.info(
+                "Marées France Coordinator: lat/lon not found in config entry for %s. "
+                "Attempting to fetch and update.",
+                self.harbor_id,
+            )
+            try:
+                from . import fetch_harbors  # pylint: disable=import-outside-toplevel
+
+                all_harbors = await fetch_harbors(self.websession)
+                harbor_details = all_harbors.get(self.harbor_id)
+                if (
+                    harbor_details
+                    and "lat" in harbor_details
+                    and "lon" in harbor_details
+                ):
+                    new_data = {**self.config_entry.data}
+                    new_data[CONF_HARBOR_LAT] = harbor_details["lat"]
+                    new_data[CONF_HARBOR_LON] = harbor_details["lon"]
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, data=new_data
+                    )
+                    _LOGGER.info(
+                        "Marées France Coordinator: Successfully updated config entry for %s "
+                        "with lat/lon.",
+                        self.harbor_id,
+                    )
+                else:
+                    _LOGGER.warning(
+                        "Marées France Coordinator: Could not find lat/lon for %s in "
+                        "fetched harbor list.",
+                        self.harbor_id,
+                    )
+            except Exception:
+                _LOGGER.exception(
+                    "Marées France Coordinator: Error fetching harbor list to update "
+                    "lat/lon for %s.",
+                    self.harbor_id,
+                )
 
         today = date.today()
         today_str = today.strftime(DATE_FORMAT)
@@ -311,10 +408,25 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Use the potentially repaired harbor-specific cache for today's data.
         harbor_water_level_cache = water_level_cache_full.get(self.harbor_id, {})
 
+        lat = self.config_entry.data.get(CONF_HARBOR_LAT)
+        lon = self.config_entry.data.get(CONF_HARBOR_LON)
+        if lat and lon:
+            (
+                watertemp_cache_full,
+                _,
+            ) = await self._validate_and_repair_cache(
+                self.watertemp_store,
+                watertemp_cache_full,
+                "watertemp",
+                _async_fetch_and_store_water_temp,
+                (lat, lon),
+            )
+
         future_window_days = 366
         tides_data_for_parser = {}
         coeff_data_for_parser = {}
         water_level_data_for_parser = harbor_water_level_cache.get(today_str)
+        harbor_watertemp_cache = watertemp_cache_full.get(self.harbor_id, {})
 
         if water_level_data_for_parser is None:
             _LOGGER.info(
@@ -407,6 +519,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 tides_data_for_parser,
                 coeff_data_for_parser,
                 water_level_data_for_parser,
+                harbor_watertemp_cache,
                 translation_high,  # Though unused, kept for signature consistency
                 translation_low,  # Though unused, kept for signature consistency
             )
@@ -422,11 +535,11 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         tides_raw_data: dict[str, list[list[str]]],
         coeff_raw_data: dict[str, list[str]],
         water_level_raw_data: dict[str, list[list[str]]] | None,
+        water_temp_raw_data: dict[str, list[dict[str, Any]]] | None,
         _translation_high: str,  # Parameter kept for signature, but not used directly
         _translation_low: str,  # Parameter kept for signature, but not used directly
     ) -> dict[str, Any]:
         """Parse raw tide, coefficient, and water level data into a structured format.
-
         This method takes the raw data fetched from the SHOM API (via cache)
         and transforms it into a dictionary containing:
         - Information about the current tide (if any).
@@ -436,7 +549,6 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         - The date and coefficient of the next neap tide.
         - The current water height (if available).
         - A timestamp of the last update.
-
         Args:
             tides_raw_data: Raw tide data, mapping dates to lists of tide events.
                             Expected to cover yesterday through future dates.
@@ -445,9 +557,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             water_level_raw_data: Raw water level data for today, structured as
                                   `{date_str: [[timestamp_str, height_str], ...]}`.
                                   Can be None if not available.
+            water_temp_raw_data: Raw water temperature data. Can be None.
             _translation_high: Translation for "High Tide" (unused).
             _translation_low: Translation for "Low Tide" (unused).
-
         Returns:
             A dictionary containing parsed and processed tide information.
         """
@@ -599,98 +711,69 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
 
         current_water_height = None
-        _LOGGER.debug(
-            "Marées France Coordinator: Checking water level data for current height "
-            "calculation. Received data: %s",
-            water_level_raw_data,
-        )
+        current_water_temp = None
+
         water_levels: list[list[str]] | None = None
         today_str_key = date.today().strftime(DATE_FORMAT)
 
         if isinstance(water_level_raw_data, dict) and isinstance(
             water_level_raw_data.get(today_str_key), list
         ):
-            _LOGGER.debug(
-                "Marées France Coordinator: Extracting water levels using key '%s'.",
-                today_str_key,
-            )
             water_levels = cast(list[list[str]], water_level_raw_data[today_str_key])
-        elif (
-            water_level_raw_data is not None
-        ):  # Log if data is present but not in expected format
-            _LOGGER.warning(
-                "Marées France Coordinator: Received water level data, but it's not a "
-                "dictionary or lacks the expected key '%s'. Data: %s",
-                today_str_key,
-                water_level_raw_data,
-            )
 
         if water_levels:
+            # First, interpolate water temperature for each water level entry
+            daily_water_temps = (
+                water_temp_raw_data.get(today_str_key, [])
+                if water_temp_raw_data
+                else []
+            )
+            temp_by_hour = {
+                item["datetime"].split("T")[1][:2]: item["temp"]
+                for item in daily_water_temps
+            }
+
+            interpolated_water_levels = []
+            for entry in water_levels:
+                if len(entry) != 2:
+                    continue
+                time_str = entry[0]
+                hour_str = time_str.split(":")[0]
+                temp = temp_by_hour.get(hour_str)
+                interpolated_water_levels.append([entry[0], entry[1], temp])
+
+            # Now, find the closest entry to now_utc
             closest_entry = None
             min_diff = timedelta.max
-            for entry in water_levels:
-                if isinstance(entry, list) and len(entry) == 2:
-                    try:
-                        time_str = entry[0]
-                        if len(time_str) == 5:
-                            time_str += ":00"
-                        elif len(time_str) != 8:
-                            raise ValueError(f"Unexpected time format: {time_str}")
-
-                        dt_naive = datetime.strptime(
-                            f"{today_str_key} {time_str}", f"{DATE_FORMAT} %H:%M:%S"
-                        )
-                        dt_local = paris_tz.localize(dt_naive)
-                        entry_dt = dt_local.astimezone(timezone.utc)
-                        diff = abs(now_utc - entry_dt)
-                        if diff < min_diff:
-                            min_diff = diff
-                            closest_entry = entry
-                    except (
-                        ValueError,
-                        TypeError,
-                        pytz.exceptions.AmbiguousTimeError,
-                        pytz.exceptions.NonExistentTimeError,
-                    ) as e:
-                        _LOGGER.warning(
-                            "Marées France Coordinator: Skipping water level entry due to "
-                            "parsing/timezone error for %s: %s (%s)",
-                            entry,
-                            e.__class__.__name__,
-                            e,
-                        )
-                        continue
-            if closest_entry:
-                if min_diff <= timedelta(minutes=15):  # Check if recent enough
-                    try:
-                        current_water_height = float(closest_entry[1])
-                        _LOGGER.debug(
-                            "Marées France Coordinator: Found closest water level height: "
-                            "%.2f m at %s (diff: %s)",
-                            current_water_height,
-                            closest_entry[0],
-                            min_diff,
-                        )
-                    except (ValueError, TypeError):
-                        _LOGGER.warning(
-                            "Marées France Coordinator: Could not parse height from "
-                            "closest water level entry: %s",
-                            closest_entry,
-                        )
-                else:
-                    _LOGGER.warning(
-                        "Marées France Coordinator: Closest water level entry is too old "
-                        "(%s difference). Cannot determine current height.",
-                        min_diff,
+            for entry in interpolated_water_levels:
+                try:
+                    time_str = entry[0]
+                    if len(time_str) == 5:
+                        time_str += ":00"
+                    dt_naive = datetime.strptime(
+                        f"{today_str_key} {time_str}", f"{DATE_FORMAT} %H:%M:%S"
                     )
-            else:  # No valid entry found in water_levels
-                _LOGGER.warning(
-                    "Marées France Coordinator: Could not find any valid/parseable "
-                    "water level entries for today."
-                )
+                    dt_local = paris_tz.localize(dt_naive)
+                    entry_dt = dt_local.astimezone(timezone.utc)
+                    diff = abs(now_utc - entry_dt)
+                    if diff < min_diff:
+                        min_diff = diff
+                        closest_entry = entry
+                except (ValueError, TypeError, pytz.exceptions.Error):
+                    continue
 
-        if now_data is not None and current_water_height is not None:
+            if closest_entry and min_diff <= timedelta(minutes=15):
+                try:
+                    current_water_height = float(closest_entry[1])
+                    current_water_temp = (
+                        float(closest_entry[2]) if closest_entry[2] is not None else None
+                    )
+                except (ValueError, TypeError):
+                    pass
+
+        if now_data:
             now_data[ATTR_CURRENT_HEIGHT] = current_water_height
+            now_data[ATTR_WATER_TEMP] = current_water_temp
 
         next_spring_date_str = None
         next_spring_coeff = None

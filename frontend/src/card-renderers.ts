@@ -12,6 +12,7 @@ import {
   MareesFranceCardConfig,
   NextTideStatus,
   GetTidesDataResponseData,
+  GetWaterTempResponseData,
 } from './types';
 import { localizeCard } from './localize';
 import { CalendarDialogManager } from './calendar-dialog'; // For opening dialog
@@ -25,6 +26,7 @@ export interface CardInstanceForRenderers {
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _tideData: GetTidesDataResponseData | { error: string } | null; // For nextTideInfo
+  _waterTempData: GetWaterTempResponseData | { error: string } | null;
   // Methods
   _handleTabClick: (ev: MouseEvent) => void;
   _calendarDialogManager: CalendarDialogManager | null; // To open the dialog
@@ -58,6 +60,9 @@ export function renderNextTideStatus(card: CardInstanceForRenderers, nextTideInf
     const coefClass = coef >= 100 ? 'warning-coef' : '';
     detailParts.push(html`<span class="${coefClass}">Coef. ${coef}</span>`);
   }
+  if (card._waterTempData && !("error" in card._waterTempData) && card._waterTempData[card._selectedDay] && card._waterTempData[card._selectedDay][0]) {
+    detailParts.push(`${card._waterTempData[card._selectedDay][0].temp.toFixed(1)} °C`);
+  }
   return html`
     <div class="next-tide-status">
       <div class="next-tide-main">
@@ -68,7 +73,7 @@ export function renderNextTideStatus(card: CardInstanceForRenderers, nextTideInf
             <span class="next-tide-time">${nextTideInfo.nextPeakTime}</span>
           </div>
         </div>
-        <div class="next-tide-details">${detailParts.length === 2 ? html`${detailParts[0]} - ${detailParts[1]}` : detailParts[0] ?? ''}</div>
+        <div class="next-tide-details">${detailParts.map((part, index) => html`${index > 0 ? ' - ' : ''}${part}`)}</div>
       </div>
       <ha-icon class="calendar-icon" icon="mdi:calendar-month" @click="${() => card._calendarDialogManager?.openCalendarDialog()}" title="${localizeCard('ui.card.marees_france.open_calendar', card.hass)}"></ha-icon>
     </div>`;

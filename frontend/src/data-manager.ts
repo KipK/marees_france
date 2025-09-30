@@ -12,7 +12,8 @@ import {
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   GetCoefficientsDataResponseData,
-} from './types';
+  GetWaterTempResponseData,
+} from "./types";
 import { localizeCard } from './localize';
 
 // Interface for the card instance properties and methods DataManager needs.
@@ -23,6 +24,7 @@ export interface CardInstanceForDataManager {
   _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
   _tideData: GetTidesDataResponseData | { error: string } | null;
   _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null;
+  _waterTempData: GetWaterTempResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _isLoadingCoefficients: boolean;
@@ -71,6 +73,7 @@ export class DataManager {
         this.fetchWaterLevels(),
         this.fetchTideData(),
         this.fetchCoefficientsData(),
+        this.fetchWaterTemp(),
       ]);
     } catch (error) {
       console.error("Marees Card (DataManager): Error during concurrent data fetch", error);
@@ -244,6 +247,22 @@ export class DataManager {
       this.card._isLoadingCoefficients = false;
       this.updateInitialLoadingFlag();
       this.card.requestUpdate();
+    }
+  }
+
+  public async fetchWaterTemp(): Promise<void> {
+    if (!this.card.config.device_id) return;
+    try {
+      const waterTemp = await this.callWebsocketCommand(
+        "marees_france/get_water_temp",
+        {
+          device_id: this.card.config.device_id,
+        }
+      );
+      this.card._waterTempData = waterTemp as GetWaterTempResponseData;
+    } catch (error) {
+      console.error("Error fetching water temperature:", error);
+      this.card._waterTempData = { error: (error as Error).message };
     }
   }
 

@@ -34,6 +34,8 @@ CONF_HARBOR_ID: Final[str] = "harbor_id"
 CONF_HARBOR_NAME: Final[str] = (
     "harbor_name"  # Used in config entry, not directly by user
 )
+CONF_HARBOR_LAT: Final[str] = "harbor_lat"
+CONF_HARBOR_LON: Final[str] = "harbor_lon"
 
 # --- Default Values ---
 DEFAULT_HARBOR: Final[str] = "PORNICHET"  # Default harbor for config flow
@@ -55,6 +57,10 @@ WATERLEVELS_URL_TEMPLATE: Final[str] = (
 COEFF_URL_TEMPLATE: Final[str] = (
     "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/coeff?"
     "harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1"
+)
+WATERTEMP_URL_TEMPLATE: Final[str] = (
+    "https://ws.meteoconsult.fr/meteoconsultmarine/androidtab/115/fr/v30/previsionsSpot.php?"
+    "lat={lat}&lon={lon}"
 )
 HEADERS: Final[dict[str, str]] = {
     "Referer": "https://maree.shom.fr/",
@@ -87,10 +93,13 @@ ATTR_FINISHED_HEIGHT: Final[str] = (
 ATTR_STARTING_TIME: Final[str] = "starting_time"  # Attribute for tide starting time
 ATTR_FINISHED_TIME: Final[str] = "finished_time"  # Attribute for tide finished time
 ATTR_CURRENT_HEIGHT: Final[str] = "current_height"  # Attribute for current water height
+ATTR_WATER_TEMP: Final[str] = "water_temp"
 
 # --- Storage Keys and Versions ---
 WATERLEVELS_STORAGE_KEY: Final[str] = f"{DOMAIN}_water_levels_cache"
 WATERLEVELS_STORAGE_VERSION: Final[int] = 1
+WATERTEMP_STORAGE_KEY: Final[str] = f"{DOMAIN}_water_temp_cache"
+WATERTEMP_STORAGE_VERSION: Final[int] = 1
 TIDES_STORAGE_KEY: Final[str] = f"{DOMAIN}_tides_cache"
 TIDES_STORAGE_VERSION: Final[int] = 1
 COEFF_STORAGE_KEY: Final[str] = f"{DOMAIN}_coefficients_cache"
@@ -117,6 +126,7 @@ SERVICE_GET_WATER_LEVELS: Final[str] = "get_water_levels"
 SERVICE_GET_TIDES_DATA: Final[str] = "get_tides_data"
 SERVICE_GET_COEFFICIENTS_DATA: Final[str] = "get_coefficients_data"
 SERVICE_REINITIALIZE_HARBOR_DATA: Final[str] = "reinitialize_harbor_data"
+SERVICE_GET_WATER_TEMP: Final[str] = "get_water_temp"
 
 # --- Frontend Modules ---
 JSMODULES: Final[list[dict[str, str]]] = [

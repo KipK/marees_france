@@ -18,6 +18,7 @@ from .const import (
     WATERLEVELS_URL_TEMPLATE,
     TIDESURL_TEMPLATE,
     COEFF_URL_TEMPLATE,
+    WATERTEMP_URL_TEMPLATE,
     DATE_FORMAT,
     API_REQUEST_DELAY,
 )
@@ -423,3 +424,82 @@ async def _async_fetch_and_store_coefficients(
             days,
         )
         return False
+
+
+async def _async_fetch_and_store_water_temp(
+   hass: HomeAssistant,
+   store: Store[dict[str, dict[str, Any]]],
+   cache: dict[str, dict[str, Any]],
+   harbor_id: str,
+   lat: str,
+   lon: str,
+   websession: aiohttp.ClientSession | None = None,
+) -> bool:
+   """Fetch water temperature data, validate, store in cache, and save."""
+   url = WATERTEMP_URL_TEMPLATE.format(lat=lat, lon=lon)
+   session = websession or async_get_clientsession(hass)
+   timeout_seconds = 30
+
+   data = await _async_fetch_with_retry(
+       session=session,
+       url=url,
+       headers=HEADERS,
+       timeout=timeout_seconds,
+       harbor_id=harbor_id,
+       data_type="water temperature",
+   )
+
+   if data is None:
+       return False
+
+   try:
+       previsions = data.get("contenu", {}).get("previs", {}).get("detail")
+       if not isinstance(previsions, list):
+           _LOGGER.error(
+               "Marées France Helper: Water temp 'detail' is not a list for %s. Data: %s",
+               harbor_id,
+               data,
+           )
+           return False
+   except Exception as e:
+       _LOGGER.exception(
+           "Marées France Helper: Unexpected error accessing water temp data for %s. Error: %s",
+           harbor_id,
+           e,
+       )
+       return False
+
+   try:
+       harbor_cache = cache.setdefault(harbor_id, {})
+
+       today = date.today()
+       for i in range(7):
+           current_date = today + timedelta(days=i)
+           date_str = current_date.strftime(DATE_FORMAT)
+           daily_temps = []
+
+           for prevision in previsions:
+               prevision_date_str = prevision.get("datetime", "").split("T")[0]
+               if prevision_date_str == date_str and "teau" in prevision:
+                   daily_temps.append(
+                       {
+                           "datetime": prevision["datetime"],
+                           "temp": prevision["teau"],
+                       }
+                   )
+
+           if daily_temps:
+               harbor_cache[date_str] = daily_temps
+
+       await store.async_save(cache)
+       _LOGGER.debug(
+           "Marées France Helper: Cached new water temperature data for %s",
+           harbor_id,
+       )
+       return True
+   except Exception:
+       _LOGGER.exception(
+           "Marées France Helper: Unexpected error saving water temperature cache for %s",
+           harbor_id,
+       )
+       return False

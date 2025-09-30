@@ -93,6 +93,10 @@ export interface GetCoefficientsDataResponseData {
   [date: string]: string[];
 }
 
+export interface GetWaterTempResponseData {
+  [date: string]: { datetime: string; temp: number }[];
+}
+
 // --- Parsed/Processed Data Structures ---
 
 // Structure for a parsed tide event used in utils.ts and graph-renderer.ts
@@ -146,6 +150,7 @@ export interface CurrentTimeMarkerData {
   heightStr: string;
   totalMinutes: number;
   height: number;
+  water_temp?: number;
 }
 
 // --- SVG.js Basic Types (Placeholder if @types not available) ---
