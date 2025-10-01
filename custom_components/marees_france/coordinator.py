@@ -99,7 +99,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=f"{DOMAIN}_{self.harbor_id}",
             update_interval=update_interval,
         )
- 
+
     async def prune_watertemp_cache(self) -> None:
         """Remove water temperature entries older than today."""
         try:
@@ -107,14 +107,14 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             harbor_cache = cache.get(self.harbor_id)
             if not harbor_cache:
                 return
- 
+
             today = date.today()
             keys_to_prune = [
                 key
                 for key in harbor_cache
                 if date.fromisoformat(key.split("T")[0]) < today
             ]
- 
+
             if keys_to_prune:
                 for key in keys_to_prune:
                     del harbor_cache[key]
@@ -130,7 +130,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.harbor_id,
                 e,
             )
- 
+
     async def _validate_and_repair_cache(
         self,
         store: Store[dict[str, dict[str, Any]]],
@@ -150,11 +150,11 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         fetch_args: tuple[Any, ...],
     ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
         """Validate cache for the harbor, repair if needed, and return caches.
- 
+
         Checks if the cache for the specific harbor and data type is present and
         has a valid basic structure. If not, it attempts to clear the invalid
         entry and re-fetch the data using the provided `fetch_function`.
- 
+
         Args:
             store: The data store instance (tides, coefficients, or water levels).
             cache_full: The entire cache dictionary loaded from the store.
@@ -165,7 +165,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             fetch_args: A tuple of arguments to pass to the `fetch_function`
                         (excluding hass, store, cache_full, harbor_id which are
                         passed automatically).
- 
+
         Returns:
             A tuple containing:
                 - The (potentially modified) full cache dictionary.
@@ -211,20 +211,20 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         needs_repair = True
                         break
             elif data_type == "watertemp":
-               for date_key, daily_data in harbor_cache.items():
-                   if not isinstance(daily_data, list) or not all(
-                       isinstance(item, dict) for item in daily_data
-                   ):
-                       _LOGGER.warning(
-                           "Marées France Coordinator: Invalid %s cache data for harbor '%s', "
-                           "date '%s': Expected list of dicts, got %s.",
-                           data_type,
-                           self.harbor_id,
-                           date_key,
-                           type(daily_data).__name__,
-                       )
-                       needs_repair = True
-                       break
+                for date_key, daily_data in harbor_cache.items():
+                    if not isinstance(daily_data, list) or not all(
+                        isinstance(item, dict) for item in daily_data
+                    ):
+                        _LOGGER.warning(
+                            "Marées France Coordinator: Invalid %s cache data for harbor '%s', "
+                            "date '%s': Expected list of dicts, got %s.",
+                            data_type,
+                            self.harbor_id,
+                            date_key,
+                            type(daily_data).__name__,
+                        )
+                        needs_repair = True
+                        break
             else:  # Tides and Coefficients expect a list of items per date
                 for date_key, daily_data in harbor_cache.items():
                     if not isinstance(daily_data, list):
@@ -328,7 +328,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Failed to load cache: {e}") from e
 
         await self.prune_watertemp_cache()
- 
+
         if not all(
             k in self.config_entry.data for k in [CONF_HARBOR_LAT, CONF_HARBOR_LON]
         ):
@@ -766,7 +766,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 try:
                     current_water_height = float(closest_entry[1])
                     current_water_temp = (
-                        float(closest_entry[2]) if closest_entry[2] is not None else None
+                        float(closest_entry[2])
+                        if closest_entry[2] is not None
+                        else None
                     )
                 except (ValueError, TypeError):
                     pass

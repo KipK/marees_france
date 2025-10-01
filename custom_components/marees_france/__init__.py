@@ -290,6 +290,7 @@ WS_GET_WATER_TEMP_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
     }
 )
 
+
 # Shared Helper Functions for Services and Websocket Commands
 async def _get_device_and_harbor_id(
     hass: HomeAssistant, device_id: str
@@ -519,6 +520,7 @@ async def ws_handle_get_water_temp(
         _LOGGER.exception("Unexpected error in websocket get_water_temp")
         connection.send_error(msg["id"], "unknown_error", str(err))
 
+
 # Websocket Command Handlers
 @websocket_api.async_response
 async def ws_handle_get_water_levels(
@@ -666,7 +668,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
     watertemp_store = Store[dict[str, dict[str, Any]]](
         hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
     )
- 
+
     caches_cleared = []
     try:
         tides_cache_full = await tides_store.async_load() or {}
@@ -675,7 +677,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             await tides_store.async_save(tides_cache_full)
             caches_cleared.append("tides")
             _LOGGER.debug("Reinitialize Service: Cleared tides cache for %s", harbor_id)
- 
+
         coeff_cache_full = await coeff_store.async_load() or {}
         if harbor_id in coeff_cache_full:
             del coeff_cache_full[harbor_id]
@@ -684,7 +686,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             _LOGGER.debug(
                 "Reinitialize Service: Cleared coefficients cache for %s", harbor_id
             )
- 
+
         water_level_cache_full = await water_level_store.async_load() or {}
         if harbor_id in water_level_cache_full:
             del water_level_cache_full[harbor_id]
@@ -693,7 +695,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             _LOGGER.debug(
                 "Reinitialize Service: Cleared water levels cache for %s", harbor_id
             )
- 
+
         watertemp_cache_full = await watertemp_store.async_load() or {}
         if harbor_id in watertemp_cache_full:
             del watertemp_cache_full[harbor_id]
@@ -731,7 +733,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         coeff_cache_full = await coeff_store.async_load() or {}
         water_level_cache_full = await water_level_store.async_load() or {}
         watertemp_cache_full = await watertemp_store.async_load() or {}
- 
+
         today = date.today()
         yesterday = today - timedelta(days=1)
         yesterday_str = yesterday.strftime(DATE_FORMAT)
@@ -747,7 +749,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("tides")
- 
+
         first_day_of_current_month = today.replace(day=1)
         coeff_fetch_days = 365
         if not await _async_fetch_and_store_coefficients(
@@ -760,7 +762,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("coefficients")
- 
+
         today_str = today.strftime(DATE_FORMAT)
         if not await _async_fetch_and_store_water_level(
             hass,
@@ -771,7 +773,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("water levels")
- 
+
         lat = config_entry.data.get(CONF_HARBOR_LAT)
         lon = config_entry.data.get(CONF_HARBOR_LON)
         if lat and lon:
@@ -1570,8 +1572,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             second=0,
         )
     )
-    
-    
+
     async def _daily_watertemp_prefetch_job(*_: Any) -> None:
         """Run daily job to prefetch water temperature data."""
         _LOGGER.debug("Marées France: Running daily water temperature prefetch job.")
@@ -1599,9 +1600,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Marées France: Removing daily prefetch listeners.")
         for remove_listener in listeners:
             remove_listener()
-    
+
     entry.async_on_unload(_unload_listeners)
-    
+
     return True
 
 

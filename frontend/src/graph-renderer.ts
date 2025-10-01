@@ -9,7 +9,6 @@ import {
   TideEventTuple,
   GraphMargins,
   PointData,
-  TideMarkerData,
   CurrentTimeMarkerData,
 } from './types.js';
 
