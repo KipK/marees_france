@@ -1,39 +1,27 @@
-// This file will manage interactions with the graph renderer and its container.
-// Responsibilities include:
-// - Setting up and handling the MutationObserver for the SVG container.
-// - Managing the GraphRenderer instance.
-// - Logic for triggering graph drawing (_drawGraphIfReady).
-// - Handling tooltip updates initiated by the GraphRenderer.
-// - Managing internal HTML tooltip visibility and positioning.
-
 import {
   HomeAssistant,
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
+  GetWaterTempResponseData,
 } from './types';
 import { GraphRenderer, TooltipDelegate } from './graph-renderer';
 
-// Define type for synthetic event used in tooltip positioning
 export interface SyntheticPositionEvent {
     clientX?: number;
     clientY?: number;
     type: string;
 }
 
-// Interface for the card instance properties and methods GraphInteractionManager needs.
-// This helps to decouple and define clear dependencies.
 export interface CardInstanceForGraphManager {
   hass: HomeAssistant;
   shadowRoot: ShadowRoot | null;
-  // Data properties needed for drawing the graph
   _selectedDay: string;
   _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
   _tideData: GetTidesDataResponseData | { error: string } | null;
+  _waterTempData: GetWaterTempResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
-  // Method to get bounding client rect for tooltip positioning
   getBoundingClientRect: () => DOMRect;
-  // Method to request an update if needed (though @state should handle most)
   requestUpdate: (name?: PropertyKey, oldValue?: unknown) => void;
 }
 
@@ -47,10 +35,6 @@ export class GraphInteractionManager implements TooltipDelegate {
     this.card = cardInstance;
   }
 
-  /**
-   * Sets up the MutationObserver to watch for the graph container element.
-   * Initializes the graph renderer when the container is available.
-   */
   public setupMutationObserver(): void {
     if (!this.card.shadowRoot || this.mutationObserver) return;
     this.mutationObserver = new MutationObserver(this.handleMutation.bind(this));
@@ -67,19 +51,13 @@ export class GraphInteractionManager implements TooltipDelegate {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const el = node as HTMLElement;
             const found = el.id === 'marees-graph-target' ? el : el.querySelector<HTMLDivElement>('#marees-graph-target');
-            if (found && found instanceof HTMLDivElement) {
-              containerAdded = found;
-            } else if (found) {
-              console.warn("Marees Card (GraphInteractionManager): Found potential graph target container but it's not an HTMLDivElement:", found);
-            }
+            if (found && found instanceof HTMLDivElement) containerAdded = found;
           }
         });
         mutation.removedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const el = node as HTMLElement;
-            if (el.id === 'marees-graph-target' || (this.svgContainer && el.contains(this.svgContainer))) {
-              containerRemoved = true;
-            }
+            if (el.id === 'marees-graph-target' || (this.svgContainer && el.contains(this.svgContainer))) containerRemoved = true;
           }
         });
         if (containerAdded) this.handleContainerStateChange(containerAdded);
@@ -95,14 +73,11 @@ export class GraphInteractionManager implements TooltipDelegate {
       this.svgContainer = null;
     } else if (containerElement && !this.graphRenderer) {
       this.svgContainer = containerElement;
-      // Pass `this` (GraphInteractionManager instance) as the first argument to GraphRenderer
       this.graphRenderer = new GraphRenderer(this, this.svgContainer, this.card.hass);
       this.drawGraphIfReady();
     } else if (containerElement && this.graphRenderer) {
       if (this.svgContainer !== containerElement) {
           this.svgContainer = containerElement;
-          // Re-initialize or update renderer if container instance changes.
-          // For now, destroy and recreate.
           this.graphRenderer.destroy();
           this.graphRenderer = new GraphRenderer(this, this.svgContainer, this.card.hass);
       }
@@ -110,13 +85,10 @@ export class GraphInteractionManager implements TooltipDelegate {
     }
   }
 
-  /**
-   * Checks if all data is ready and the graph container exists, then draws the graph.
-   * Called when data changes or the graph container becomes available.
-   */
   public drawGraphIfReady(): void {
     const waterDataValid = this.card._waterLevels && !('error' in this.card._waterLevels);
     const tideDataValid = this.card._tideData && !('error' in this.card._tideData);
+    const waterTempDataValid = this.card._waterTempData && !('error' in this.card._waterTempData);
     const dataIsReady = !this.card._isLoadingWater && !this.card._isLoadingTides && waterDataValid && tideDataValid;
     const containerStillExists = this.svgContainer && this.card.shadowRoot?.contains(this.svgContainer);
 
@@ -125,6 +97,7 @@ export class GraphInteractionManager implements TooltipDelegate {
         this.graphRenderer.drawGraph(
           this.card._tideData as GetTidesDataResponseData,
           this.card._waterLevels as GetWaterLevelsResponseData,
+          waterTempDataValid ? (this.card._waterTempData as GetWaterTempResponseData) : null,
           this.card._selectedDay
         );
         this.graphRenderer.refreshDimensionsAndScale();
@@ -134,23 +107,7 @@ export class GraphInteractionManager implements TooltipDelegate {
     }
   }
 
-  /**
-   * Updates and shows the HTML tooltip based on interaction with the graph.
-   * This method is called by the GraphRenderer instance.
-   * @param svgX The X coordinate in SVG space for the tooltip anchor.
-   * @param svgY The Y coordinate in SVG space for the tooltip anchor.
-   * @param timeMinutes The time in total minutes from midnight.
-   * @param height The water height at that time.
-   * @param isSnapped True if the interaction point is snapped to the current time marker.
-   */
-  public updateInteractionTooltip(
-    svgX: number,
-    svgY: number,
-    timeMinutes: number,
-    height: number,
-    waterTemp: number | undefined,
-    isSnapped: boolean = false
-  ): void {
+  public updateInteractionTooltip(svgX: number, svgY: number, timeMinutes: number, height: number, waterTemp: number | undefined, isSnapped = false): void {
     if (this.card.hass?.editMode) return;
     const svg = this.svgContainer?.querySelector('svg');
     if (!svg) return;
@@ -167,7 +124,6 @@ export class GraphInteractionManager implements TooltipDelegate {
       const svgPt = svg.createSVGPoint();
       svgPt.x = svgX; svgPt.y = svgY;
       const screenPt = svgPt.matrixTransform(ctm);
-
       const syntheticEvent: SyntheticPositionEvent = { clientX: screenPt.x, clientY: screenPt.y, type: 'interactionMove' };
       const tooltip = this.card.shadowRoot?.getElementById('marees-html-tooltip');
       if (tooltip) tooltip.classList.toggle('snapped-tooltip', isSnapped);
@@ -197,58 +153,41 @@ export class GraphInteractionManager implements TooltipDelegate {
     }
   }
 
-  /**
-   * Hides the HTML interaction tooltip.
-   * This method is called by the GraphRenderer instance.
-   */
   public hideInteractionTooltip(): void {
     const tooltip = this.card.shadowRoot?.getElementById('marees-html-tooltip');
     if (tooltip) tooltip.classList.remove('snapped-tooltip');
     this.hideHtmlTooltip();
   }
 
-  private showHtmlTooltip(
-    evt: SyntheticPositionEvent,
-    time: string,
-    height: string,
-    waterTemp?: string
-  ): void {
+  private showHtmlTooltip(evt: SyntheticPositionEvent, time: string, height: string, waterTemp?: string): void {
     const tooltip = this.card.shadowRoot?.getElementById('marees-html-tooltip');
     if (!tooltip) return;
-
     tooltip.style.visibility = 'visible';
     tooltip.style.display = 'block';
-
     let content = `<strong>${time}</strong><br>${height} m`;
     if (waterTemp) {
       content += `<br>${waterTemp} °C`;
     }
     tooltip.innerHTML = content;
-
     if (evt.clientX === undefined || evt.clientY === undefined) { this.hideHtmlTooltip(); return; }
-
     const cardRect = this.card.getBoundingClientRect();
     const targetCenterX = evt.clientX - cardRect.left;
     const targetTopY = evt.clientY - cardRect.top;
     const targetHeight = 1;
     const tooltipWidth = tooltip.offsetWidth;
     const tooltipHeight = tooltip.offsetHeight;
-
     if (tooltipWidth <= 0 || tooltipHeight <= 0) { this.hideHtmlTooltip(); return; }
-
     const isTouchEvent = evt.type.startsWith('touch') || evt.type === 'interactionMove';
     const offsetAbove = isTouchEvent ? 45 : 10;
     let left = targetCenterX - tooltipWidth / 2;
     let top = targetTopY - tooltipHeight - offsetAbove;
     const safetyMargin = 2;
-
     if (left < safetyMargin) left = safetyMargin;
     if (left + tooltipWidth > cardRect.width - safetyMargin) left = cardRect.width - tooltipWidth - safetyMargin;
     if (top < safetyMargin) {
       top = targetTopY + targetHeight + offsetAbove;
       if (top + tooltipHeight > cardRect.height - safetyMargin) top = cardRect.height - tooltipHeight - safetyMargin;
     }
-
     tooltip.style.left = `${left}px`;
     tooltip.style.top = `${top}px`;
   }
@@ -261,10 +200,6 @@ export class GraphInteractionManager implements TooltipDelegate {
     }
   }
 
-  /**
-   * Disconnects the MutationObserver and destroys the GraphRenderer instance.
-   * Called when the main card is disconnected from the DOM.
-   */
   public disconnectObserver(): void {
     if (this.mutationObserver) {
       this.mutationObserver.disconnect();
