@@ -27,6 +27,7 @@ export interface CardInstanceForRenderers {
   _isLoadingTides: boolean;
   _tideData: GetTidesDataResponseData | { error: string } | null; // For nextTideInfo
   _waterTempData: GetWaterTempResponseData | { error: string } | null;
+  _isLoadingWaterTemp: boolean;
   // Methods
   _handleTabClick: (ev: MouseEvent) => void;
   _calendarDialogManager: CalendarDialogManager | null; // To open the dialog
@@ -105,7 +106,7 @@ export function renderDayTab(card: CardInstanceForRenderers, date: string, local
 export function renderGraphContainer(card: CardInstanceForRenderers): TemplateResult {
   return html`
     <div class="svg-graph-container">
-      ${card._isLoadingWater || card._isLoadingTides ? html`<ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>` : nothing}
+      ${card._isLoadingWater || card._isLoadingTides || card._isLoadingWaterTemp ? html`<ha-icon icon="mdi:loading" class="loading-icon"></ha-icon>` : nothing}
       <div id="marees-graph-target" class="svg-graph-target"></div>
     </div>`;
 }

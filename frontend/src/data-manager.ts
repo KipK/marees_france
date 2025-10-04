@@ -28,6 +28,7 @@ export interface CardInstanceForDataManager {
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _isLoadingCoefficients: boolean;
+  _isLoadingWaterTemp: boolean;
   _isInitialLoading: boolean;
   _deviceName: string | null;
   // Potentially requestUpdate if direct state manipulation isn't enough,
@@ -63,6 +64,7 @@ export class DataManager {
     this.card._isLoadingWater = true;
     this.card._isLoadingTides = true;
     this.card._isLoadingCoefficients = true;
+    this.card._isLoadingWaterTemp = true;
     this.card._waterLevels = null;
     this.card._tideData = null;
     this.card._coefficientsData = null;
@@ -252,6 +254,10 @@ export class DataManager {
 
   public async fetchWaterTemp(): Promise<void> {
     if (!this.card.config.device_id) return;
+
+    this.card._isLoadingWaterTemp = true;
+    this.card.requestUpdate();
+
     try {
       const waterTemp = await this.callWebsocketCommand(
         "marees_france/get_water_temp",
@@ -263,11 +269,15 @@ export class DataManager {
     } catch (error) {
       console.error("Error fetching water temperature:", error);
       this.card._waterTempData = { error: (error as Error).message };
+    } finally {
+      this.card._isLoadingWaterTemp = false;
+      this.updateInitialLoadingFlag();
+      this.card.requestUpdate();
     }
   }
 
   private updateInitialLoadingFlag(): void {
-      if (this.card._isInitialLoading && !this.card._isLoadingWater && !this.card._isLoadingTides && !this.card._isLoadingCoefficients) {
+      if (this.card._isInitialLoading && !this.card._isLoadingWater && !this.card._isLoadingTides && !this.card._isLoadingCoefficients && !this.card._isLoadingWaterTemp) {
           this.card._isInitialLoading = false;
           // No need to call this.card.requestUpdate() here as it's called by the fetch methods' finally blocks.
       }

@@ -21,6 +21,7 @@ export interface CardInstanceForGraphManager {
   _waterTempData: GetWaterTempResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
+  _isLoadingWaterTemp: boolean;
   getBoundingClientRect: () => DOMRect;
   requestUpdate: (name?: PropertyKey, oldValue?: unknown) => void;
 }
@@ -89,7 +90,7 @@ export class GraphInteractionManager implements TooltipDelegate {
     const waterDataValid = this.card._waterLevels && !('error' in this.card._waterLevels);
     const tideDataValid = this.card._tideData && !('error' in this.card._tideData);
     const waterTempDataValid = this.card._waterTempData && !('error' in this.card._waterTempData);
-    const dataIsReady = !this.card._isLoadingWater && !this.card._isLoadingTides && waterDataValid && tideDataValid;
+    const dataIsReady = !this.card._isLoadingWater && !this.card._isLoadingTides && !this.card._isLoadingWaterTemp && waterDataValid && tideDataValid;
     const containerStillExists = this.svgContainer && this.card.shadowRoot?.contains(this.svgContainer);
 
     if (this.graphRenderer && containerStillExists && dataIsReady) {

@@ -50,6 +50,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   @state() _isLoadingWater: boolean = true;
   @state() _isLoadingTides: boolean = true;
   @state() _isLoadingCoefficients: boolean = true;
+  @state() _isLoadingWaterTemp: boolean = true;
   @state() _isInitialLoading: boolean = true;
   @state() _deviceName: string | null = null;
   // _graphRenderer and _svgContainer are now managed by GraphInteractionManager
@@ -66,6 +67,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
  
   constructor() {
     super();
+    this._selectedDay = new Date().toISOString().slice(0, 10);
     this._dataManager = new DataManager(this);
     this._calendarDialogManager = new CalendarDialogManager(this);
     this._graphInteractionManager = new GraphInteractionManager(this);
@@ -155,9 +157,10 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
       changedProperties.has('_waterLevels') ||
       changedProperties.has('_tideData') ||
       changedProperties.has('_isLoadingWater') ||
-      changedProperties.has('_isLoadingTides');
+      changedProperties.has('_isLoadingTides') ||
+      changedProperties.has('_isLoadingWaterTemp');
 
-    if (dataOrLoadingChanged) { // _graphRenderer check is now internal to GraphInteractionManager
+    if (dataOrLoadingChanged) {
       this._graphInteractionManager?.drawGraphIfReady();
     }
  
