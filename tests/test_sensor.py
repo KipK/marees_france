@@ -97,6 +97,7 @@ async def setup_integration_entry(
             "finished_height": "1.5",
             "coefficient": "90",
             "current_height": 5.0,
+            "water_temp": "15.5",
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -159,6 +160,7 @@ async def test_sensor_creation_and_initial_state(
             "finished_height": "1.5",
             "coefficient": "90",
             "current_height": 5.0,
+            "water_temp": "15.5",
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -225,6 +227,7 @@ async def test_sensor_updates_on_new_data(
             "finished_height": "1.5",
             "coefficient": "90",
             "current_height": 5.0,
+            "water_temp": "15.5",
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -263,6 +266,7 @@ async def test_sensor_updates_on_new_data(
             "finished_height": "2.0",
             "coefficient": "80",
             "current_height": 6.0,
+            "water_temp": "16.2",
         },
         "next_data": {
             "tide_trend": "Low Tide",
@@ -315,6 +319,7 @@ async def test_sensor_availability(
             "finished_height": "1.5",
             "coefficient": "90",
             "current_height": 5.0,
+            "water_temp": "15.5",
         },
         "next_data": {
             "tide_trend": "Low Tide",
