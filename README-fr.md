@@ -73,11 +73,16 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 - **État** : Date/heure de la prochaine morte-eau (coefficient ≤ 40)
 - **Attribut** : `coefficient`
 
+### Température de l'eau
+
+- **État**: La température actuelle de l'eau en degrés Celsius.
+- **Attributs**: `current_height`, `tide_trend`
+
 ---
 
 ## 🛠️ Services disponibles
 
-Quatres services sont disponibles :
+Cinq services sont disponibles :
 
 ### 1. Récupérer les données de marées
 
@@ -112,6 +117,15 @@ data:
 action: marees_france.reinitialize_harbor_data
 data:
   device_id: xxxxxxxxxx
+```
+
+### 5. Obtenir la température de l'eau pour une date spécifique
+
+```yaml
+action: marees_france.get_water_temp
+data:
+  device_id: xxxxxxxxxx
+  date: "2025-04-26"
 ```
 
 ---

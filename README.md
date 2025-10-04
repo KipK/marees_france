@@ -78,11 +78,16 @@ Same attributes as above, for the last tide event.
 - **State**: Date/Time of the next neap tide (coefficient ≤ 40)
 - **Attribute**: `coefficient`
 
+### Water Temperature
+
+- **State**: The current water temperature in degrees Celsius.
+- **Attributes**: `current_height`, `tide_trend`
+
 ---
 
 ## 🛠️ Available Services
 
-Four services are available:
+Five services are available:
 
 ### 1. Fetch tide data
 
@@ -118,6 +123,14 @@ action: marees_france.reinitialize_harbor_data
 data:
   device_id: xxxxxxxxxx
 ```
+
+### 5. Fetch water temperature for a specific date
+
+```yaml
+action: marees_france.get_water_temp
+data:
+  device_id: xxxxxxxxxx
+  date: "2025-04-26"```
 
 ---
 
