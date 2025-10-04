@@ -407,6 +407,7 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = "°C"
     _attr_icon = "mdi:thermometer-water"
+    _attr_suggested_display_precision = 1
 
     def __init__(
         self,
@@ -443,7 +444,7 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
                 except (ValueError, TypeError):
                     _LOGGER.warning("Invalid water temperature value: %s", water_temp)
                     return None
-            
+
         return None
 
     async def async_added_to_hass(self) -> None:
@@ -460,7 +461,10 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
             attrs = {}
 
             # Include current water height if available
-            if ATTR_CURRENT_HEIGHT in now_data and now_data[ATTR_CURRENT_HEIGHT] is not None:
+            if (
+                ATTR_CURRENT_HEIGHT in now_data
+                and now_data[ATTR_CURRENT_HEIGHT] is not None
+            ):
                 attrs[ATTR_CURRENT_HEIGHT] = now_data[ATTR_CURRENT_HEIGHT]
 
             # Include tide trend if available
