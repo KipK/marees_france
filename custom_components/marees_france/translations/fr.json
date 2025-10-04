@@ -117,6 +117,13 @@
                     "starting_time": { "name": "Heure Début" },
                     "tide_trend": { "name": "Tendance Marée" }
                 }
+            },
+            "water_temp": {
+                "name": "Température de l'Eau",
+                "state_attributes": {
+                    "current_height": { "name": "Hauteur Actuelle" },
+                    "tide_trend": { "name": "Tendance Marée" }
+                }
             }
         }
     },

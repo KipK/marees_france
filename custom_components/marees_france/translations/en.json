@@ -173,6 +173,17 @@
                         "name": "Tide Trend"
                     }
                 }
+            },
+            "water_temp": {
+                "name": "Water Temperature",
+                "state_attributes": {
+                    "current_height": {
+                        "name": "Current Height"
+                    },
+                    "tide_trend": {
+                        "name": "Tide Trend"
+                    }
+                }
             }
         }
     },

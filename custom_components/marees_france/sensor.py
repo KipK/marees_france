@@ -25,6 +25,7 @@ from .const import (
     ATTR_STARTING_HEIGHT,
     ATTR_STARTING_TIME,
     ATTR_TIDE_TREND,
+    ATTR_WATER_TEMP,
     ATTRIBUTION,
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
@@ -57,10 +58,11 @@ async def async_setup_entry(
         MareesFrancePreviousSensor(coordinator, entry),
         MareesFranceNextSpringTideSensor(coordinator, entry),
         MareesFranceNextNeapTideSensor(coordinator, entry),
+        MareesFranceWaterTempSensor(coordinator, entry),
     ]
 
     async_add_entities(sensors_to_add, update_before_add=True)
-    _LOGGER.debug("Added 5 Marées France sensors for harbor: %s", harbor_id)
+    _LOGGER.debug("Added 6 Marées France sensors for harbor: %s", harbor_id)
 
 
 class MareesFranceBaseSensor(
@@ -393,3 +395,61 @@ class MareesFranceNextNeapTideSensor(MareesFranceNextSpecialTideSensor):
     ) -> None:
         """Initialize the next neap tide sensor."""
         super().__init__(coordinator, config_entry, "next_neap_date", "next_neap_tide")
+
+
+class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
+    """Sensor representing the current water temperature.
+
+    The state of this sensor indicates the current water temperature in degrees Celsius.
+    """
+
+    _attr_translation_key = "water_temp"
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = "°C"
+    _attr_icon = "mdi:thermometer-water"
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the water temperature sensor."""
+        super().__init__(coordinator, config_entry, "water_temp")
+
+    @property
+    def _sensor_data(self) -> dict[str, Any] | None:
+        """Helper to get the 'now_data' block from the coordinator."""
+        if not self.coordinator.data:
+            return None
+        return cast(dict[str, Any] | None, self.coordinator.data.get("now_data"))
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current water temperature in degrees Celsius."""
+        if self.available and self._sensor_data:
+            water_temp = self._sensor_data.get(ATTR_WATER_TEMP)
+            if water_temp is not None:
+                try:
+                    return float(water_temp)
+                except (ValueError, TypeError):
+                    _LOGGER.warning("Invalid water temperature value: %s", water_temp)
+                    return None
+        return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional attributes like current height and tide trend."""
+        if self.available and self.coordinator.data:
+            now_data = self.coordinator.data.get("now_data", {})
+            attrs = {}
+
+            # Include current water height if available
+            if ATTR_CURRENT_HEIGHT in now_data and now_data[ATTR_CURRENT_HEIGHT] is not None:
+                attrs[ATTR_CURRENT_HEIGHT] = now_data[ATTR_CURRENT_HEIGHT]
+
+            # Include tide trend if available
+            if ATTR_TIDE_TREND in now_data and now_data[ATTR_TIDE_TREND] is not None:
+                attrs[ATTR_TIDE_TREND] = now_data[ATTR_TIDE_TREND]
+
+            return attrs if attrs else None
+        return None

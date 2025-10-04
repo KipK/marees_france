@@ -41,6 +41,9 @@
           "high_tide": "High Tide",
           "low_tide": "Low Tide"
         }
+      },
+      "water_temp": {
+        "name": "Water Temperature"
       }
     }
   }
