@@ -151,8 +151,7 @@
             "description": "Le port dont on veut les données de marées."
           }
         }
-      }
-,
+      },
       "get_coefficients_data": {
         "name": "Obtenir les Données de Coefficients",
         "description": "Récupère les données de coefficients de marée mises en cache pour un port spécifique. Permet de filtrer par date de début et nombre de jours.",
@@ -178,6 +177,20 @@
           "device_id": {
             "name": "Port",
             "description": "Le port Marées France dont les données doivent être réinitialisées."
+          }
+        }
+      },
+      "get_water_temp": {
+        "name": "Obtenir la température de l'eau",
+        "description": "Récupère les données de température de l'eau mises en cache pour un port spécifique. Permet de filtrer par date de début.",
+        "fields": {
+          "device_id": {
+            "name": "Port",
+            "description": "Le port dont on veut obtenir les données de température de l'eau."
+          },
+          "date": {
+            "name": "Date (Optionnel)",
+            "description": "La date pour laquelle récupérer la température de l'eau (format AAAA-MM-JJ)."
           }
         }
       }

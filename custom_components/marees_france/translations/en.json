@@ -239,6 +239,20 @@
                     "description": "The Marées France harbor device whose data should be reinitialized."
                 }
             }
+        },
+        "get_water_temp": {
+            "name": "Get Water Temperature",
+            "description": "Retrieves cached water temperature data for a specific harbor device. Allows filtering by start date.",
+            "fields": {
+                "device_id": {
+                    "name": "Harbor",
+                    "description": "The harbor you want the water temperature data from."
+                },
+                "date": {
+                    "name": "Date (Optional)",
+                    "description": "The date for which to fetch water temperature (YYYY-MM-DD format)."
+                }
+            }
         }
     }
 }
