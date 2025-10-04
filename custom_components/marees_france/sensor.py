@@ -424,6 +424,15 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
         return cast(dict[str, Any] | None, self.coordinator.data.get("now_data"))
 
     @property
+    def available(self) -> bool:
+        """Return True if coordinator has data and water temp is available."""
+        return (
+            self.coordinator.data is not None
+            and self._sensor_data is not None
+            and self._sensor_data.get(ATTR_WATER_TEMP) is not None
+        )
+
+    @property
     def native_value(self) -> float | None:
         """Return the current water temperature in degrees Celsius."""
         if self.available and self._sensor_data:
@@ -434,7 +443,14 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
                 except (ValueError, TypeError):
                     _LOGGER.warning("Invalid water temperature value: %s", water_temp)
                     return None
+            
         return None
+
+    async def async_added_to_hass(self) -> None:
+        """Request a refresh when added to hass."""
+        await super().async_added_to_hass()
+        if self.native_value is None:
+            await self.coordinator.async_request_refresh()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

@@ -1350,6 +1350,13 @@ async def async_setup(hass: HomeAssistant, _config: dict[str, Any]) -> bool:
     return True
 
 
+async def async_process_updates(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Process updates for a config entry."""
+    _LOGGER.debug("Marées France: Processing updates for entry: %s", entry.entry_id)
+    # Add your update processing logic here
+    await async_reload_entry(hass, entry)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Marées France from a config entry.
 
@@ -1398,7 +1405,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.async_create_task(coordinator.async_config_entry_first_refresh())
     _LOGGER.debug("Marées France: Forwarded entry setup for platforms: %s", PLATFORMS)
 
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    entry.async_on_unload(entry.add_update_listener(async_process_updates))
 
     if not hass.services.has_service(DOMAIN, SERVICE_GET_WATER_LEVELS):
         hass.services.async_register(
