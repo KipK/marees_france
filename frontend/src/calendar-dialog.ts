@@ -230,9 +230,9 @@ export class CalendarDialogManager {
           heading="${localizeCard('ui.card.marees_france.coefficient_calendar_title', this.card.hass)}"
         >
           <div class="dialog-content">${this._renderCalendarDialogContent()}</div>
-          <mwc-button slot="primaryAction" @click=${() => this.closeCalendarDialog()}>
+          <ha-button slot="primaryAction" @click=${() => this.closeCalendarDialog()}>
             ${this.card.hass.localize('ui.common.close')}
-          </mwc-button>
+          </ha-button>
         </ha-dialog>
       `;
   }

@@ -424,9 +424,9 @@
           heading="${wt("ui.card.marees_france.coefficient_calendar_title",this.card.hass)}"
         >
           <div class="dialog-content">${this._renderCalendarDialogContent()}</div>
-          <mwc-button slot="primaryAction" @click=${()=>this.closeCalendarDialog()}>
+          <ha-button slot="primaryAction" @click=${()=>this.closeCalendarDialog()}>
             ${this.card.hass.localize("ui.common.close")}
-          </mwc-button>
+          </ha-button>
         </ha-dialog>
       `}_renderCalendarDialogContent(){if(this.card._isLoadingCoefficients)return V`<div class="dialog-loader">Loading...</div>`;const t=this.card._coefficientsData;if(t&&"error"in t&&t.error)return this._calendarHasPrevData=!1,this._calendarHasNextData=!1,V`<div class="dialog-warning">${String(t.error)}</div>`;if(!t||"object"!=typeof t)return this._calendarHasPrevData=!1,this._calendarHasNextData=!1,V`<div class="dialog-warning">${wt("ui.card.marees_france.no_coefficient_data",this.card.hass)}</div>`;const e=t,i=this.card.hass.language||"en",n=this._calendarSelectedMonth,r=n.getFullYear(),s=n.getMonth(),a=new Date(r,s,1),o=new Date(r,s+1,0).getDate(),h=a.getDay(),l=0===h?6:h-1,c=`${r}-${String(s+1).padStart(2,"0")}`,d=Array.from({length:7},((t,e)=>function(t,e){let i=new Date(2023,0,2+t).toLocaleDateString(e,{weekday:"short"});return i.length>3&&(i=i.substring(0,3)),i}(e,i))),u=[],p=new Date(r,s,0).getDate();for(let t=0;t<l;t++)u.push({day:p-l+1+t,isPadding:!0,isCurrentMonth:!1});for(let t=1;t<=o;t++){const i=`${c}-${String(t).padStart(2,"0")}`;u.push({day:t,isPadding:!1,isCurrentMonth:!0,coeffs:e[i]||[],dateStr:i})}const f=7*Math.ceil((l+o)/7),m=(f<42?42:f)-u.length;for(let t=1;t<=m;t++)u.push({day:t,isPadding:!0,isCurrentMonth:!1});const g=Object.keys(e).sort();let _=!1,y=!1;if(g.length>0){const t=new Date(r,s-1,1),e=new Date(r,s+1,1),i=t.getFullYear(),n=t.getMonth(),a=e.getFullYear(),o=e.getMonth();try{_=g.some((t=>{const e=new Date(t);return e.getFullYear()===i&&e.getMonth()===n})),y=g.some((t=>{const e=new Date(t);return e.getFullYear()===a&&e.getMonth()===o}))}catch(t){console.error("Error checking month data:",t)}}return this._calendarHasPrevData=_,this._calendarHasNextData=y,V`
       <div class="calendar-dialog-content">
