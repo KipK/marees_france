@@ -55,6 +55,7 @@ export interface MareesFranceCardConfig extends LovelaceCardConfig {
   device_id: string;
   show_header?: boolean;
   title?: string | null;
+  card_type?: 'full' | 'condensed';
 }
 
 // --- Home Assistant Object Subset ---

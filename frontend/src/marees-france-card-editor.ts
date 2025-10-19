@@ -113,6 +113,30 @@ export class MareesFranceCardEditor extends LitElement {
         label: localizeCard('ui.card.marees_france.editor.title', this.hass),
         selector: { text: {} },
       },
+      // --- Card Type Picker ---
+      {
+        name: 'card_type',
+        label: localizeCard(
+          'ui.card.marees_france.editor.card_type',
+          this.hass
+        ),
+        selector: {
+          select: {
+            options: [
+              {
+                value: 'full',
+                label: localizeCard('ui.card.marees_france.editor.card_type_full', this.hass)
+              },
+              {
+                value: 'condensed',
+                label: localizeCard('ui.card.marees_france.editor.card_type_condensed', this.hass)
+              },
+            ],
+          },
+        },
+        default: 'full',
+      },
+      // --- End Card Type Picker ---
     ];
 
     // Pass the hass object and current config to ha-form

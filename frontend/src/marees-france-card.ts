@@ -53,6 +53,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   @state() _isLoadingWaterTemp: boolean = true;
   @state() _isInitialLoading: boolean = true;
   @state() _deviceName: string | null = null;
+  @state() _isGraphOverlayVisible: boolean = false;
   // _graphRenderer and _svgContainer are now managed by GraphInteractionManager
   // Calendar-specific state properties (_isCalendarDialogOpen, _calendarSelectedMonth, _touchStartX, _touchStartY,
   // _calendarHasPrevData, _calendarHasNextData, _calendarContentElement) and private members
@@ -225,6 +226,9 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   // _changeCalendarMonth, _addCalendarTouchListeners, _removeCalendarTouchListeners,
   // _handleTouchStart, _handleTouchMove, _handleTouchEnd)
   // has been moved to CalendarDialogManager.
+  public _toggleGraphOverlay(): void {
+    this._isGraphOverlayVisible = !this._isGraphOverlayVisible;
+  }
 
   // --- Graph Renderer Interaction (now handled by GraphInteractionManager) ---
   // _setupMutationObserver, _handleMutation, _handleContainerStateChange, _drawGraphIfReady,
@@ -284,10 +288,14 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
         ${renderHeader(this)}
         <div class="card-content">
           ${renderNextTideStatus(this, nextTideInfo)}
-          <div class="tabs">
-            ${dayLabels.map((date) => renderDayTab(this, date, locale))}
-          </div>
-          ${!this.hass?.editMode ? renderGraphContainer(this) : nothing}
+          ${(this.config.card_type || 'full') === 'condensed' && !this._isGraphOverlayVisible ? nothing : html`
+            <div class="tabs-and-graph-container">
+              <div class="tabs">
+                ${dayLabels.map((date) => renderDayTab(this, date, locale))}
+              </div>
+              ${!this.hass?.editMode ? renderGraphContainer(this) : nothing}
+            </div>
+          `}
           <div id="marees-html-tooltip" class="chart-tooltip"></div>
         </div>
       </ha-card>

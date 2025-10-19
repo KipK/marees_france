@@ -35,11 +35,42 @@ export const cardStyles = css`
       }
       .card-header {
         /* Standard HA card header style */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         padding: 16px 16px 8px 16px; /* Less bottom padding */
         color: var(--primary-text-color);
       }
       .card-content {
         padding: 0 16px 8px 16px; /* Reduced bottom padding */
+      }
+      .header-icons {
+        display: flex;
+        gap: 8px;
+      }
+      .sinewave-icon {
+        color: var(--secondary-text-color);
+        --mdc-icon-size: 24px;
+        transition: color 0.2s ease-in-out;
+        cursor: pointer;
+      }
+      .sinewave-icon:hover {
+        color: var(--primary-color);
+      }
+      .calendar-icon {
+        --mdc-icon-size: 24px;
+      }
+      .tabs-and-graph-container {
+        position: relative;
+      }
+      .tabs-and-graph-container[style*="display: none;"] {
+        display: none !important;
+      }
+      .graph-overlay-content {
+        background-color: var(--ha-card-background, white);
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       }
 
       /* Next Tide Status Display Styles */
@@ -48,9 +79,9 @@ export const cardStyles = css`
         justify-content: space-between; /* Push icon to the right */
         align-items: center; /* Vertically align main info and icon */
         gap: 16px; /* Gap between main info and icon */
-        padding-bottom: 16px; /* Space before tabs */
+        padding-bottom: 8px; /* Reduced space before tabs */
         padding-left: 16px; /* Add left padding to match card content */
-        padding-right: 16px; /* Add right padding */
+        padding-right: 8px; /* Reduced right padding */
         padding-top: 16px; /* Add top padding */
       }
       .next-tide-main {

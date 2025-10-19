@@ -19,7 +19,25 @@
                 "no_data_for_day": "Aucune donnée de marée pour ce jour.",
                 "high_tide": "Haute",
                 "low_tide": "Basse",
-                "tide_at_time": "{status} à {time}"
+                "tide_at_time": "{status} à {time}",
+                "editor": {
+                    "card_type": "Type de carte",
+                    "card_type_full": "Complète",
+                    "card_type_condensed": "Condensée",
+                    "device_label": "Appareil",
+                    "show_header": "Afficher l'en-tête",
+                    "title": "Titre"
+                },
+                "selector": {
+                    "card_type": {
+                        "options": {
+                            "full": "Complète",
+                            "condensed": "Condensée"
+                        }
+                    }
+                },
+                "open_calendar": "Ouvrir le calendrier",
+                "toggle_graph": "Afficher/Cacher le graphique"
             }
         }
     }

@@ -19,7 +19,25 @@
                 "no_data_for_day": "No tide data for this day.",
                 "high_tide": "High",
                 "low_tide": "Low",
-                "tide_at_time": "{status} at {time}"
+                "tide_at_time": "{status} at {time}",
+                "editor": {
+                    "card_type": "Card Type",
+                    "card_type_full": "Full",
+                    "card_type_condensed": "Condensed",
+                    "device_label": "Device",
+                    "show_header": "Show Header",
+                    "title": "Title"
+                },
+                "selector": {
+                    "card_type": {
+                        "options": {
+                            "full": "Full",
+                            "condensed": "Condensed"
+                        }
+                    }
+                },
+                "open_calendar": "Open Calendar",
+                "toggle_graph": "Toggle Graph"
             }
         }
     }

@@ -41,13 +41,20 @@ export function localizeCard(
     // Check if the final result is a string
     if (typeof currentLevel === 'string') {
       translated = currentLevel;
+    } else if (hass?.localize) {
+      // Fallback to hass.localize if our custom lookup fails
+      translated = hass.localize(key, ...args);
     } else {
-      // If not a string (undefined, object, etc.), fall back to the key
+      // If not a string and no fallback, use the key
       translated = key;
     }
   } catch {
-    // Key not found, use the key itself
-    translated = key;
+    // Key not found, use the key itself or fallback
+    if (hass?.localize) {
+      translated = hass.localize(key, ...args);
+    } else {
+      translated = key;
+    }
   }
 
   // Replace placeholders like {entity}

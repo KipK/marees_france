@@ -76,6 +76,7 @@ export function getCardStubConfig(): MareesFranceCardConfig {
     device_id: '',
     show_header: true,
     title: null,
+    card_type: 'full',
   };
 }
 

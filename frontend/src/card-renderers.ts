@@ -31,6 +31,7 @@ export interface CardInstanceForRenderers {
   // Methods
   _handleTabClick: (ev: MouseEvent) => void;
   _calendarDialogManager: CalendarDialogManager | null; // To open the dialog
+  _toggleGraphOverlay: () => void;
 }
 
 /**
@@ -76,7 +77,22 @@ export function renderNextTideStatus(card: CardInstanceForRenderers, nextTideInf
         </div>
         <div class="next-tide-details">${detailParts.map((part, index) => html`${index > 0 ? ' - ' : ''}${part}`)}</div>
       </div>
-      <ha-icon class="calendar-icon" icon="mdi:calendar-month" @click="${() => card._calendarDialogManager?.openCalendarDialog()}" title="${localizeCard('ui.card.marees_france.open_calendar', card.hass)}"></ha-icon>
+      <div class="header-icons">
+        ${(card.config.card_type || 'full') === 'condensed' ? html`
+          <ha-icon
+            class="sinewave-icon"
+            icon="mdi:sine-wave"
+            @click="${() => card._toggleGraphOverlay()}"
+            title="${localizeCard('ui.card.marees_france.toggle_graph', card.hass)}">
+          </ha-icon>
+        ` : nothing}
+        <ha-icon
+          class="calendar-icon"
+          icon="mdi:calendar-month"
+          @click="${() => card._calendarDialogManager?.openCalendarDialog()}"
+          title="${localizeCard('ui.card.marees_france.open_calendar', card.hass)}">
+        </ha-icon>
+      </div>
     </div>`;
 }
 

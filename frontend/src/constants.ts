@@ -5,6 +5,9 @@ export interface EditorTranslationKeys {
   show_header: string;
   device_label: string;
   title: string;
+  card_type: string;
+  card_type_full: string;
+  card_type_condensed: string;
 }
 
 /**
@@ -109,6 +112,9 @@ export const translations: TranslationStructure = {
             show_header: 'Display header',
             device_label: 'Harbor Device',
             title: 'Title (Optional)',
+            card_type: 'Card Type',
+            card_type_full: 'Full',
+            card_type_condensed: 'Condensed',
           },
         },
       },
@@ -159,6 +165,9 @@ export const translations: TranslationStructure = {
             show_header: "Afficher l'en-tête",
             device_label: 'Appareil Port',
             title: 'Titre (Optionnel)',
+            card_type: 'Type de carte',
+            card_type_full: 'Complète',
+            card_type_condensed: 'Condensée',
           },
         },
       },
