@@ -28,6 +28,7 @@ export interface CardInstanceForRenderers {
   _tideData: GetTidesDataResponseData | { error: string } | null; // For nextTideInfo
   _waterTempData: GetWaterTempResponseData | { error: string } | null;
   _isLoadingWaterTemp: boolean;
+  _isGraphOverlayVisible: boolean;
   // Methods
   _handleTabClick: (ev: MouseEvent) => void;
   _calendarDialogManager: CalendarDialogManager | null; // To open the dialog
@@ -80,7 +81,7 @@ export function renderNextTideStatus(card: CardInstanceForRenderers, nextTideInf
       <div class="header-icons">
         ${(card.config.card_type || 'full') === 'condensed' ? html`
           <ha-icon
-            class="sinewave-icon"
+            class="sinewave-icon ${card._isGraphOverlayVisible ? 'active' : ''}"
             icon="mdi:sine-wave"
             @click="${() => card._toggleGraphOverlay()}"
             title="${localizeCard('ui.card.marees_france.toggle_graph', card.hass)}">

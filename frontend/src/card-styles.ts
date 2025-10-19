@@ -54,7 +54,8 @@ export const cardStyles = css`
         transition: color 0.2s ease-in-out;
         cursor: pointer;
       }
-      .sinewave-icon:hover {
+      .sinewave-icon:hover,
+      .sinewave-icon.active {
         color: var(--primary-color);
       }
       .calendar-icon {
