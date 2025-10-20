@@ -228,11 +228,41 @@ export class GraphRenderer {
         return;
     }
 
-    const levelsData: WaterLevelTuple[] | undefined = waterLevels[selectedDay];
+    let levelsData: WaterLevelTuple[] | undefined = waterLevels[selectedDay];
     if (!Array.isArray(levelsData) || levelsData.length === 0) {
       const noDataText = this.svgDraw.text(localizeCard('ui.card.marees_france.no_data_for_day', this.hass)).move(viewBoxWidth / 2, viewBoxHeight / 2).font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle' });
       this.elementsToKeepSize.push(noDataText);
       return;
+    }
+
+    // Handle DST transition days where data is an array of arrays
+    // Check if the first element is itself an array (indicating nested structure for DST)
+    if (levelsData.length > 0 && Array.isArray(levelsData[0]) && Array.isArray(levelsData[0][0])) {
+      const arrays = levelsData as unknown as WaterLevelTuple[][];
+      
+      // Process first array (before DST transition) - filter out nulls
+      const firstArray = arrays[0].filter(
+        (item): item is WaterLevelTuple => Array.isArray(item) && item[1] !== null
+      );
+      
+      // Find the last valid time in first array to determine where DST transition occurred
+      let lastValidTime = '00:00:00';
+      if (firstArray.length > 0) {
+        lastValidTime = firstArray[firstArray.length - 1][0];
+      }
+      
+      // Process second array (after DST transition) - filter nulls and skip duplicate times
+      const secondArray = arrays.length > 1 ? arrays[1].filter(
+        (item): item is WaterLevelTuple => {
+          if (!Array.isArray(item) || item[1] === null) return false;
+          // Skip times that are less than or equal to the last valid time from first array
+          // This avoids plotting the duplicate hour when clocks fall back
+          return item[0] > lastValidTime;
+        }
+      ) : [];
+      
+      // Combine the arrays
+      levelsData = [...firstArray, ...secondArray];
     }
 
     this.graphMargin = { top: 55, right: 15, bottom: 27.2, left: 15 };
