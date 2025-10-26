@@ -25,7 +25,6 @@ from .const import (
     ATTR_STARTING_HEIGHT,
     ATTR_STARTING_TIME,
     ATTR_TIDE_TREND,
-    ATTR_WATER_TEMP,
     ATTRIBUTION,
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
@@ -426,26 +425,49 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
 
     @property
     def available(self) -> bool:
-        """Return True if coordinator has data and water temp is available."""
+        """Return True if coordinator has data and water temp data is available."""
         return (
             self.coordinator.data is not None
-            and self._sensor_data is not None
-            and self._sensor_data.get(ATTR_WATER_TEMP) is not None
+            and self.coordinator.data.get("water_temp_data") is not None
         )
 
     @property
     def native_value(self) -> float | None:
-        """Return the current water temperature in degrees Celsius."""
-        if self.available and self._sensor_data:
-            water_temp = self._sensor_data.get(ATTR_WATER_TEMP)
-            if water_temp is not None:
-                try:
-                    return float(water_temp)
-                except (ValueError, TypeError):
-                    _LOGGER.warning("Invalid water temperature value: %s", water_temp)
-                    return None
+        """Return the current water temperature from the hourly forecast."""
+        if not self.available or not self.coordinator.data:
+            return None
 
-        return None
+        water_temp_data = self.coordinator.data.get("water_temp_data", [])
+        if not water_temp_data:
+            return None
+
+        now_utc = dt_util.utcnow()
+        latest_temp = None
+
+        # Find the most recent temperature forecast that is not in the future
+        for forecast in water_temp_data:
+            forecast_time_str = forecast.get("datetime")
+            temp_value = forecast.get("temp")
+
+            if not forecast_time_str or temp_value is None:
+                continue
+
+            try:
+                forecast_time = dt_util.parse_datetime(forecast_time_str)
+                if forecast_time <= now_utc:
+                    latest_temp = float(temp_value)
+                else:
+                    # Stop when we reach future forecasts
+                    break
+            except (ValueError, TypeError):
+                _LOGGER.warning(
+                    "Could not parse water temperature data: time=%s, temp=%s",
+                    forecast_time_str,
+                    temp_value,
+                )
+                continue
+
+        return latest_temp
 
     async def async_added_to_hass(self) -> None:
         """Request a refresh when added to hass."""

@@ -710,9 +710,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     ATTR_COEFFICIENT: next_tide_event["coefficient"],
                 }
 
+        # Keep water height calculation, but simplify water temp handling.
         current_water_height = None
-        current_water_temp = None
-
         water_levels: list[list[str]] | None = None
         today_str_key = date.today().strftime(DATE_FORMAT)
 
@@ -722,32 +721,13 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             water_levels = cast(list[list[str]], water_level_raw_data[today_str_key])
 
         if water_levels:
-            # First, interpolate water temperature for each water level entry
-            daily_water_temps = (
-                water_temp_raw_data.get(today_str_key, [])
-                if water_temp_raw_data
-                else []
-            )
-            temp_by_hour = {
-                item["datetime"].split("T")[1][:2]: item["temp"]
-                for item in daily_water_temps
-            }
-
-            interpolated_water_levels = []
-            for entry in water_levels:
-                if len(entry) != 2:
-                    continue
-                time_str = entry[0]
-                hour_str = time_str.split(":")[0]
-                temp = temp_by_hour.get(hour_str)
-                interpolated_water_levels.append([entry[0], entry[1], temp])
-
-            # Now, find the closest entry to now_utc
             closest_entry = None
             min_diff = timedelta.max
-            for entry in interpolated_water_levels:
+            for entry in water_levels:
                 try:
-                    time_str = entry[0]
+                    if len(entry) < 2:
+                        continue
+                    time_str, height_str = entry, entry
                     if len(time_str) == 5:
                         time_str += ":00"
                     dt_naive = datetime.strptime(
@@ -758,24 +738,21 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     diff = abs(now_utc - entry_dt)
                     if diff < min_diff:
                         min_diff = diff
-                        closest_entry = entry
+                        closest_entry = height_str
                 except (ValueError, TypeError, pytz.exceptions.Error):
                     continue
 
             if closest_entry and min_diff <= timedelta(minutes=15):
                 try:
-                    current_water_height = float(closest_entry[1])
-                    current_water_temp = (
-                        float(closest_entry[2])
-                        if closest_entry[2] is not None
-                        else None
-                    )
+                    current_water_height = float(closest_entry)
                 except (ValueError, TypeError):
-                    pass
+                    pass  # Keep it None if conversion fails
 
         if now_data:
             now_data[ATTR_CURRENT_HEIGHT] = current_water_height
-            now_data[ATTR_WATER_TEMP] = current_water_temp
+            # Remove the old direct water_temp assignment
+            if ATTR_WATER_TEMP in now_data:
+                del now_data[ATTR_WATER_TEMP]
 
         next_spring_date_str = None
         next_spring_coeff = None
@@ -846,5 +823,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "next_neap_date": next_neap_date_obj,
             "next_neap_coeff": next_neap_coeff,
             "last_update": last_update_iso,
+            # Pass the raw water temp data directly to the sensors
+            "water_temp_data": water_temp_raw_data.get(today_str_key)
+            if water_temp_raw_data
+            else None,
         }
         return {k: v for k, v in final_data.items() if v is not None}
