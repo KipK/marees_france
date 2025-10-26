@@ -63,8 +63,9 @@ export function renderNextTideStatus(card: CardInstanceForRenderers, nextTideInf
     const coefClass = coef >= 100 ? 'warning-coef' : '';
     detailParts.push(html`<span class="${coefClass}">Coef. ${coef}</span>`);
   }
-  if (card._waterTempData && !("error" in card._waterTempData) && card._waterTempData[card._selectedDay] && card._waterTempData[card._selectedDay][0]) {
-    detailParts.push(`${card._waterTempData[card._selectedDay][0].temp.toFixed(1)} °C`);
+  const today = new Date().toISOString().slice(0, 10);
+  if (card._waterTempData && !("error" in card._waterTempData) && card._waterTempData[today] && card._waterTempData[today][0]) {
+    detailParts.push(`${card._waterTempData[today][0].temp.toFixed(1)} °C`);
   }
   return html`
     <div class="next-tide-status">
