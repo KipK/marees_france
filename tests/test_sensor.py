@@ -120,6 +120,10 @@ async def setup_integration_entry(
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
         "last_update": "2025-05-12T00:00:00+00:00",
+        "water_temp_data": [
+            {"datetime": "2025-05-11T23:00:00Z", "temp": "15.5"},
+            {"datetime": "2025-05-12T00:00:00Z", "temp": "15.6"},
+        ],
     }
 
     # Patch the coordinator's _parse_tide_data method and dt_util.now
@@ -183,6 +187,10 @@ async def test_sensor_creation_and_initial_state(
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
         "last_update": "2025-05-12T00:00:00+00:00",
+        "water_temp_data": [
+            {"datetime": "2025-05-11T23:00:00Z", "temp": "15.5"},
+            {"datetime": "2025-05-12T00:00:00Z", "temp": "15.6"},
+        ],
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
@@ -250,6 +258,10 @@ async def test_sensor_updates_on_new_data(
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
         "last_update": "2025-05-12T00:00:00+00:00",
+        "water_temp_data": [
+            {"datetime": "2025-05-11T23:00:00Z", "temp": "15.5"},
+            {"datetime": "2025-05-12T00:00:00Z", "temp": "15.6"},
+        ],
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
@@ -289,6 +301,11 @@ async def test_sensor_updates_on_new_data(
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "75",
         "last_update": "2025-05-12T01:00:00+00:00",
+        "water_temp_data": [
+            {"datetime": "2025-05-11T23:00:00Z", "temp": "15.5"},
+            {"datetime": "2025-05-12T00:00:00Z", "temp": "15.6"},
+            {"datetime": "2025-05-12T01:00:00Z", "temp": "16.2"},
+        ],
     }
     coordinator.data = new_mock_data
     coordinator.last_update_success = True
@@ -342,6 +359,10 @@ async def test_sensor_availability(
         "next_neap_date": "2025-05-13",
         "next_neap_coeff": "88",
         "last_update": "2025-05-12T00:00:00+00:00",
+        "water_temp_data": [
+            {"datetime": "2025-05-11T23:00:00Z", "temp": "15.5"},
+            {"datetime": "2025-05-12T00:00:00Z", "temp": "15.6"},
+        ],
     }
     coordinator.data = mock_data
     coordinator.last_update_success = True
