@@ -20,9 +20,10 @@ def test_import():
 
     assert coordinator.MareesFranceUpdateCoordinator is not None
 
-    from custom_components.marees_france import sensor
+    from custom_components.marees_france import sensor, number
 
     assert sensor is not None
+    assert number is not None
 
     # Try importing the frontend module
     try:

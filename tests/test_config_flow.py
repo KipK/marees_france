@@ -11,6 +11,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.marees_france.const import (
+    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
     DOMAIN,
@@ -75,7 +76,10 @@ async def test_async_step_user_success(
     # Simulate user input selecting the mock harbor
     result2 = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {CONF_HARBOR_ID: MOCK_HARBOR_ID},
+        {
+            CONF_HARBOR_ID: MOCK_HARBOR_ID,
+            CONF_HARBOR_MIN_DEPTH: 2.5
+        },
     )
     await hass.async_block_till_done()
 
@@ -87,6 +91,7 @@ async def test_async_step_user_success(
     assert result2["data"] == {
         CONF_HARBOR_ID: MOCK_HARBOR_ID,
         CONF_HARBOR_NAME: MOCK_HARBOR_NAME,  # Ensure name is also stored
+        CONF_HARBOR_MIN_DEPTH: 2.5,  # Default depth value
     }
     # No second call to fetch_harbors expected here
     mock_fetch_harbors.assert_called_once()

@@ -27,17 +27,19 @@ Once the integration is installed and configured, refresh your browser so that H
 
 1. Go to **Devices & Services → Add Integration**, search for **Tides France**.
 2. Select the **nearest port** from the list.
+3. *(Optional)* Define the **minimum depth needed to navigate** — this value will be used to adapt graphs to display if your boat can safely navigate at the current water level. Leave at 0 if not needed.
 
 ![Integration Configuration](./img/integration-config-en.png)
 
-Once configured, the entity will appear as:  
-`sensor.marees_france_[PORT_NAME]`
+Once configured, the entities will appear as:
+- `sensor.marees_france_[PORT_NAME]` — Tide sensor data
+- `number.[PORT_NAME]_minimum_depth` — Adjustable minimum depth
 
 ---
 
 ## 🖼️ Usage
 
-A **custom Lovelace card** is provided with the integration!  
+A **custom Lovelace card** is provided with the integration!
 Simply add the **Tides France card** to your dashboard.
 
 ![Card Editor](./img/card-editor-en.png)
@@ -83,11 +85,24 @@ Same attributes as above, for the last tide event.
 - **State**: The current water temperature in degrees Celsius.
 - **Attributes**: `current_height`, `tide_trend`
 
+### Minimum Depth To Boat
+
+- **Type**: Number entity
+- **Description**: Configurable minimum water depth required for your boat to safely navigate
+- **Default**: 0 meters
+- **Features**:
+  - Setting this value will adapt graphics layouts by adding colored 'zones' that indicate the time slot to safely leave/enter the port.
+  - Activating this feature will display current depth on current day graph.
+  - Adjustable from 0 meters with 0.1 meter increments
+  - Value persists across Home Assistant restarts
+  - Real-time update of coordinator data when changed
+  - Optional : when set to defaut value, no influence on graphs.
+
 ---
 
 ## 🛠️ Available Services
 
-Five services are available:
+Six services are available:
 
 ### 1. Fetch tide data
 
@@ -130,7 +145,16 @@ data:
 action: marees_france.get_water_temp
 data:
   device_id: xxxxxxxxxx
-  date: "2025-04-26"```
+  date: "2025-04-26"
+```
+
+### 6. Get harbor minimum depth
+
+```yaml
+action: marees_france.get_harbor_min_depth
+data:
+  device_id: xxxxxxxxxx
+```
 
 ---
 
@@ -168,7 +192,7 @@ cd frontend
 npm run build
 ```
 
-The build will be output to:  
+The build will be output to:
 `custom_components/marees_info/frontend`
 
 ---

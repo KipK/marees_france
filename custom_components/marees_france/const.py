@@ -24,7 +24,7 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
     )
 
 DOMAIN: Final[str] = "marees_france"
-PLATFORMS: Final[list[Platform]] = [Platform.SENSOR]
+PLATFORMS: Final[list[Platform]] = [Platform.SENSOR, Platform.NUMBER]
 INTEGRATION_NAME: Final[str] = "Marées France"
 MANUFACTURER: Final[str] = "SHOM"
 ATTRIBUTION: Final[str] = "Data provided by SHOM"
@@ -39,6 +39,8 @@ CONF_HARBOR_LON: Final[str] = "harbor_lon"
 
 # --- Default Values ---
 DEFAULT_HARBOR: Final[str] = "PORNICHET"  # Default harbor for config flow
+
+CONF_HARBOR_MIN_DEPTH: Final[str] = "harbor_min_depth"
 
 # --- API Configuration ---
 HARBORSURL: Final[str] = (
@@ -104,6 +106,8 @@ TIDES_STORAGE_KEY: Final[str] = f"{DOMAIN}_tides_cache"
 TIDES_STORAGE_VERSION: Final[int] = 1
 COEFF_STORAGE_KEY: Final[str] = f"{DOMAIN}_coefficients_cache"
 COEFF_STORAGE_VERSION: Final[int] = 1
+HARBORMINDEPTH_STORAGE_KEY: Final[str] = f"{DOMAIN}_harbor_min_depth_cache"
+HARBORMINDEPTH_STORAGE_VERSION: Final[int] = 1
 
 # --- Tide Types & Thresholds ---
 TIDE_HIGH: Final[str] = "tide.high"  # Internal representation for high tide
@@ -127,6 +131,7 @@ SERVICE_GET_TIDES_DATA: Final[str] = "get_tides_data"
 SERVICE_GET_COEFFICIENTS_DATA: Final[str] = "get_coefficients_data"
 SERVICE_REINITIALIZE_HARBOR_DATA: Final[str] = "reinitialize_harbor_data"
 SERVICE_GET_WATER_TEMP: Final[str] = "get_water_temp"
+SERVICE_GET_HARBOR_MIN_DEPTH: Final[str] = "get_harbor_min_depth"
 
 # --- Frontend Modules ---
 JSMODULES: Final[list[dict[str, str]]] = [

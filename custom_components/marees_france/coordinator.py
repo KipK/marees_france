@@ -42,6 +42,7 @@ from .api_helpers import (
     _async_fetch_and_store_tides,
     _async_fetch_and_store_coefficients,
     _async_fetch_and_store_water_temp,
+    _async_store_harbor_min_depth,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         coeff_store: Store[dict[str, dict[str, Any]]],
         water_level_store: Store[dict[str, dict[str, Any]]],
         watertemp_store: Store[dict[str, dict[str, Any]]],
+        harborMinDepth_store: Store[dict[str, dict[str, Any]]],
         websession: aiohttp.ClientSession | None = None,
     ) -> None:
         """Initialize the data update coordinator.
@@ -80,6 +82,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             coeff_store: The store for caching coefficient data.
             water_level_store: The store for caching water level data.
             watertemp_store: The store for caching water temperature data.
+            harborMinDepth_store: The store for caching harbor minimum depth data.
             websession: Optional aiohttp ClientSession. If not provided, one will be created.
         """
         self.hass = hass
@@ -89,6 +92,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.coeff_store = coeff_store
         self.water_level_store = water_level_store
         self.watertemp_store = watertemp_store
+        self.harborMinDepth_store = harborMinDepth_store
         self.websession = websession or async_get_clientsession(hass)
 
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
@@ -296,6 +300,28 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
                 harbor_cache = {}
         return cache_full, harbor_cache
+
+    async def _async_update_from_number(self, unique_id: str, value: float) -> None:
+        """
+        Docstring for _async_update_from_number
+
+        :param self: Description
+        :param number: The number entity that triggered the update
+        :param value: The new value for the number
+        """
+
+        if value >= 0:
+            if not await _async_store_harbor_min_depth(
+                self.hass,
+                self.harborMinDepth_store,
+                self.harbor_id,
+                value
+            ):
+                _LOGGER.error(
+                    "Marées France Coordinator: Failed to store new min depth to boat "
+                    "value for %s after update from number.",
+                    self.harbor_id,
+                )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch and process tide, coefficient, and water level data.
