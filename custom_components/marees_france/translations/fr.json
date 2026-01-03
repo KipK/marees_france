@@ -1,198 +1,214 @@
 {
-    "title": "Marées France (SHOM)",
-    "config": {
-        "step": {
-            "user": {
-                "title": "Configurer le port",
-                "description": "Sélectionnez le port",
-                "data": {
-                    "harbor_id": "Nom du port",
-                    "scan_interval": "Intervalle de mise à jour (heures)"
-                }
-            },
-            "confirm": {
-                "description": "Pensez à rafraîchir votre navigateur si vous venez d'installer l'integration pour voir la carte dans l'editeur Lovelace.",
-                "title": "Mar\u00e9es France"
-            }
-        },
-        "error": {
-            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-            "unknown": "[%key:common::config_flow::error::unknown%]",
-            "invalid_harbor": "Le port sélectionné est invalide. Veuillez choisir dans la liste."
-        },
-        "abort": {
-            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-            "unknown": "[%key:common::config_flow::error::unknown%]"
+  "title": "Marées France (SHOM)",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer le port",
+        "description": "Sélectionnez le port",
+        "data": {
+          "harbor_id": "Nom du port",
+          "scan_interval": "Intervalle de mise à jour (heures)",
+          "harbor_min_depth": "Profondeur minimale (mètres)"
         }
+      },
+      "confirm": {
+        "description": "Pensez à rafraîchir votre navigateur si vous venez d'installer l'integration pour voir la carte dans l'editeur Lovelace.",
+        "title": "Mar\u00e9es France"
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "Options Marées France",
-                "description": "Ajustez la fréquence de mise à jour pour ce port.",
-                "data": {
-                    "scan_interval": "Intervalle de mise à jour (heures)"
-                }
-            }
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "invalid_harbor": "Le port sélectionné est invalide. Veuillez choisir dans la liste."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Marées France",
+        "description": "Ajustez la fréquence de mise à jour pour ce port.",
+        "data": {
+          "scan_interval": "Intervalle de mise à jour (heures)"
+        }
+      }
+    },
+    "error": {}
+  },
+  "entity": {
+    "sensor": {
+      "now_tide": {
+        "name": "Marée Actuelle",
+        "state": {
+          "rising": "Montante",
+          "falling": "Descendante"
         },
-        "error": {}
-    },
-    "entity": {
-        "sensor": {
-            "now_tide": {
-                "name": "Marée Actuelle",
-                "state": {
-                    "rising": "Montante",
-                    "falling": "Descendante"
-                },
-                "state_attributes": {
+        "state_attributes": {
                     "coefficient": { "name": "Coefficient" },
                     "finished_height": { "name": "Hauteur Fin" },
                     "finished_time": { "name": "Heure Fin" },
                     "starting_height": { "name": "Hauteur Début" },
                     "starting_time": { "name": "Heure Début" },
-                    "tide_trend": {
-                        "name": "Tendance Marée",
-                        "state": {
-                            "rising": "Montante",
-                            "falling": "Descendante"
-                        }
-                    },
+          "tide_trend": {
+            "name": "Tendance Marée",
+            "state": {
+              "rising": "Montante",
+              "falling": "Descendante"
+            }
+          },
 "current_height": { "name": "Hauteur Actuelle" }
-                }
-            },
-            "next_tide": {
-                "name": "Marée Suivante",
-                "state_attributes": {
+        }
+      },
+      "next_tide": {
+        "name": "Marée Suivante",
+        "state_attributes": {
                     "coefficient": { "name": "Coefficient" },
                     "finished_height": { "name": "Hauteur Fin" },
                     "finished_time": { "name": "Heure Fin" },
                     "starting_height": { "name": "Hauteur Début" },
                     "starting_time": { "name": "Heure Début" },
-                    "tide_trend": {
-                        "name": "Tendance Marée",
-                        "state": {
-                            "tide_high": "Pleine Mer",
-                            "tide_low": "Basse Mer"
-                        }
-                    }
-                }
-            },
-            "previous_tide": {
-                "name": "Marée Précédente",
-                "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Hauteur Fin" },
-                    "finished_time": { "name": "Heure Fin" },
-                    "starting_height": { "name": "Hauteur Début" },
-                    "starting_time": { "name": "Heure Début" },
-                    "tide_trend": {
-                        "name": "Tendance Marée",
-                        "state": {
-                            "tide_high": "Pleine Mer",
-                            "tide_low": "Basse Mer"
-                        }
-                    }
-                }
-            },
-            "next_spring_tide": {
-                "name": "Prochaine Grande Marée",
-                "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Hauteur Fin" },
-                    "finished_time": { "name": "Heure Fin" },
-                    "starting_height": { "name": "Hauteur Début" },
-                    "starting_time": { "name": "Heure Début" },
-                    "tide_trend": { "name": "Tendance Marée" }
-                }
-            },
-            "next_neap_tide": {
-                "name": "Prochaine Morte-Eau",
-                "state_attributes": {
-                    "coefficient": { "name": "Coefficient" },
-                    "finished_height": { "name": "Hauteur Fin" },
-                    "finished_time": { "name": "Heure Fin" },
-                    "starting_height": { "name": "Hauteur Début" },
-                    "starting_time": { "name": "Heure Début" },
-                    "tide_trend": { "name": "Tendance Marée" }
-                }
-            },
-            "water_temp": {
-                "name": "Température de l'Eau",
-                "state_attributes": {
-                    "current_height": { "name": "Hauteur Actuelle" },
-                    "tide_trend": { "name": "Tendance Marée" }
-                }
+          "tide_trend": {
+            "name": "Tendance Marée",
+            "state": {
+              "tide_high": "Pleine Mer",
+              "tide_low": "Basse Mer"
             }
-        }
-    },
-    "services": {
-      "get_water_levels": {
-        "name": "Obtenir les hauteurs d'eau",
-        "description": "Récupère les hauteurs d'eau détaillées pour un port et une date spécifiques.",
-        "fields": {
-          "device_id": {
-            "name": "Port",
-            "description": "Le port dont on veut obtenir les hauteurs d'eau."
-          },
-          "date": {
-            "name": "Date",
-            "description": "La date pour laquelle récupérer les hauteurs d'eau (format AAAA-MM-JJ)."
           }
         }
       },
-      "get_tides_data": {
-        "name": "Récupérer les données de marées",
-        "description": "Récupère les données de marées (pleines/basses mers, coefficients) mises en cache.",
-        "fields": {
-          "device_id": {
-            "name": "Port",
-            "description": "Le port dont on veut les données de marées."
+      "previous_tide": {
+        "name": "Marée Précédente",
+        "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+          "tide_trend": {
+            "name": "Tendance Marée",
+            "state": {
+              "tide_high": "Pleine Mer",
+              "tide_low": "Basse Mer"
+            }
           }
         }
       },
-      "get_coefficients_data": {
-        "name": "Obtenir les Données de Coefficients",
-        "description": "Récupère les données de coefficients de marée mises en cache pour un port spécifique. Permet de filtrer par date de début et nombre de jours.",
-        "fields": {
-          "device_id": {
-            "name": "Port",
-            "description": "Le port Marées France dont on veut obtenir les données de coefficients."
-          },
-          "date": {
-            "name": "Date de début (Optionnel)",
-            "description": "La date de début pour laquelle récupérer les coefficients (format AAAA-MM-JJ)."
-          },
-          "days": {
-            "name": "Nombre de jours (Optionnel)",
-            "description": "Le nombre de jours (incluant la date de début) pour lesquels récupérer les coefficients."
-          }
+      "next_spring_tide": {
+        "name": "Prochaine Grande Marée",
+        "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": { "name": "Tendance Marée" }
         }
       },
-      "reinitialize_harbor_data": {
-        "name": "Réinitialiser les données du port",
-        "description": "Efface les données mises en cache (marées, coefficients, hauteurs d'eau) pour un port spécifique et déclenche une nouvelle récupération immédiate des données.",
-        "fields": {
-          "device_id": {
-            "name": "Port",
-            "description": "Le port Marées France dont les données doivent être réinitialisées."
-          }
+      "next_neap_tide": {
+        "name": "Prochaine Morte-Eau",
+        "state_attributes": {
+                    "coefficient": { "name": "Coefficient" },
+                    "finished_height": { "name": "Hauteur Fin" },
+                    "finished_time": { "name": "Heure Fin" },
+                    "starting_height": { "name": "Hauteur Début" },
+                    "starting_time": { "name": "Heure Début" },
+                    "tide_trend": { "name": "Tendance Marée" }
         }
       },
-      "get_water_temp": {
-        "name": "Obtenir la température de l'eau",
-        "description": "Récupère les données de température de l'eau mises en cache pour un port spécifique. Permet de filtrer par date de début.",
-        "fields": {
-          "device_id": {
-            "name": "Port",
-            "description": "Le port dont on veut obtenir les données de température de l'eau."
-          },
-          "date": {
-            "name": "Date (Optionnel)",
-            "description": "La date pour laquelle récupérer la température de l'eau (format AAAA-MM-JJ)."
-          }
+      "water_temp": {
+        "name": "Température de l'Eau",
+        "state_attributes": {
+          "current_height": { "name": "Hauteur Actuelle" },
+          "tide_trend": { "name": "Tendance Marée" }
+        }
+      },
+      "number": {
+        "min_depth": {
+          "name": "Profondeur minimale"
         }
       }
     }
+  },
+  "services": {
+    "get_water_levels": {
+      "name": "Obtenir les hauteurs d'eau",
+      "description": "Récupère les hauteurs d'eau détaillées pour un port et une date spécifiques.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port dont on veut obtenir les hauteurs d'eau."
+        },
+        "date": {
+          "name": "Date",
+          "description": "La date pour laquelle récupérer les hauteurs d'eau (format AAAA-MM-JJ)."
+        }
+      }
+    },
+    "get_tides_data": {
+      "name": "Récupérer les données de marées",
+      "description": "Récupère les données de marées (pleines/basses mers, coefficients) mises en cache.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port dont on veut les données de marées."
+        }
+      }
+    },
+    "get_coefficients_data": {
+      "name": "Obtenir les Données de Coefficients",
+      "description": "Récupère les données de coefficients de marée mises en cache pour un port spécifique. Permet de filtrer par date de début et nombre de jours.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port Marées France dont on veut obtenir les données de coefficients."
+        },
+        "date": {
+          "name": "Date de début (Optionnel)",
+          "description": "La date de début pour laquelle récupérer les coefficients (format AAAA-MM-JJ)."
+        },
+        "days": {
+          "name": "Nombre de jours (Optionnel)",
+          "description": "Le nombre de jours (incluant la date de début) pour lesquels récupérer les coefficients."
+        }
+      }
+    },
+    "reinitialize_harbor_data": {
+      "name": "Réinitialiser les données du port",
+      "description": "Efface les données mises en cache (marées, coefficients, hauteurs d'eau) pour un port spécifique et déclenche une nouvelle récupération immédiate des données.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port Marées France dont les données doivent être réinitialisées."
+        }
+      }
+    },
+    "get_water_temp": {
+      "name": "Obtenir la température de l'eau",
+      "description": "Récupère les données de température de l'eau mises en cache pour un port spécifique. Permet de filtrer par date de début.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port dont on veut obtenir les données de température de l'eau."
+        },
+        "date": {
+          "name": "Date (Optionnel)",
+          "description": "La date pour laquelle récupérer la température de l'eau (format AAAA-MM-JJ)."
+        }
+      }
+    },
+    "get_harbor_min_depth": {
+      "name": "Obtenir la profondeur minimale du port pour sortir le bateau",
+      "description": "Récupère la profondeur minimal pour la navigation dans un port spécifique.",
+      "fields": {
+        "device_id": {
+          "name": "Port",
+          "description": "Le port dont on veut obtenir le paramètrage"
+        }
+      }
+    }
+  }
 }

@@ -5,6 +5,7 @@ import {
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   GetWaterTempResponseData,
+  GetHarborMinDepthResponseData,
   WaterLevelTuple,
   TideEventTuple,
   GraphMargins,
@@ -41,6 +42,7 @@ export class GraphRenderer {
   private yDomainMax: number | null = null;
   private yRange: number | null = null;
   private waterTempData: GetWaterTempResponseData | null = null;
+  private harborMinDepth: GetHarborMinDepthResponseData | null = null;
   private currentTimeMarkerData: CurrentTimeMarkerData | null = null;
   private currentTimeDotElement: Circle | null = null;
   private interactionLine: Line | null = null;
@@ -201,12 +203,14 @@ export class GraphRenderer {
     tideData: GetTidesDataResponseData | null,
     waterLevels: GetWaterLevelsResponseData | null,
     waterTemp: GetWaterTempResponseData | null,
-    selectedDay: string
+    selectedDay: string,
+    harborMinDepth: GetHarborMinDepthResponseData | null,
   ): void {
     if (!this.svgDraw || !this.svgContainer || !this.hass) return;
     this.svgDraw.clear();
     this.svgDraw.node.dataset.day = selectedDay;
     this.waterTempData = waterTemp;
+    this.harborMinDepth = harborMinDepth;
     this.elementsToKeepSize = [];
     this.currentTimeDotElement = null;
     this.currentTimeMarkerData = null;
@@ -222,10 +226,10 @@ export class GraphRenderer {
       return;
     }
     if (!waterLevels || typeof waterLevels !== 'object' || ('error' in waterLevels && waterLevels.error)) {
-        const msg = !waterLevels || !('error' in waterLevels) ? 'no_water_level_data' : `Water Level Error: ${waterLevels.error}`;
-        const errorText = this.svgDraw.text(localizeCard(`ui.card.marees_france.${msg}`, this.hass)).move(viewBoxWidth / 2, viewBoxHeight / 2).font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
-        this.elementsToKeepSize.push(errorText);
-        return;
+      const msg = !waterLevels || !('error' in waterLevels) ? 'no_water_level_data' : `Water Level Error: ${waterLevels.error}`;
+      const errorText = this.svgDraw.text(localizeCard(`ui.card.marees_france.${msg}`, this.hass)).move(viewBoxWidth / 2, viewBoxHeight / 2).font({ fill: 'var(--error-color, red)', size: 14, anchor: 'middle' });
+      this.elementsToKeepSize.push(errorText);
+      return;
     }
 
     let levelsData: WaterLevelTuple[] | undefined = waterLevels[selectedDay];
@@ -239,18 +243,18 @@ export class GraphRenderer {
     // Check if the first element is itself an array (indicating nested structure for DST)
     if (levelsData.length > 0 && Array.isArray(levelsData[0]) && Array.isArray(levelsData[0][0])) {
       const arrays = levelsData as unknown as WaterLevelTuple[][];
-      
+
       // Process first array (before DST transition) - filter out nulls
       const firstArray = arrays[0].filter(
         (item): item is WaterLevelTuple => Array.isArray(item) && item[1] !== null
       );
-      
+
       // Find the last valid time in first array to determine where DST transition occurred
       let lastValidTime = '00:00:00';
       if (firstArray.length > 0) {
         lastValidTime = firstArray[firstArray.length - 1][0];
       }
-      
+
       // Process second array (after DST transition) - filter nulls and skip duplicate times
       const secondArray = arrays.length > 1 ? arrays[1].filter(
         (item): item is WaterLevelTuple => {
@@ -260,7 +264,7 @@ export class GraphRenderer {
           return item[0] > lastValidTime;
         }
       ) : [];
-      
+
       // Combine the arrays
       levelsData = [...firstArray, ...secondArray];
     }
@@ -311,38 +315,99 @@ export class GraphRenderer {
     }
     this.yRange = Math.max(0.01, this.yDomainMax - this.yDomainMin);
 
-    const pathData = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
     const firstX = this._timeToX(this.pointsData[0].totalMinutes), lastX = this._timeToX(this.pointsData[this.pointsData.length - 1].totalMinutes);
     const fillBottomY = this.graphMargin.top + this.graphHeight;
-    const fillPath = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathData.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
-    
+    const draw = this.svgDraw;
     const now = new Date();
+    var minDepthAvailable = this.harborMinDepth?.harborMinDepth !== null && this.harborMinDepth?.harborMinDepth !== 0;
+
     if (selectedDay === now.toISOString().slice(0, 10)) {
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       if (this.curveMinMinutes <= currentMinutes && currentMinutes <= this.curveMaxMinutes) {
-        const h = this._interpolateHeight(currentMinutes), t = this._interpolateWaterTemp(currentMinutes);
+        const h = this._interpolateHeight(currentMinutes);
+        const t = this._interpolateWaterTemp(currentMinutes);
         if (h !== null) {
           this.currentTimeMarkerData = { x: this._timeToX(currentMinutes), y: this._heightToY(h), timeStr: now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }), heightStr: h.toFixed(2), totalMinutes: currentMinutes, height: h, water_temp: t ?? undefined };
         }
       }
     }
-    
-    const draw = this.svgDraw;
-    const curveColor = 'var(--primary-color, blue)';
-    draw.path(fillPath).fill({ color: curveColor, opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-    draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-    
+
+    //If harbor min depth is not available, we draw the graph normally
+    if (!(minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined)) {
+      const curveColor = 'var(--primary-color, blue)';
+      const pathData = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
+      const firstX = this._timeToX(this.pointsData[0].totalMinutes), lastX = this._timeToX(this.pointsData[this.pointsData.length - 1].totalMinutes);
+      const fillPath = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathData.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+      draw.path(fillPath).fill({ color: curveColor, opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+      draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+    }
+    else {
+
+      if (selectedDay === now.toISOString().slice(0, 10)) {
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        if (this.curveMinMinutes <= currentMinutes && currentMinutes <= this.curveMaxMinutes) {
+          //Specifically for current day, if harbor min depth is defined, we display the graph differently
+          //to show areas where the depth is below the minimum
+          const h = this._interpolateHeight(currentMinutes);
+          if (minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined && this.currentTimeMarkerData && h !== null) {
+            const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
+
+            const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(harborMinDepthValue, p.heightNum, h)).toFixed(2)}`).join(' ').replace('L', 'M');
+            const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
+            const pathCurrentHeight = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, h)).toFixed(2)}`).join(' ').replace('L', 'M');
+
+            const fillCurrentHeight = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathCurrentHeight.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+            const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
+            const pathDataMinDepthMin = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(Math.min(p.heightNum, harborMinDepthValue), h)).toFixed(2)}`).join(' ').replace('L', 'M');
+
+            const fillPathMinDepth = `M ${firstX.toFixed(2)} ${this.currentTimeMarkerData.y.toFixed(2)} ${pathDataMinDepthMin.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this.currentTimeMarkerData.y.toFixed(2)} Z`;
+            const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(Math.max(h, harborMinDepthValue)).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(Math.max(h, harborMinDepthValue)).toFixed(2)} Z`;
+
+            if (h > harborMinDepthValue && this._heightToY(harborMinDepthValue) < fillBottomY) {
+              draw.path(pathDataMinDepth).fill('none').stroke({ color: 'red', width: 1 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '2' });
+            }
+
+            draw.path(fillCurrentHeight).fill({ color: 'blue', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+            draw.path(pathCurve).fill('none').stroke({ color: 'blue', width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+            draw.path(fillPath).fill({ color: 'green', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+            draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+
+          }
+        }
+      }
+      else {
+        //Not current day, we check if harbor min depth is defined, and if so, we draw the graph accordingly
+        if (minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined) {
+          const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
+          const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(harborMinDepthValue, p.heightNum)).toFixed(2)}`).join(' ').replace('L', 'M');
+          const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
+          const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} Z`;
+          const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
+          const fillPathMinDepth = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataMinDepth.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+          draw.path(pathCurve).fill('none').stroke({ color: 'blue', width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+          draw.path(fillPath).fill({ color: 'green', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+
+          if (this._heightToY(harborMinDepthValue) < fillBottomY) {
+            draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+          }
+        }
+      }
+    }
+
     const interactionGroup = draw.group().attr('id', 'interaction-indicator').hide() as G;
-    this.interactionLine = interactionGroup.line(0,0,0,0).stroke({ color: 'var(--primary-text-color, black)', width: 1, dasharray: '2,2' }).attr({ 'pointer-events': 'none', 'vector-effect': 'non-scaling-stroke' }) as Line;
+    this.interactionLine = interactionGroup.line(0, 0, 0, 0).stroke({ color: 'var(--primary-text-color, black)', width: 1, dasharray: '2,2' }).attr({ 'pointer-events': 'none', 'vector-effect': 'non-scaling-stroke' }) as Line;
     const interactionDot = interactionGroup.circle(12).fill('var(--info-color, blue)').attr('pointer-events', 'none') as Circle;
 
     for (let mins = 0; mins <= 1440; mins += 480) {
       const x = this._timeToX(mins === 1440 ? 1439.99 : mins);
       const label = (mins / 60 === 24) ? '00:00' : `${String(mins / 60).padStart(2, '0')}:00`;
       const textEl = draw.text(label).font({ fill: 'var(--secondary-text-color, grey)', size: 14, anchor: 'middle', weight: 'normal' }).move(x, viewBoxHeight - 11.2);
-       this.elementsToKeepSize.push(textEl);
+      this.elementsToKeepSize.push(textEl);
     }
-    
+
     const tideEventsForDay: TideEventTuple[] | undefined = tideData[selectedDay];
     if (Array.isArray(tideEventsForDay)) {
       tideEventsForDay.forEach((tideArr: TideEventTuple) => {
@@ -359,46 +424,46 @@ export class GraphRenderer {
         const arrowY = y + arrowYOffset;
         let arrowPathData;
         if (isHigh) {
-            arrowPathData = `M ${x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${x},${arrowY - arrowSize * 0.4} Z`;
+          arrowPathData = `M ${x - arrowSize / 2},${arrowY + arrowSize * 0.4} L ${x + arrowSize / 2},${arrowY + arrowSize * 0.4} L ${x},${arrowY - arrowSize * 0.4} Z`;
         } else {
-            arrowPathData = `M ${x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${x},${arrowY + arrowSize * 0.4} Z`;
+          arrowPathData = `M ${x - arrowSize / 2},${arrowY - arrowSize * 0.4} L ${x + arrowSize / 2},${arrowY - arrowSize * 0.4} L ${x},${arrowY + arrowSize * 0.4} Z`;
         }
         arrowGroup.path(arrowPathData).fill('var(--primary-text-color, black)').stroke('none');
         let timeTextY, heightTextY;
         const arrowTipY = arrowY + (isHigh ? -arrowSize * 0.4 : arrowSize * 0.4);
         if (isHigh) {
-            timeTextY = arrowTipY + textSpacing;
-            heightTextY = timeTextY + textLineHeight;
+          timeTextY = arrowTipY + textSpacing;
+          heightTextY = timeTextY + textLineHeight;
         } else {
-            heightTextY = arrowTipY - textSpacing - textLineHeight;
-            timeTextY = heightTextY - textLineHeight;
+          heightTextY = arrowTipY - textSpacing - textLineHeight;
+          timeTextY = heightTextY - textLineHeight;
         }
         arrowGroup.text(time).font({ fill: 'var(--primary-text-color, black)', size: 14, weight: 'bold' }).attr('text-anchor', 'middle').cx(x).y(timeTextY);
         arrowGroup.text(`${height.toFixed(1)}m`).font({ fill: 'var(--primary-text-color, black)', size: 12 }).attr('text-anchor', 'middle').cx(x).y(heightTextY);
         this.elementsToKeepSize.push(arrowGroup);
         if (isHigh && coeff !== null) {
-            const coefGroup = draw.group() as G;
-            const coefText = String(coeff);
-            const tempText = draw.text(coefText).font({ size: 16, weight: 'bold', anchor: 'middle' }).attr('dominant-baseline', 'central').opacity(0);
-            const textBBox = tempText.bbox();
-            tempText.remove();
-            if (textBBox && !isNaN(textBBox.width) && !isNaN(textBBox.height) && !isNaN(x)) {
-                const boxWidth = textBBox.width + 12, boxHeight = textBBox.height + 8, boxX = x - boxWidth / 2, boxY = 10;
-                coefGroup.rect(boxWidth, boxHeight).attr({ x: boxX, y: boxY, rx: 4, ry: 4 }).fill('var(--secondary-background-color, #f0f0f0)').stroke({ color: 'var(--ha-card-border-color, var(--divider-color, grey))', width: 1 }).attr('vector-effect', 'non-scaling-stroke');
-                const coefColor = coeff >= 100 ? 'var(--warning-color)' : 'var(--primary-text-color, black)';
-                coefGroup.text(coefText).font({ fill: coefColor, size: 16, weight: 'bold', anchor: 'middle' }).attr('dominant-baseline', 'central').attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
-                const lineStartY = boxY + boxHeight, lineEndY = y - 10;
-                if (!isNaN(lineStartY) && !isNaN(lineEndY) && lineEndY > lineStartY) {
-                    coefGroup.line(x, lineStartY, x, lineEndY).stroke({ color: 'var(--primary-text-color, #212121)', width: 1, dasharray: '2,2' }).attr('vector-effect', 'non-scaling-stroke');
-                }
-                this.elementsToKeepSize.push(coefGroup);
+          const coefGroup = draw.group() as G;
+          const coefText = String(coeff);
+          const tempText = draw.text(coefText).font({ size: 16, weight: 'bold', anchor: 'middle' }).attr('dominant-baseline', 'central').opacity(0);
+          const textBBox = tempText.bbox();
+          tempText.remove();
+          if (textBBox && !isNaN(textBBox.width) && !isNaN(textBBox.height) && !isNaN(x)) {
+            const boxWidth = textBBox.width + 12, boxHeight = textBBox.height + 8, boxX = x - boxWidth / 2, boxY = 10;
+            coefGroup.rect(boxWidth, boxHeight).attr({ x: boxX, y: boxY, rx: 4, ry: 4 }).fill('var(--secondary-background-color, #f0f0f0)').stroke({ color: 'var(--ha-card-border-color, var(--divider-color, grey))', width: 1 }).attr('vector-effect', 'non-scaling-stroke');
+            const coefColor = coeff >= 100 ? 'var(--warning-color)' : 'var(--primary-text-color, black)';
+            coefGroup.text(coefText).font({ fill: coefColor, size: 16, weight: 'bold', anchor: 'middle' }).attr('dominant-baseline', 'central').attr({ x: boxX + boxWidth / 2, y: boxY + boxHeight / 2 });
+            const lineStartY = boxY + boxHeight, lineEndY = y - 10;
+            if (!isNaN(lineStartY) && !isNaN(lineEndY) && lineEndY > lineStartY) {
+              coefGroup.line(x, lineStartY, x, lineEndY).stroke({ color: 'var(--primary-text-color, #212121)', width: 1, dasharray: '2,2' }).attr('vector-effect', 'non-scaling-stroke');
             }
+            this.elementsToKeepSize.push(coefGroup);
+          }
         }
       });
     }
 
     if (this.currentTimeMarkerData) {
-        this.currentTimeDotElement = draw.circle(12).center(this.currentTimeMarkerData.x, this.currentTimeMarkerData.y).fill('var(--tide-icon-color)').attr('pointer-events', 'none') as Circle;
+      this.currentTimeDotElement = draw.circle(12).center(this.currentTimeMarkerData.x, this.currentTimeMarkerData.y).fill('var(--tide-icon-color)').attr('pointer-events', 'none') as Circle;
     }
 
     const overlay = draw.rect(this.graphWidth, this.graphHeight).move(this.graphMargin.left, this.graphMargin.top).fill('transparent').attr('cursor', 'crosshair') as Rect;

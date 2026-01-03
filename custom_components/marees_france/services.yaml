@@ -85,3 +85,14 @@ get_water_temp:
       required: false
       selector:
         date:
+get_harbor_min_depth:
+  name: Get Harbor Minimum Depth
+  description: Retrieves the minimum depth for a specific harbor.
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to get minimum depth.
+      required: true
+      selector:
+        device:
+          integration: marees_france

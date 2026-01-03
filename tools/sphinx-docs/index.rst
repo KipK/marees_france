@@ -15,6 +15,7 @@ Home Assistant integration.
 
    init
    sensor
+   number
    coordinator
    config_flow
    api_helpers

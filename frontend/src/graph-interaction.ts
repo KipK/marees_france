@@ -3,13 +3,14 @@ import {
   GetTidesDataResponseData,
   GetWaterLevelsResponseData,
   GetWaterTempResponseData,
+  GetHarborMinDepthResponseData
 } from './types';
 import { GraphRenderer, TooltipDelegate } from './graph-renderer';
 
 export interface SyntheticPositionEvent {
-    clientX?: number;
-    clientY?: number;
-    type: string;
+  clientX?: number;
+  clientY?: number;
+  type: string;
 }
 
 export interface CardInstanceForGraphManager {
@@ -19,6 +20,7 @@ export interface CardInstanceForGraphManager {
   _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
   _tideData: GetTidesDataResponseData | { error: string } | null;
   _waterTempData: GetWaterTempResponseData | { error: string } | null;
+  _harborMinDepth: GetHarborMinDepthResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _isLoadingWaterTemp: boolean;
@@ -78,9 +80,9 @@ export class GraphInteractionManager implements TooltipDelegate {
       this.drawGraphIfReady();
     } else if (containerElement && this.graphRenderer) {
       if (this.svgContainer !== containerElement) {
-          this.svgContainer = containerElement;
-          this.graphRenderer.destroy();
-          this.graphRenderer = new GraphRenderer(this, this.svgContainer, this.card.hass);
+        this.svgContainer = containerElement;
+        this.graphRenderer.destroy();
+        this.graphRenderer = new GraphRenderer(this, this.svgContainer, this.card.hass);
       }
       this.drawGraphIfReady();
     }
@@ -90,6 +92,7 @@ export class GraphInteractionManager implements TooltipDelegate {
     const waterDataValid = this.card._waterLevels && !('error' in this.card._waterLevels);
     const tideDataValid = this.card._tideData && !('error' in this.card._tideData);
     const waterTempDataValid = this.card._waterTempData && !('error' in this.card._waterTempData);
+    const harborMinDepthDataValid = this.card._harborMinDepth && !('error' in this.card._harborMinDepth);
     const dataIsReady = !this.card._isLoadingWater && !this.card._isLoadingTides && !this.card._isLoadingWaterTemp && waterDataValid && tideDataValid;
     const containerStillExists = this.svgContainer && this.card.shadowRoot?.contains(this.svgContainer);
 
@@ -99,7 +102,8 @@ export class GraphInteractionManager implements TooltipDelegate {
           this.card._tideData as GetTidesDataResponseData,
           this.card._waterLevels as GetWaterLevelsResponseData,
           waterTempDataValid ? (this.card._waterTempData as GetWaterTempResponseData) : null,
-          this.card._selectedDay
+          this.card._selectedDay,
+          harborMinDepthDataValid ? (this.card._harborMinDepth as GetHarborMinDepthResponseData) : null,
         );
         this.graphRenderer.refreshDimensionsAndScale();
       } catch (e) {
@@ -141,11 +145,11 @@ export class GraphInteractionManager implements TooltipDelegate {
             const svgPoint = pt.matrixTransform(ctmForTooltip.inverse());
             this.graphRenderer.setTooltipBottomY(svgPoint.y);
           } catch (inverseError) {
-             console.error('Marees Card (GIM): Error inverting CTM for tooltip Y:', inverseError);
-             this.graphRenderer.setTooltipBottomY(-1);
+            console.error('Marees Card (GIM): Error inverting CTM for tooltip Y:', inverseError);
+            this.graphRenderer.setTooltipBottomY(-1);
           }
         } else {
-           this.graphRenderer.setTooltipBottomY(-1);
+          this.graphRenderer.setTooltipBottomY(-1);
         }
       }
     } catch (transformError) {

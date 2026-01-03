@@ -7,7 +7,8 @@
                 "description": "Select the harbor",
                 "data": {
                     "harbor_id": "Harbor Name",
-                    "scan_interval": "Update interval (hours)"
+                    "scan_interval": "Update interval (hours)",
+                    "harbor_min_depth": "Minimum Depth (meters)"
                 }
             },
             "confirm": {
@@ -185,6 +186,11 @@
                     }
                 }
             }
+        },
+        "number": {
+            "min_depth": {
+                "name": "Minimum depth"
+            }
         }
     },
     "services": {
@@ -251,6 +257,16 @@
                 "date": {
                     "name": "Date (Optional)",
                     "description": "The date for which to fetch water temperature (YYYY-MM-DD format)."
+                }
+            }
+        },
+        "get_harbor_min_depth": {
+            "name": "Get Harbor Minimum Depth to Boat",
+            "description": "Get the minimum depth to navigate in a specific harbor.",
+            "fields": {
+                "device_id": {
+                    "name": "Port",
+                    "description": "The harbor you want the data from."
                 }
             }
         }
