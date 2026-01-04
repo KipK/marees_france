@@ -315,84 +315,111 @@ export class GraphRenderer {
     }
     this.yRange = Math.max(0.01, this.yDomainMax - this.yDomainMin);
 
+    //Prepare informations needed to draw graph
+    const draw = this.svgDraw;
     const firstX = this._timeToX(this.pointsData[0].totalMinutes), lastX = this._timeToX(this.pointsData[this.pointsData.length - 1].totalMinutes);
     const fillBottomY = this.graphMargin.top + this.graphHeight;
-    const draw = this.svgDraw;
-    const now = new Date();
-    var minDepthAvailable = this.harborMinDepth?.harborMinDepth !== null && this.harborMinDepth?.harborMinDepth !== 0;
+    const minDepthAvailable = this.harborMinDepth?.harborMinDepth !== null && this.harborMinDepth?.harborMinDepth !== 0;
+    var currentDepth: number | null = null;
 
-    if (selectedDay === now.toISOString().slice(0, 10)) {
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      if (this.curveMinMinutes <= currentMinutes && currentMinutes <= this.curveMaxMinutes) {
-        const h = this._interpolateHeight(currentMinutes);
+    //Compute current depth & temperature (interpolate)
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (this.curveMinMinutes <= currentMinutes && currentMinutes <= this.curveMaxMinutes) {
+      currentDepth = this._interpolateHeight(currentMinutes); //Compute current depth
+
+      if (selectedDay === now.toISOString().slice(0, 10) && currentDepth !== null) {
+        //If selected day == current : compute current temp & TimeMarkerData position.
         const t = this._interpolateWaterTemp(currentMinutes);
-        if (h !== null) {
-          this.currentTimeMarkerData = { x: this._timeToX(currentMinutes), y: this._heightToY(h), timeStr: now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }), heightStr: h.toFixed(2), totalMinutes: currentMinutes, height: h, water_temp: t ?? undefined };
-        }
+        this.currentTimeMarkerData = { x: this._timeToX(currentMinutes), y: this._heightToY(currentDepth), timeStr: now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }), heightStr: currentDepth.toFixed(2), totalMinutes: currentMinutes, height: currentDepth, water_temp: t ?? undefined };
       }
     }
 
-    //If harbor min depth is not available, we draw the graph normally
+    //There are 3 differents ways to display the graph.
     if (!(minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined)) {
+      //Case Harbor min depth setting not available or set to default value (zero)
+      // -1st way : graph shows the depth curve, filled under using primary-color
       const curveColor = 'var(--primary-color, blue)';
       const pathData = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
       const firstX = this._timeToX(this.pointsData[0].totalMinutes), lastX = this._timeToX(this.pointsData[this.pointsData.length - 1].totalMinutes);
       const fillPath = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathData.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
 
+      //Draw depth curve and its bottom filled
       draw.path(fillPath).fill({ color: curveColor, opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
       draw.path(pathData).fill('none').stroke({ color: curveColor, width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
     }
     else {
-
+      //Else, we're in the case harbor min depth is available and > 0
       if (selectedDay === now.toISOString().slice(0, 10)) {
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        if (this.curveMinMinutes <= currentMinutes && currentMinutes <= this.curveMaxMinutes) {
-          //Specifically for current day, if harbor min depth is defined, we display the graph differently
-          //to show areas where the depth is below the minimum
-          const h = this._interpolateHeight(currentMinutes);
-          if (minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined && this.currentTimeMarkerData && h !== null) {
-            const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
-
-            const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(harborMinDepthValue, p.heightNum, h)).toFixed(2)}`).join(' ').replace('L', 'M');
-            const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
-            const pathCurrentHeight = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, h)).toFixed(2)}`).join(' ').replace('L', 'M');
-
-            const fillCurrentHeight = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathCurrentHeight.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
-
-            const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
-            const pathDataMinDepthMin = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(Math.min(p.heightNum, harborMinDepthValue), h)).toFixed(2)}`).join(' ').replace('L', 'M');
-
-            const fillPathMinDepth = `M ${firstX.toFixed(2)} ${this.currentTimeMarkerData.y.toFixed(2)} ${pathDataMinDepthMin.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this.currentTimeMarkerData.y.toFixed(2)} Z`;
-            const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(Math.max(h, harborMinDepthValue)).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(Math.max(h, harborMinDepthValue)).toFixed(2)} Z`;
-
-            if (h > harborMinDepthValue && this._heightToY(harborMinDepthValue) < fillBottomY) {
-              draw.path(pathDataMinDepth).fill('none').stroke({ color: 'red', width: 1 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '2' });
-            }
-
-            draw.path(fillCurrentHeight).fill({ color: 'blue', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-            draw.path(pathCurve).fill('none').stroke({ color: 'blue', width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-            draw.path(fillPath).fill({ color: 'green', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-            draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-
-          }
-        }
-      }
-      else {
-        //Not current day, we check if harbor min depth is defined, and if so, we draw the graph accordingly
-        if (minDepthAvailable && this.harborMinDepth?.harborMinDepth !== undefined) {
+        //Case selected day is current day
+        // -2nd way : We display the graph with a different layout to show 3 zones :
+        //      - Current depth : represents water level (blue)
+        //      - Go zone : area over min Depth (green)
+        //      - NoGo zone : area under min depth (red)
+        if (currentDepth !== null) {
+          const tsIssue_currentDepth = currentDepth ///TS issue in some max function bellow, still considering currentDepth can be null ...
           const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
-          const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(harborMinDepthValue, p.heightNum)).toFixed(2)}`).join(' ').replace('L', 'M');
-          const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
-          const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} Z`;
-          const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
-          const fillPathMinDepth = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataMinDepth.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
 
+          //PathCurve is depth curve
+          const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
+
+          //pathCurrentHeight is the current depth curve (not display, used to compute the area fillCurrentHeight)
+          const pathCurrentHeight = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, tsIssue_currentDepth)).toFixed(2)}`).join(' ').replace('L', 'M');
+          //fillCurrentHeight is the area representing the current level of water
+          const fillCurrentHeight = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathCurrentHeight.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+          //pathDataMinDepth is the curve representing the minimum depth, used to compute the nogo area, displayed as dashed when there is not nogo zone to display )
+          const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
+          //pathDataMinDepthMin is a working curve used to compute fillPathMinDepth (the nogo zone)
+          const pathDataMinDepthMin = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(Math.min(p.heightNum, harborMinDepthValue), tsIssue_currentDepth)).toFixed(2)}`).join(' ').replace('L', 'M');
+          //fillPathMinDepth is the area of the nogo zone, diplayed in red to illustrate the depth bellow you can't navigate
+          const fillPathMinDepth = `M ${firstX.toFixed(2)} ${this._heightToY(tsIssue_currentDepth).toFixed(2)} ${pathDataMinDepthMin.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(tsIssue_currentDepth).toFixed(2)} Z`;
+          //pathCurveMax is a working curve used to compute fillPath (the go zone)
+          const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(tsIssue_currentDepth, harborMinDepthValue, p.heightNum)).toFixed(2)}`).join(' ').replace('L', 'M');
+          //fillPath is the area of the go zone, diplayed in green to illustrate the depth in which you can navigate
+          const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(Math.max(tsIssue_currentDepth, harborMinDepthValue)).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(Math.max(tsIssue_currentDepth, harborMinDepthValue)).toFixed(2)} Z`;
+
+          //In some condition, nogo zone area is empty and if in the graph scale
+          if (tsIssue_currentDepth > harborMinDepthValue && this._heightToY(harborMinDepthValue) < fillBottomY) {
+            //we display a red dashed line to represent the minimum depth under which you should not enter/leave the harbor
+            draw.path(pathDataMinDepth).fill('none').stroke({ color: 'red', width: 1 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '2' });
+          }
+
+          //Drawing the depth curve and the 3 areas
+          draw.path(fillCurrentHeight).fill({ color: 'blue', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
           draw.path(pathCurve).fill('none').stroke({ color: 'blue', width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
           draw.path(fillPath).fill({ color: 'green', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+          draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+        }
+        else
+          return
+      }
+      else {
+        //Else, not current day
+        // -3rd way : We draw the graph with two areas :
+        //      - Go zone : area over min Depth (green)
+        //      - NoGo zone : area under min depth (blue)
 
-          if (this._heightToY(harborMinDepthValue) < fillBottomY) {
-            draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
-          }
+        const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
+
+        //PathCurve is depth curve
+        const pathCurve = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(p.heightNum).toFixed(2)}`).join(' ').replace('L', 'M');
+        //pathCurveMax is a working curve used to compute fillPath (the go zone)
+        const pathCurveMax = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(harborMinDepthValue, p.heightNum)).toFixed(2)}`).join(' ').replace('L', 'M');
+        //fillPath is the area of the go zone, diplayed in green to illustrate the depth in which you can navigate
+        const fillPath = `M ${firstX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} ${pathCurveMax.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${this._heightToY(harborMinDepthValue).toFixed(2)} Z`;
+        //pathDataMinDepth is the curve representing the minimum depth, used to compute the nogo area fillPathMinDepth
+        const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue)).toFixed(2)}`).join(' ').replace('L', 'M');
+        //fillPathMinDepth is the area of the nogo zone, diplayed in red to illustrate the depth bellow you can't navigate
+        const fillPathMinDepth = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataMinDepth.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+        //Drawing the depth curve and the green area
+        draw.path(pathCurve).fill('none').stroke({ color: 'blue', width: 2 }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+        draw.path(fillPath).fill({ color: 'green', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+
+        //Drawing the nogo zone if in the graph scale
+        if (this._heightToY(harborMinDepthValue) < fillBottomY) {
+          draw.path(fillPathMinDepth).fill({ color: 'red', opacity: 0.4 }).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
         }
       }
     }
