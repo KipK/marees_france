@@ -98,6 +98,9 @@ export interface GetWaterTempResponseData {
   [date: string]: { datetime: string; temp: number }[];
 }
 
+export interface GetHarborMinDepthResponseData {
+  harborMinDepth: number;
+}
 // --- Parsed/Processed Data Structures ---
 
 // Structure for a parsed tide event used in utils.ts and graph-renderer.ts

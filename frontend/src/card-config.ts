@@ -2,7 +2,7 @@
 // including setConfig, getStubConfig, and getConfigElement.
 // It will be responsible for validating and applying the card configuration.
 
-import { HomeAssistant, MareesFranceCardConfig, GetWaterLevelsResponseData, GetTidesDataResponseData, GetCoefficientsDataResponseData } from './types';
+import { HomeAssistant, MareesFranceCardConfig, GetWaterLevelsResponseData, GetTidesDataResponseData, GetCoefficientsDataResponseData, GetHarborMinDepthResponseData } from './types';
 import { localizeCard } from './localize';
 
 // Define an interface for the card instance properties and methods
@@ -15,9 +15,11 @@ export interface CardInstanceForSetConfig {
   _waterLevels: GetWaterLevelsResponseData | { error: string } | null;
   _tideData: GetTidesDataResponseData | { error: string } | null;
   _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null;
+  _harborMinDepth: GetHarborMinDepthResponseData | { error: string } | null;
   _isLoadingWater: boolean;
   _isLoadingTides: boolean;
   _isLoadingCoefficients: boolean;
+  _isLoadingHarborMinDepth: boolean;
   _isInitialLoading: boolean;
   // _isCalendarDialogOpen and _calendarSelectedMonth are now managed by CalendarDialogManager
   _deviceName: string | null;
@@ -51,8 +53,10 @@ export function setCardConfig(
   card._waterLevels = null;
   card._tideData = null;
   card._coefficientsData = null;
+  card._harborMinDepth = null;
   card._isLoadingWater = true;
   card._isLoadingTides = true;
+  card._isLoadingHarborMinDepth = true;
   card._isLoadingCoefficients = true;
   card._isInitialLoading = true;
   // card._isCalendarDialogOpen = false; // Managed by CalendarDialogManager

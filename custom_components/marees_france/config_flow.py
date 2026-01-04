@@ -13,6 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import fetch_harbors  # fetch_harbors is defined in __init__.py
 from .const import (
+    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
     DEFAULT_HARBOR,
@@ -83,12 +84,14 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
 
                 harbor_name = self._harbors_cache[selected_harbor_id]["name"]
+                harbor_depth = user_input.get(CONF_HARBOR_MIN_DEPTH, 0)
 
                 return self.async_create_entry(
                     title=f"{INTEGRATION_NAME} - {harbor_name}",
                     data={
                         CONF_HARBOR_ID: selected_harbor_id,
                         CONF_HARBOR_NAME: harbor_name,
+                        CONF_HARBOR_MIN_DEPTH: harbor_depth,
                     },
                 )
 
@@ -107,6 +110,9 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_HARBOR_ID, default=DEFAULT_HARBOR): vol.In(
                     harbor_options
+                ),
+                vol.Optional(CONF_HARBOR_MIN_DEPTH, default=0): vol.All(
+                    vol.Coerce(float), vol.Range(min=0)
                 ),
             }
         )

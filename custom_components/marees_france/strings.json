@@ -7,7 +7,8 @@
         "description": "Select the harbor and the update frequency.",
         "data": {
           "harbor_id": "Harbor Name",
-          "scan_interval": "Update interval (hours)"
+          "scan_interval": "Update interval (hours)",
+          "harbor_min_depth": "Minimum Depth (meters)"
         }
       }
     },

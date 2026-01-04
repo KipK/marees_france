@@ -10,7 +10,7 @@ from homeassistant.helpers.storage import Store
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.marees_france.const import DOMAIN
+from custom_components.marees_france.const import DOMAIN, CONF_HARBOR_LAT, CONF_HARBOR_LON
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator
 # Assuming ShomApiClient and specific exceptions are importable for mocking/testing
 # from custom_components.marees_france.api import ShomApiClient, ShomApiError
@@ -18,6 +18,7 @@ from custom_components.marees_france.coordinator import MareesFranceUpdateCoordi
 from tests.conftest import (
     MOCK_CONFIG_ENTRY_DATA,
     CONF_HARBOR_ID,
+    MOCK_PORT_DATA
 )  # MOCK_PORT_DATA is likely obsolete now
 
 
@@ -62,36 +63,47 @@ MOCK_WATER_LEVEL_CACHE = {
     }
 }
 
+MOCK_HARBOR_MIN_DEPTH_CACHE = {
+    MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]: {
+        "harborMinDepth": 2.5
+    }
+}
+
 # Mock data for an empty cache scenario
 EMPTY_CACHE = {MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_ID]: {}}
 
 
 @pytest.fixture
-def mock_stores() -> tuple[AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
+def mock_stores() -> tuple[AsyncMock, AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
     """Provides mock Store objects."""
     mock_tides_store = AsyncMock(spec=Store)
     mock_coeff_store = AsyncMock(spec=Store)
     mock_water_level_store = AsyncMock(spec=Store)
     mock_watertemp_store = AsyncMock(spec=Store)
+    mock_harborMinDepth_store = AsyncMock(spec=Store)
     # Default load behavior (can be overridden in tests)
     mock_tides_store.async_load.return_value = MOCK_TIDES_CACHE
     mock_coeff_store.async_load.return_value = MOCK_COEFF_CACHE
     mock_water_level_store.async_load.return_value = MOCK_WATER_LEVEL_CACHE
     mock_watertemp_store.async_load.return_value = {}  # Empty by default
+
+    mock_harborMinDepth_store.async_load.return_value = MOCK_HARBOR_MIN_DEPTH_CACHE  # Empty by default
     return (
         mock_tides_store,
         mock_coeff_store,
         mock_water_level_store,
         mock_watertemp_store,
+        mock_harborMinDepth_store,
     )
 
 
 @pytest.fixture
 async def setup_coordinator(
     hass: HomeAssistant,
-    mock_stores: tuple[AsyncMock, AsyncMock, AsyncMock, AsyncMock],
+    mock_stores: tuple[AsyncMock, AsyncMock, AsyncMock, AsyncMock, AsyncMock],
 ) -> tuple[
     MareesFranceUpdateCoordinator,
+    AsyncMock,
     AsyncMock,
     AsyncMock,
     AsyncMock,
@@ -104,6 +116,7 @@ async def setup_coordinator(
         mock_coeff_store,
         mock_water_level_store,
         mock_watertemp_store,
+        mock_harborMinDepth_store,
     ) = mock_stores
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -117,6 +130,7 @@ async def setup_coordinator(
     mock_tides_store.async_load.return_value = MOCK_TIDES_CACHE
     mock_coeff_store.async_load.return_value = MOCK_COEFF_CACHE
     mock_water_level_store.async_load.return_value = MOCK_WATER_LEVEL_CACHE
+    mock_harborMinDepth_store.async_load.return_value = MOCK_HARBOR_MIN_DEPTH_CACHE
 
     # Create a mock data structure for the coordinator
     mock_data = {
@@ -159,7 +173,11 @@ async def setup_coordinator(
         mock_coeff_store,
         mock_water_level_store,
         mock_watertemp_store,
+        mock_harborMinDepth_store,
     )
+
+    MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_LAT] = MOCK_PORT_DATA["lat"]
+    MOCK_CONFIG_ENTRY_DATA[CONF_HARBOR_LON] = MOCK_PORT_DATA["lon"]
 
     # Prevent coordinator's scheduled updates during tests by default
     # Tests can manually trigger updates using async_refresh()
@@ -175,6 +193,7 @@ async def setup_coordinator(
         mock_coeff_store,
         mock_water_level_store,
         mock_watertemp_store,
+        mock_harborMinDepth_store,
         entry,
     )
 
@@ -187,13 +206,14 @@ async def test_coordinator_initial_fetch_success(
         AsyncMock,
         AsyncMock,
         AsyncMock,
+        AsyncMock,
         MockConfigEntry,
     ],
     mock_api_fetchers_detailed: MagicMock,  # Access patched helpers if needed
     snapshot: SnapshotAssertion,
 ):
     """Test successful initial data fetch by the coordinator."""
-    coordinator, mock_tides, mock_coeffs, mock_water, _, _ = setup_coordinator
+    coordinator, mock_tides, mock_coeffs, mock_water, mock_harborMinDepth, _, _ = setup_coordinator
 
     # Since we've directly set the coordinator data in the fixture,
     # we just need to verify it's correct
@@ -212,12 +232,13 @@ async def test_coordinator_listener_updated_on_success(
         AsyncMock,
         AsyncMock,
         AsyncMock,
+        AsyncMock,
         MockConfigEntry,
     ],
     mock_api_fetchers_detailed: MagicMock,  # Access patched helpers if needed
 ):
     """Test that listeners are updated after a successful data fetch."""
-    coordinator, mock_tides, mock_coeffs, mock_water, _, _ = setup_coordinator
+    coordinator, mock_tides, mock_coeffs, mock_water, mock_harborMinDepth, _, _ = setup_coordinator
 
     # Add a regular function as a listener instead of an AsyncMock
     # to avoid the "coroutine never awaited" warning
@@ -244,12 +265,13 @@ async def test_coordinator_api_error_handling(
         AsyncMock,
         AsyncMock,
         AsyncMock,
+        AsyncMock,
         MockConfigEntry,
     ],
     mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
 ):
     """Test coordinator error handling when the API call fails during cache repair."""
-    coordinator, mock_tides, mock_coeffs, mock_water, _, _ = setup_coordinator
+    coordinator, mock_tides, mock_coeffs, mock_water, mock_harborMinDepth, _, _ = setup_coordinator
 
     # Simulate an error by directly setting the coordinator state
     coordinator.last_update_success = False
@@ -266,13 +288,14 @@ async def test_coordinator_recovery_after_api_error(
         AsyncMock,
         AsyncMock,
         AsyncMock,
+        AsyncMock,
         MockConfigEntry,
     ],
     mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
     snapshot: SnapshotAssertion,
 ):
     """Test coordinator recovers and fetches data after a previous API error."""
-    coordinator, mock_tides, mock_coeffs, mock_water, _, _ = setup_coordinator
+    coordinator, mock_tides, mock_coeffs, mock_water, mock_harborMinDepth, _, _ = setup_coordinator
 
     # First, simulate an error
     coordinator.last_update_success = False
@@ -296,13 +319,14 @@ async def test_coordinator_scheduled_update(
         AsyncMock,
         AsyncMock,
         AsyncMock,
+        AsyncMock,
         MockConfigEntry,
     ],
     mock_api_fetchers_detailed: MagicMock,  # Access patched helpers
     freezer,  # Use time freezing fixture
 ):
     """Test scheduled updates trigger data fetching."""
-    coordinator, mock_tides, mock_coeffs, mock_water, _, entry = setup_coordinator
+    coordinator, mock_tides, mock_coeffs, mock_water, mock_harborMinDepth, _, entry = setup_coordinator
 
     # Set the update interval
     coordinator.update_interval = timedelta(minutes=5)

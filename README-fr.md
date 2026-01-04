@@ -22,17 +22,19 @@ Une fois l'intégration installée et configurée, rafraichissez le navigateur p
 
 1. Dans **Appareils et Services → Ajouter une intégration**, rechercher **Marées France**.
 2. Sélectionner le **port le plus proche** dans la liste proposée.
+3. *(Optionnel)* Définir la **profondeur minimale nécessaire pour naviguer** — cette valeur sera utilisée pour adapter l'affichage des graphiques afin de rendre plus lisible les périodes où la naviguation sera possible. Laissez à 0 si non nécessaire.
 
 ![Configuration de l'intégration](./img/integration-config.png)
 
-Une fois configurée, l’entité sera disponible sous le nom :  
-`sensor.marees_france_[NOM_DU_PORT]`
+Une fois configurées, les entités seront disponibles sous les noms :
+- `sensor.marees_france_[NOM_DU_PORT]` — Données de marée
+- `number.[NOM_DU_PORT]_profondeur_minimale` — Profondeur minimale ajustable
 
 ---
 
 ## 🖼️ Utilisation
 
-Une **carte Lovelace personnalisée** est fournie avec l'intégration !  
+Une **carte Lovelace personnalisée** est fournie avec l'intégration !
 Ajoutez simplement la **carte Marées France** dans votre dashboard.
 
 ![Éditeur de carte](./img/card-editor.png)
@@ -78,11 +80,23 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 - **État**: La température actuelle de l'eau en degrés Celsius.
 - **Attributs**: `current_height`, `tide_trend`
 
+### Profondeur minimale pour naviguer
+
+- **Type** : Entité nombre (Number)
+- **Description** : Profondeur d'eau minimale configurable requise pour que votre bateau navigue en sécurité
+- **Valeur par défaut** : 0 mètres
+- **Caractéristiques** :
+  - Définir cette valeur permettra à l'intégration d'adapter le design des graphiques pour afficher les périodes sur lesquelles il est possible d'entrer/sortir du port. (La hauteur actuelle est uniquement affichée sur le jour courant)
+  - Activer la fonctionnalité permet également d'afficher, pour le jour courant, la hauteur actuelle d'eau.
+  - Ajustable à partir de 0 mètre par incréments de 0,1 mètre
+  - La valeur persiste lors des redémarrages de Home Assistant
+  - Mise à jour en temps réel des données du coordinateur lors du changement
+
 ---
 
 ## 🛠️ Services disponibles
 
-Cinq services sont disponibles :
+Six services sont disponibles :
 
 ### 1. Récupérer les données de marées
 
@@ -128,6 +142,14 @@ data:
   date: "2025-04-26"
 ```
 
+### 6. Récupérer la profondeur minimale du port
+
+```yaml
+action: marees_france.get_harbor_min_depth
+data:
+  device_id: xxxxxxxxxx
+```
+
 ---
 
 ## Dépannage
@@ -150,7 +172,7 @@ cd frontend
 npm run build
 ```
 
-Le build sera généré dans :  
+Le build sera généré dans :
 `custom_components/marees_info/frontend`
 
 ### Documentation build

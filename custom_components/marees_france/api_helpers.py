@@ -503,3 +503,60 @@ async def _async_fetch_and_store_water_temp(
             harbor_id,
         )
         return False
+
+
+async def _async_store_harbor_min_depth(
+    hass: HomeAssistant,
+    store: Store[dict[str, dict[str, Any]]],
+    harbor_id: str,
+    min_depth: float
+) -> bool:
+    """Store harbor min depth entry in cache, and save.
+
+    Args:
+        hass: The Home Assistant instance.
+        store: The data store for caching.
+        harbor_id: The ID of the harbor for the API request.
+        min_depth: The minimum depth value for the specified harbor to store.
+
+    Returns:
+        True if storing is successful, False otherwise.
+    """
+    if min_depth is None:
+        return False
+    try:
+        if not isinstance(min_depth, float):
+            _LOGGER.error(
+                "Marées France Helper: Min depth is not a float for %s. Data: %s",
+                harbor_id,
+                min_depth,
+            )
+            return False
+    except Exception as e:
+        _LOGGER.exception(
+            "Marées France Helper: Unexpected error accessing min depth data for %s. Error: %s",
+            harbor_id,
+            e,
+            "Marées France Helper: Min depth is not a float for %s. Data: %s",
+            harbor_id,
+            min_depth,
+        )
+        return False
+    try:
+        cache: dict[str, dict[str, Any]] = await store.async_load() or {}
+        harbor_cache = cache.setdefault(harbor_id, {})
+        harbor_cache["harborMinDepth"] = min_depth
+
+        await store.async_save(cache)
+        _LOGGER.debug(
+            "Marées France Helper: Cached new harbor min depth data %s for %s",
+            cache,
+            harbor_id,
+        )
+        return True
+    except Exception:
+        _LOGGER.exception(
+            "Marées France Helper: Unexpected error saving harbor min depth cache for %s",
+            harbor_id,
+        )
+        return False
