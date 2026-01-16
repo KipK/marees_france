@@ -9,6 +9,7 @@ import {
   GetWaterLevelsResponseData,
   GetCoefficientsDataResponseData,
   GetWaterTempResponseData,
+  GetHarborMinDepthResponseData,
   NextTideStatus,
 } from './types';
 import { cardStyles } from './card-styles';
@@ -47,10 +48,12 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   @state() _tideData: GetTidesDataResponseData | { error: string } | null = null;
   @state() _coefficientsData: GetCoefficientsDataResponseData | { error: string } | null = null;
   @state() _waterTempData: GetWaterTempResponseData | { error: string } | null = null;
+  @state() _harborMinDepth: GetHarborMinDepthResponseData | { error: string } | null = null;
   @state() _isLoadingWater: boolean = true;
   @state() _isLoadingTides: boolean = true;
   @state() _isLoadingCoefficients: boolean = true;
   @state() _isLoadingWaterTemp: boolean = true;
+  @state() _isLoadingHarborMinDepth: boolean = true;
   @state() _isInitialLoading: boolean = true;
   @state() _deviceName: string | null = null;
   @state() _isGraphOverlayVisible: boolean = false;
@@ -65,7 +68,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   public _dataManager: DataManager | null = null; // Made public for CalendarDialogManager
   public _calendarDialogManager: CalendarDialogManager | null = null; // Made public for CardInstanceForRenderers
   private _graphInteractionManager: GraphInteractionManager | null = null;
- 
+
   constructor() {
     super();
     this._selectedDay = new Date().toISOString().slice(0, 10);
@@ -84,7 +87,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   static async getConfigElement(): Promise<HTMLElement> {
     return getCardConfigElement();
   }
- 
+
   /**
    * Returns a stub configuration for the card.
    * Delegates to `getCardStubConfig` from `card-config.ts`.
@@ -93,7 +96,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   static getStubConfig(): MareesFranceCardConfig {
     return getCardStubConfig();
   }
- 
+
   // --- Configuration Setter ---
   public setConfig(config: MareesFranceCardConfig): void {
     // setCardConfig will call _fetchData and _updateDeviceName, which are now on _dataManager
@@ -128,7 +131,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
 
     const configChanged = changedProperties.has('config');
     const hassChanged = changedProperties.has('hass');
- 
+
     // Handle Data Fetching:
     // - If the configuration changes, always refetch data.
     // - If Home Assistant object changes (e.g., on initial load or HA restart)
@@ -142,14 +145,15 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
       this.hass &&
       this.config?.device_id &&
       this._tideData === null && // Only fetch initially if data is null
-      !this._isLoadingTides && !this._isLoadingWater && !this._isLoadingCoefficients // And not already loading
+      !this._isLoadingTides && !this._isLoadingWater && !this._isLoadingCoefficients && !this._isLoadingHarborMinDepth // And not already loading
     ) {
       this._dataManager?.fetchData();
     }
- 
+
     // Update Device Name if hass or config changed
     if (hassChanged || configChanged) {
-        this._dataManager?.updateDeviceName();
+      this._dataManager?.updateDeviceName();
+      this._dataManager?.fetchHarborMinDepth();
     }
 
     // Trigger Graph Draw on relevant data changes
@@ -157,6 +161,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
       changedProperties.has('_selectedDay') ||
       changedProperties.has('_waterLevels') ||
       changedProperties.has('_tideData') ||
+      changedProperties.has('_harborMinDepth') ||
       changedProperties.has('_isLoadingWater') ||
       changedProperties.has('_isLoadingTides') ||
       changedProperties.has('_isLoadingWaterTemp');
@@ -164,7 +169,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     if (dataOrLoadingChanged) {
       this._graphInteractionManager?.drawGraphIfReady();
     }
- 
+
     // Manage touch listeners for the calendar dialog content.
     // After the card's DOM updates (e.g., when the dialog is rendered or re-rendered),
     // if the calendar dialog is open, locate its main content area.
@@ -181,7 +186,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
       this._calendarDialogManager?.setCalendarContentElement(null);
     }
   }
- 
+
   // --- Data Fetching Methods (delegated to DataManager) ---
   // These methods are retained to satisfy CardInstanceForSetConfig.
   // setCardConfig (from card-config.ts) calls these methods on the card instance.
@@ -265,8 +270,8 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
           ${renderHeader(this)}
           <div class="card-content">
             ${this._isLoadingTides || this._isInitialLoading
-              ? html`<div class="loader">Loading tide data...</div>`
-              : html`<div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div>`}
+          ? html`<div class="loader">Loading tide data...</div>`
+          : html`<div class="warning">${localizeCard('ui.card.marees_france.no_tide_data', this.hass)}</div>`}
           </div>
         </ha-card>
       `;
@@ -278,9 +283,9 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     const locale = this.hass.language || 'en';
     const today = new Date();
     const dayLabels = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
-        return d.toISOString().slice(0, 10);
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return d.toISOString().slice(0, 10);
     });
 
     return html`

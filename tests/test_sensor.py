@@ -200,8 +200,9 @@ async def test_sensor_creation_and_initial_state(
     await hass.async_block_till_done()
 
     # Check that the entity registry has the entities
-    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
-    assert len(entities) > 0, "No entities found for config entry"
+    entities_full = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    entities = [s for s in entities_full if s.domain == "sensor"]
+    assert len(entities) > 0, "No sensor entities found for config entry"
 
     # Check that the device registry has the device
     device_entries = dr.async_entries_for_config_entry(
@@ -313,8 +314,9 @@ async def test_sensor_updates_on_new_data(
     await hass.async_block_till_done()
 
     # Check that the entities exist
-    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
-    assert len(entities) > 0, "No entities found for config entry"
+    entities_full = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    entities = [s for s in entities_full if s.domain == "sensor"]
+    assert len(entities) > 0, "No sensor entities found for config entry"
 
 
 async def test_sensor_availability(
@@ -370,8 +372,9 @@ async def test_sensor_availability(
     await hass.async_block_till_done()
 
     # Check that the entities exist
-    entities = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
-    assert len(entities) > 0, "No entities found for config entry"
+    entities_full = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    entities = [s for s in entities_full if s.domain == "sensor"]
+    assert len(entities) > 0, "No sensor entities found for config entry"
 
     # Then simulate a failure
     coordinator.last_update_success = False

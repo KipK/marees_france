@@ -9,14 +9,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 from homeassistant.const import CONF_DEVICE_ID, CONF_FRIENDLY_NAME
 
-from custom_components.marees_france.const import CONF_HARBOR_ID, DOMAIN
+from custom_components.marees_france.const import CONF_HARBOR_MIN_DEPTH, CONF_HARBOR_ID, DOMAIN
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-# Mock data for config entries
-MOCK_CONFIG_ENTRY_DATA = {
-    CONF_HARBOR_ID: "BREST",
-}
 
 # Apply the enable_socket marker to all tests in this directory and subdirectories
 pytestmark = [
@@ -82,6 +78,7 @@ MOCK_CONFIG_ENTRY_DATA = {
     CONF_HARBOR_ID: "BREST",
     CONF_DEVICE_ID: "Brest",
     CONF_FRIENDLY_NAME: "Maree Brest",
+    CONF_HARBOR_MIN_DEPTH: 2.5,
 }
 
 MOCK_PORT_DATA = {
@@ -108,8 +105,8 @@ MOCK_PORT_DATA = {
             "date": "2025-05-12T09:00:00Z",
         },
     ],
+    "harborMinDepth": 2.5,
 }
-
 
 @pytest.fixture
 def mock_setup_entry() -> Generator[AsyncMock, None, None]:
@@ -144,38 +141,14 @@ def mock_api_fetchers_fixture() -> Generator[
                 "hauteurs_maree"
             ),  # Return some plausible data
         ) as mock_fetch_water,
+        patch(
+            "custom_components.marees_france.coordinator._async_store_harbor_min_depth",
+            autospec=True,
+            return_value=MOCK_PORT_DATA.get("harborMinDepth"),  # Return some plausible data
+        ) as mock_harborMinDepth,
     ):
         # Yield the mocks in case tests need to assert calls
-        yield mock_fetch_tides, mock_fetch_coeffs, mock_fetch_water
-
-
-# Mock port data for testing
-MOCK_PORT_DATA = {
-    "nom_port": "BREST",
-    "lat": 48.3833,
-    "lon": -4.5,
-    "coeff_maree": [
-        {"valeur": 95, "jour": 1, "date": "2025-05-12T00:00:00Z"},
-        {"valeur": 90, "jour": 2, "date": "2025-05-13T00:00:00Z"},
-    ],
-    "hauteurs_maree": [
-        {
-            "valeur": 1.5,
-            "etat": "BM",
-            "jour": 1,
-            "heure": "03:00",
-            "date": "2025-05-12T03:00:00Z",
-        },
-        {
-            "valeur": 6.5,
-            "etat": "PM",
-            "jour": 1,
-            "heure": "09:00",
-            "date": "2025-05-12T09:00:00Z",
-        },
-    ],
-}
-
+        yield mock_fetch_tides, mock_fetch_coeffs, mock_fetch_water, mock_harborMinDepth
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
@@ -230,6 +203,7 @@ def reduce_timeouts():
         coeff_store,
         water_level_store,
         watertemp_store,
+        harborMinDepth_store,
         websession=None,
     ):
         original_init(
@@ -240,6 +214,7 @@ def reduce_timeouts():
             coeff_store,
             water_level_store,
             watertemp_store,
+            harborMinDepth_store,
             websession=websession,
         )
         self.update_interval = timedelta(seconds=0.1)
@@ -341,6 +316,10 @@ def mock_api_fetchers_detailed():
             return_value=MOCK_PORT_DATA["hauteurs_maree"],
         ) as fetch_water_mock,
         patch(
+            "custom_components.marees_france.api_helpers._async_store_harbor_min_depth",
+            return_value=True,
+        ) as store_harbor_min_depth_mock,
+        patch(
             "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._parse_tide_data",
             return_value=mock_parsed_data,
         ),
@@ -362,12 +341,18 @@ def mock_api_fetchers_detailed():
         )
         mock_water_store.async_save = AsyncMock(return_value=None)
 
+        mock_harborMinDepth_store = MagicMock()
+        mock_harborMinDepth_store.async_load = AsyncMock(
+            return_value={"BREST": MOCK_PORT_DATA["harborMinDepth"]}
+        )
+        mock_harborMinDepth_store.async_save = AsyncMock(return_value=None)
+
         # Patch the store creation
         with patch(
             "custom_components.marees_france.__init__.Store",
-            side_effect=[mock_tides_store, mock_coeffs_store, mock_water_store],
+            side_effect=[mock_tides_store, mock_coeffs_store, mock_water_store, mock_harborMinDepth_store],
         ):
-            yield (fetch_tides_mock, fetch_coeffs_mock, fetch_water_mock)
+            yield (fetch_tides_mock, fetch_coeffs_mock, fetch_water_mock, store_harbor_min_depth_mock)
 
 
 @pytest.fixture
@@ -413,6 +398,7 @@ async def init_integration(hass: HomeAssistant, mock_api_fetchers_detailed) -> N
             data=MOCK_CONFIG_ENTRY_DATA,
             entry_id="test",
             unique_id="BREST",
+            harbor_min_depth=2.5,
             version=2,  # Skip migration
         )
         entry.add_to_hass(hass)
