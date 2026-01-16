@@ -381,8 +381,9 @@ export class GraphRenderer {
     //Define curve color
     const curveColor = 'var(--primary-color, blue)';
     //Define hatch pattern for danger/no-go zone
-    var dangerZoneLineOpacity = 0.4;
-    var dangerZoneColor = 'var(--primary-color, blue)';
+    var dangerZoneHatchOpacity = 0.4; //Opacity for the hatch pattern (faded)
+    var dangerZoneBorderOpacity = 1; //Opacity for the dashed limit line (fully visible)
+    var dangerZoneColor = '#114F61';
     var dangerZoneBorderColor = 'var(--warning-color, #ffc107)';
     var dangerZoneBorderWidth = 2;
     var dangerZoneHatch = this.createHatchPattern(
@@ -390,7 +391,7 @@ export class GraphRenderer {
       'dangerZoneHatch', //Id of the pattern
       dangerZoneColor, //Stroke color of the pattern
       18, //Size of the pattern square
-      dangerZoneLineOpacity, //Line opacity to fade the pattern
+      dangerZoneHatchOpacity, //Line opacity to fade the pattern
       3 // Stroke width
     );
 
@@ -494,7 +495,7 @@ export class GraphRenderer {
         const fillPathHatch = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataHatchTop.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
 
         // Draw dashed/broken limit line (stroke-dasharray="6" for dashes)
-        draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: dangerZoneBorderWidth, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
+        draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: dangerZoneBorderWidth, opacity: dangerZoneBorderOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
 
         // Draw hatch fill area
         draw.path(fillPathHatch).fill(dangerZoneHatch).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });

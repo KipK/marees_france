@@ -46,6 +46,8 @@ export interface CardTranslationKeys {
   next_month: string;
   calendar_date: string;
   calendar_coeffs: string;
+  version_mismatch: string;
+  reload_button: string;
   editor: EditorTranslationKeys;
 }
 
@@ -108,6 +110,8 @@ export const translations: TranslationStructure = {
           next_month: 'Next month', // [NEW]
           calendar_date: 'Date', // [NEW]
           calendar_coeffs: 'Coefficients', // [NEW]
+          version_mismatch: 'Marées France: version mismatch! Integration: {backend_version} | Card: {frontend_version}',
+          reload_button: 'Reload',
           editor: {
             show_header: 'Display header',
             device_label: 'Harbor Device',
@@ -161,6 +165,8 @@ export const translations: TranslationStructure = {
           next_month: 'Mois suivant', // [NEW]
           calendar_date: 'Date', // [NEW]
           calendar_coeffs: 'Coefficients', // [NEW]
+          version_mismatch: 'Marées France : décalage de version ! Intégration : {backend_version} | Carte : {frontend_version}',
+          reload_button: 'Recharger',
           editor: {
             show_header: "Afficher l'en-tête",
             device_label: 'Appareil Port',

@@ -288,7 +288,13 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
    * with a reload button that clears the cache.
    */
   private _showVersionMismatch(): void {
-    const message = `Marées France: version mismatch! Backend: ${this._backendVersion} | Frontend: ${CARD_VERSION}`;
+    const message = localizeCard(
+      'ui.card.marees_france.version_mismatch',
+      this.hass,
+      'backend_version', this._backendVersion || 'unknown',
+      'frontend_version', CARD_VERSION
+    );
+    const reloadText = localizeCard('ui.card.marees_france.reload_button', this.hass);
 
     this.dispatchEvent(
       new CustomEvent('hass-notification', {
@@ -297,7 +303,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
           duration: -1, // Persistent until dismissed
           dismissable: true,
           action: {
-            text: 'Reload',
+            text: reloadText,
             action: this._handleReload,
           },
         },
