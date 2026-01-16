@@ -60,6 +60,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   @state() _isInitialLoading: boolean = true;
   @state() _deviceName: string | null = null;
   @state() _isGraphOverlayVisible: boolean = false;
+  @state() private _now: number = Date.now(); // Triggers periodic graph updates for real-time cursor
   // _graphRenderer and _svgContainer are now managed by GraphInteractionManager
   // Calendar-specific state properties (_isCalendarDialogOpen, _calendarSelectedMonth, _touchStartX, _touchStartY,
   // _calendarHasPrevData, _calendarHasNextData, _calendarContentElement) and private members
@@ -73,6 +74,7 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   private _graphInteractionManager: GraphInteractionManager | null = null;
   private _backendVersion: string | null = null;
   private _versionCheckDone: boolean = false;
+  private _updateIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     super();
@@ -119,6 +121,13 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     // Check version mismatch between frontend and backend
     this._checkVersion();
     // Popstate listener for calendar is now handled by CalendarDialogManager.
+
+    // Set up periodic updates (every 60 seconds) to refresh the graph's current time marker
+    if (!this._updateIntervalId) {
+      this._updateIntervalId = setInterval(() => {
+        this._now = Date.now();
+      }, 60000);
+    }
   }
 
   disconnectedCallback(): void {
@@ -126,6 +135,12 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     this._graphInteractionManager?.disconnectObserver();
     // Popstate listener and touch listeners for calendar are handled by CalendarDialogManager.
     // The CalendarDialogManager handles its own listener cleanup when the dialog is closed.
+
+    // Clean up the update interval
+    if (this._updateIntervalId) {
+      clearInterval(this._updateIntervalId);
+      this._updateIntervalId = null;
+    }
   }
 
   protected firstUpdated(changedProperties: PropertyValues): void {
@@ -171,7 +186,8 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
       changedProperties.has('_harborMinDepth') ||
       changedProperties.has('_isLoadingWater') ||
       changedProperties.has('_isLoadingTides') ||
-      changedProperties.has('_isLoadingWaterTemp');
+      changedProperties.has('_isLoadingWaterTemp') ||
+      changedProperties.has('_now'); // Trigger redraw on periodic time update
 
     if (dataOrLoadingChanged) {
       this._graphInteractionManager?.drawGraphIfReady();
