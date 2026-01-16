@@ -86,8 +86,8 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 - **Description** : Profondeur d'eau minimale configurable requise pour que votre bateau navigue en sécurité
 - **Valeur par défaut** : 0 mètres
 - **Caractéristiques** :
-  - Définir cette valeur permettra à l'intégration d'adapter le design des graphiques pour afficher les périodes sur lesquelles il est possible d'entrer/sortir du port. (La hauteur actuelle est uniquement affichée sur le jour courant)
-  - Activer la fonctionnalité permet également d'afficher, pour le jour courant, la hauteur actuelle d'eau.
+  - Définir cette valeur permettra à l'intégration d'adapter le design des graphiques pour afficher une zone hachurée indicant la hauteur d'eau en dessous de laquelle il est recommandé de ne pas sortir/entrer dans le port.
+  - La valeur est à définir en fonction de votre expérience dans le port, en prenant en compte le tirant d'eau de votre bateau ainsi que le votre pied de pilote
   - Ajustable à partir de 0 mètre par incréments de 0,1 mètre
   - La valeur persiste lors des redémarrages de Home Assistant
   - Mise à jour en temps réel des données du coordinateur lors du changement

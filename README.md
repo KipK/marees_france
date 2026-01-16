@@ -88,11 +88,11 @@ Same attributes as above, for the last tide event.
 ### Minimum Depth To Boat
 
 - **Type**: Number entity
-- **Description**: Configurable minimum water depth required for your boat to safely navigate
+- **Description**: Configurable minimum water depth required for your boat to safely enter/leave the harbor.
 - **Default**: 0 meters
 - **Features**:
-  - Setting this value will adapt graphics layouts by adding colored 'zones' that indicate the time slot to safely leave/enter the port.
-  - Activating this feature will display current depth on current day graph.
+  - Setting this value will adapt graphics layouts by adding an hatched zone that indicates a danger depth bellow which you should not enter/leave the port. (or at you own risks)
+  - The value should be determined based on your experience in the harbor, taking into account the draft of your boat and keel clearance.
   - Adjustable from 0 meters with 0.1 meter increments
   - Value persists across Home Assistant restarts
   - Real-time update of coordinator data when changed
