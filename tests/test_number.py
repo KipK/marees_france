@@ -32,9 +32,11 @@ ALL_NUMBER_KEYS = [
     KEY_HARBOUR_MIN_DEPTH,
 ]
 
+
 def get_entity_id(friendly_name_slug: str, sensor_key: str) -> str:
     """Helper to create entity IDs based on slugified friendly name."""
     return f"number.{friendly_name_slug}_{sensor_key}"
+
 
 @pytest.fixture(autouse=True)
 def expected_lingering_timers():
@@ -92,7 +94,9 @@ async def test_number_creation_and_initial_state(
     await hass.async_block_till_done()
 
     # Check that the entity registry has the entities
-    entities_full = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    entities_full = er.async_entries_for_config_entry(
+        entity_registry, config_entry.entry_id
+    )
     entities = [s for s in entities_full if s.domain == "number"]
     assert len(entities) > 0, "No number entities found for config entry "
 
@@ -120,32 +124,44 @@ async def test_number_updates_on_new_data(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     # First update with initial data
-    #coordinator.data = MOCK_PORT_DATA
+    # coordinator.data = MOCK_PORT_DATA
     coordinator.last_update_success = True
     coordinator.async_update_listeners()
     await hass.async_block_till_done()
 
     # update with new data
-    new_mock_data = { "harborMinDepth": 3.5 }
+    new_mock_data = {"harborMinDepth": 3.5}
 
     # Check that the entities exist
 
-    entities_full = er.async_entries_for_config_entry(entity_registry, config_entry.entry_id)
+    entities_full = er.async_entries_for_config_entry(
+        entity_registry, config_entry.entry_id
+    )
     entities = [s for s in entities_full if s.domain == "number"]
     assert len(entities) > 0, "No number entities found for config entry"
     for entity in entities:
         await hass.services.async_call(
             NUMBER_DOMAIN,
             SERVICE_SET_VALUE,
-            {ATTR_ENTITY_ID: "number.brest_minimum_depth", ATTR_VALUE: new_mock_data["harborMinDepth"]},
+            {
+                ATTR_ENTITY_ID: "number.brest_minimum_depth",
+                ATTR_VALUE: new_mock_data["harborMinDepth"],
+            },
             blocking=True,
         )
 
         await hass.async_block_till_done()
 
-        #Check number state value
-        assert new_mock_data["harborMinDepth"] == float(hass.states.get(entity.entity_id).state)
+        # Check number state value
+        assert new_mock_data["harborMinDepth"] == float(
+            hass.states.get(entity.entity_id).state
+        )
 
-        #Check store content
-        cache: dict[str, dict[str, Any]] = await coordinator.harborMinDepth_store.async_load()
-        assert new_mock_data["harborMinDepth"] == cache.setdefault("BREST", {})["harborMinDepth"]
+        # Check store content
+        cache: dict[
+            str, dict[str, Any]
+        ] = await coordinator.harborMinDepth_store.async_load()
+        assert (
+            new_mock_data["harborMinDepth"]
+            == cache.setdefault("BREST", {})["harborMinDepth"]
+        )

@@ -76,10 +76,7 @@ async def test_async_step_user_success(
     # Simulate user input selecting the mock harbor
     result2 = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {
-            CONF_HARBOR_ID: MOCK_HARBOR_ID,
-            CONF_HARBOR_MIN_DEPTH: 2.5
-        },
+        {CONF_HARBOR_ID: MOCK_HARBOR_ID, CONF_HARBOR_MIN_DEPTH: 2.5},
     )
     await hass.async_block_till_done()
 

@@ -3,6 +3,6 @@ pytest
 pytest-homeassistant-custom-component
 syrupy
 zeroconf
-homeassistant==2025.5.1
+homeassistant==2026.1.2
 isal
 zlib_ng

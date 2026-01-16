@@ -312,10 +312,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if value >= 0:
             if not await _async_store_harbor_min_depth(
-                self.hass,
-                self.harborMinDepth_store,
-                self.harbor_id,
-                value
+                self.hass, self.harborMinDepth_store, self.harbor_id, value
             ):
                 _LOGGER.error(
                     "Marées France Coordinator: Failed to store new min depth to boat "

@@ -847,10 +847,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         minDepth = config_entry.data.get(CONF_HARBOR_MIN_DEPTH)
         if minDepth:
             if not await _async_store_harbor_min_depth(
-                hass,
-                harborMinDepth_store,
-                harbor_id,
-                minDepth
+                hass, harborMinDepth_store, harbor_id, minDepth
             ):
                 fetch_errors.append("harbor min depth")
         else:
@@ -1595,7 +1592,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug(
             "Marées France: Registered service: %s.%s",
             DOMAIN,
-            SERVICE_GET_HARBOR_MIN_DEPTH
+            SERVICE_GET_HARBOR_MIN_DEPTH,
         )
 
     # Register websocket commands

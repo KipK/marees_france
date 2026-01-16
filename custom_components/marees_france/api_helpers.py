@@ -509,7 +509,7 @@ async def _async_store_harbor_min_depth(
     hass: HomeAssistant,
     store: Store[dict[str, dict[str, Any]]],
     harbor_id: str,
-    min_depth: float
+    min_depth: float,
 ) -> bool:
     """Store harbor min depth entry in cache, and save.
 

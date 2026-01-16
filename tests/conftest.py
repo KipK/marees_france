@@ -9,7 +9,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 from homeassistant.const import CONF_DEVICE_ID, CONF_FRIENDLY_NAME
 
-from custom_components.marees_france.const import CONF_HARBOR_MIN_DEPTH, CONF_HARBOR_ID, DOMAIN
+from custom_components.marees_france.const import (
+    CONF_HARBOR_MIN_DEPTH,
+    CONF_HARBOR_ID,
+    DOMAIN,
+)
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -108,6 +112,7 @@ MOCK_PORT_DATA = {
     "harborMinDepth": 2.5,
 }
 
+
 @pytest.fixture
 def mock_setup_entry() -> Generator[AsyncMock, None, None]:
     """Override async_setup_entry."""
@@ -144,11 +149,14 @@ def mock_api_fetchers_fixture() -> Generator[
         patch(
             "custom_components.marees_france.coordinator._async_store_harbor_min_depth",
             autospec=True,
-            return_value=MOCK_PORT_DATA.get("harborMinDepth"),  # Return some plausible data
+            return_value=MOCK_PORT_DATA.get(
+                "harborMinDepth"
+            ),  # Return some plausible data
         ) as mock_harborMinDepth,
     ):
         # Yield the mocks in case tests need to assert calls
         yield mock_fetch_tides, mock_fetch_coeffs, mock_fetch_water, mock_harborMinDepth
+
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
@@ -350,9 +358,19 @@ def mock_api_fetchers_detailed():
         # Patch the store creation
         with patch(
             "custom_components.marees_france.__init__.Store",
-            side_effect=[mock_tides_store, mock_coeffs_store, mock_water_store, mock_harborMinDepth_store],
+            side_effect=[
+                mock_tides_store,
+                mock_coeffs_store,
+                mock_water_store,
+                mock_harborMinDepth_store,
+            ],
         ):
-            yield (fetch_tides_mock, fetch_coeffs_mock, fetch_water_mock, store_harbor_min_depth_mock)
+            yield (
+                fetch_tides_mock,
+                fetch_coeffs_mock,
+                fetch_water_mock,
+                store_harbor_min_depth_mock,
+            )
 
 
 @pytest.fixture

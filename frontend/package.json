@@ -15,25 +15,25 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/eslint-parser": "^7.27.0",
-    "@babel/plugin-proposal-decorators": "^7.25.9",
-    "@babel/preset-env": "^7.26.9",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "eslint-config-prettier": "^10.1.2",
+    "@babel/core": "^7.28.6",
+    "@babel/eslint-parser": "^7.28.6",
+    "@babel/plugin-proposal-decorators": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-lit": "^2.1.1",
-    "eslint-plugin-wc": "^3.0.0",
-    "prettier": "^3.5.3",
-    "typedoc": "^0.28.4",
-    "typescript": "^5.8.3",
-    "webpack": "^5.99.7",
+    "eslint-plugin-wc": "^3.0.2",
+    "prettier": "^3.8.0",
+    "typedoc": "^0.28.16",
+    "typescript": "^5.9.3",
+    "webpack": "^5.104.1",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@svgdotjs/svg.js": "^3.2.4",
-    "lit": "^3.3.0",
-    "ts-loader": "^9.5.2"
+    "@svgdotjs/svg.js": "^3.2.5",
+    "lit": "^3.3.2",
+    "ts-loader": "^9.5.4"
   }
 }
