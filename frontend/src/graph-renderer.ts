@@ -382,7 +382,6 @@ export class GraphRenderer {
     const curveColor = 'var(--primary-color, blue)';
     //Define hatch pattern for danger/no-go zone
     var dangerZoneLineOpacity = 1;
-    var dangerZoneLineOpacity = 1;
     var dangerZoneColor = 'rgba(40, 90, 120, 0.35)';
     var dangerZoneBorderColor = 'var(--warning-color, #ffc107)';
     var dangerZoneHatch = this.createHatchPattern(
@@ -409,12 +408,22 @@ export class GraphRenderer {
       const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
 
       //Compute and draw only if the min depth line is actually visible in the graph
+      //Compute and draw only if the min depth line is actually visible in the graph
       if (this._heightToY(harborMinDepthValue!) < fillBottomY) {
-        const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue!)).toFixed(2)}`).join(' ').replace('L', 'M');
-        const fillPathMinDepth = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataMinDepth.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
-        //Draw min depth line & filled hatch area under the min depth line
-        draw.path(pathDataMinDepth).fill('none').stroke({ color: dangerZoneBorderColor, width: 0.8, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
-        draw.path(fillPathMinDepth).fill(dangerZoneHatch).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
+        const minDepthY = this._heightToY(harborMinDepthValue!).toFixed(2);
+
+        // Horizontal line traversing the graph
+        const limitLinePath = `M ${firstX.toFixed(2)} ${minDepthY} L ${lastX.toFixed(2)} ${minDepthY}`;
+
+        // Hatch area: follows the curve but capped at the limit line
+        const pathDataHatchTop = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue!)).toFixed(2)}`).join(' ').replace('L', 'M');
+        const fillPathHatch = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataHatchTop.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
+
+        // Draw horizontal limit line
+        draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: 0.8, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
+
+        // Draw hatch fill area
+        draw.path(fillPathHatch).fill(dangerZoneHatch).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
       }
     }
 
