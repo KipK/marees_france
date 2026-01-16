@@ -384,6 +384,7 @@ export class GraphRenderer {
     var dangerZoneLineOpacity = 1;
     var dangerZoneColor = 'rgba(40, 90, 120, 0.35)';
     var dangerZoneBorderColor = 'var(--warning-color, #ffc107)';
+    var dangerZoneBorderWidth = 2;
     var dangerZoneHatch = this.createHatchPattern(
       this.svgDraw,
       'dangerZoneHatch', //Id of the pattern
@@ -420,7 +421,7 @@ export class GraphRenderer {
         const fillPathHatch = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataHatchTop.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
 
         // Draw horizontal limit line
-        draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: 0.8, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
+        draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: dangerZoneBorderWidth, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
 
         // Draw hatch fill area
         draw.path(fillPathHatch).fill(dangerZoneHatch).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
