@@ -25,6 +25,9 @@ import {
   CardInstanceForRenderers
 } from './card-renderers';
 
+// CARD_VERSION is injected at build time via webpack DefinePlugin
+declare const CARD_VERSION: string;
+
 // SyntheticPositionEvent is imported from graph-interaction.ts.
 // CalendarDayInfo and PopStateEventState interfaces are in calendar-dialog.ts
 
@@ -68,6 +71,8 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
   public _dataManager: DataManager | null = null; // Made public for CalendarDialogManager
   public _calendarDialogManager: CalendarDialogManager | null = null; // Made public for CardInstanceForRenderers
   private _graphInteractionManager: GraphInteractionManager | null = null;
+  private _backendVersion: string | null = null;
+  private _versionCheckDone: boolean = false;
 
   constructor() {
     super();
@@ -111,6 +116,8 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     if (this.shadowRoot) { // _mutationObserver is now internal to GraphInteractionManager
       this._graphInteractionManager?.setupMutationObserver();
     }
+    // Check version mismatch between frontend and backend
+    this._checkVersion();
     // Popstate listener for calendar is now handled by CalendarDialogManager.
   }
 
@@ -245,6 +252,80 @@ export class MareesFranceCard extends LitElement implements CardInstanceForSetCo
     // Adjust size based on content? For now, keep original.
     return 7;
   }
+
+  // --- Version Check Methods ---
+  /**
+   * Check if the frontend card version matches the backend integration version.
+   * If there's a mismatch, show a toast notification to the user.
+   */
+  private async _checkVersion(): Promise<void> {
+    if (this._versionCheckDone || !this.hass) return;
+
+    try {
+      // Handle connection type union: Connection | { conn: Connection }
+      const conn = 'conn' in this.hass.connection ? this.hass.connection.conn : this.hass.connection;
+
+      const result = await conn.sendMessagePromise<{ version: string }>({
+        type: 'marees_france/version',
+      });
+
+      this._backendVersion = result.version;
+      this._versionCheckDone = true;
+
+      if (this._backendVersion !== CARD_VERSION) {
+        console.warn(
+          `Marées France: Version mismatch detected! Backend: ${this._backendVersion}, Frontend: ${CARD_VERSION}`
+        );
+        this._showVersionMismatch();
+      }
+    } catch (err) {
+      console.error('Marées France: Failed to check version:', err);
+    }
+  }
+
+  /**
+   * Show a toast notification informing the user of the version mismatch
+   * with a reload button that clears the cache.
+   */
+  private _showVersionMismatch(): void {
+    const message = `Marées France: version mismatch! Backend: ${this._backendVersion} | Frontend: ${CARD_VERSION}`;
+
+    this.dispatchEvent(
+      new CustomEvent('hass-notification', {
+        detail: {
+          message: message,
+          duration: -1, // Persistent until dismissed
+          dismissable: true,
+          action: {
+            text: 'Reload',
+            action: this._handleReload,
+          },
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  /**
+   * Handle the reload action: clear application cache and reload the page.
+   * Uses arrow function to preserve 'this' context when used as action handler.
+   */
+  private _handleReload = (): void => {
+    const doReload = (): void => {
+      globalThis.location.reload();
+    };
+
+    if ('caches' in window) {
+      caches
+        .keys()
+        .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+        .then(doReload)
+        .catch(doReload);
+    } else {
+      doReload();
+    }
+  };
 
   // --- Render Methods ---
   protected render(): TemplateResult | typeof nothing {

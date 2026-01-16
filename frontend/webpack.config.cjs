@@ -1,4 +1,11 @@
 const path = require('path');
+const webpack = require('webpack');
+const fs = require('fs');
+
+// Read version from manifest.json
+const manifestPath = path.resolve(__dirname, '../custom_components/marees_france/manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const cardVersion = manifest.version || '0.0.0';
 
 module.exports = {
   mode: 'production', // Use 'development' for easier debugging
@@ -21,6 +28,12 @@ module.exports = {
   optimization: {
     usedExports: true, // needed for tree shaking
   },
+  plugins: [
+    // Inject CARD_VERSION constant at build time
+    new webpack.DefinePlugin({
+      CARD_VERSION: JSON.stringify(cardVersion),
+    }),
+  ],
   module: {
     rules: [
       // Add rule for TypeScript files

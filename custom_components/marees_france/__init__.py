@@ -51,6 +51,7 @@ from .const import (
     HARBORMINDEPTH_STORAGE_VERSION,
     HARBORSURL,
     HEADERS,
+    INTEGRATION_VERSION,
     PLATFORMS,
     SERVICE_GET_COEFFICIENTS_DATA,
     SERVICE_GET_TIDES_DATA,
@@ -308,6 +309,12 @@ WS_GET_HARBOR_MIN_DEPTH_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.exten
     }
 )
 
+WS_GET_VERSION_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
+    {
+        vol.Required("type"): "marees_france/version",
+    }
+)
+
 
 # Shared Helper Functions for Services and Websocket Commands
 async def _get_device_and_harbor_id(
@@ -535,6 +542,14 @@ async def ws_handle_get_harbor_min_depth(
     except Exception as err:
         _LOGGER.exception("Unexpected error in websocket get_harbor_min_depth")
         connection.send_error(msg["id"], "unknown_error", str(err))
+
+
+@websocket_api.async_response
+async def ws_handle_get_version(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+) -> None:
+    """Handle websocket command for getting integration version."""
+    connection.send_result(msg["id"], {"version": INTEGRATION_VERSION})
 
 
 @websocket_api.async_response
@@ -1613,6 +1628,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "marees_france/get_harbor_min_depth",
         ws_handle_get_harbor_min_depth,
         WS_GET_HARBOR_MIN_DEPTH_SCHEMA,
+    )
+    websocket_api.async_register_command(
+        hass,
+        "marees_france/version",
+        ws_handle_get_version,
+        WS_GET_VERSION_SCHEMA,
     )
     _LOGGER.debug("Marées France: Registered websocket commands")
 
