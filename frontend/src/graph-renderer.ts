@@ -381,8 +381,8 @@ export class GraphRenderer {
     //Define curve color
     const curveColor = 'var(--primary-color, blue)';
     //Define hatch pattern for danger/no-go zone
-    var dangerZoneLineOpacity = 1;
-    var dangerZoneColor = 'rgba(40, 90, 120, 0.35)';
+    var dangerZoneLineOpacity = 0.4;
+    var dangerZoneColor = 'var(--primary-color, blue)';
     var dangerZoneBorderColor = 'var(--warning-color, #ffc107)';
     var dangerZoneBorderWidth = 2;
     var dangerZoneHatch = this.createHatchPattern(
@@ -409,18 +409,91 @@ export class GraphRenderer {
       const harborMinDepthValue = this.harborMinDepth?.harborMinDepth;
 
       //Compute and draw only if the min depth line is actually visible in the graph
-      //Compute and draw only if the min depth line is actually visible in the graph
       if (this._heightToY(harborMinDepthValue!) < fillBottomY) {
-        const minDepthY = this._heightToY(harborMinDepthValue!).toFixed(2);
+        const minDepthY = this._heightToY(harborMinDepthValue!); // Keep numeric for comparison
+        const minDepthYStr = minDepthY.toFixed(2); // String for path
 
-        // Horizontal line traversing the graph
-        const limitLinePath = `M ${firstX.toFixed(2)} ${minDepthY} L ${lastX.toFixed(2)} ${minDepthY}`;
+        // Avoid double opacity: Clip the standard fillPath so it stops at the danger zone limit
+        // We must respect currentDepth if it exists (for current day display)
+        let clipHeight = harborMinDepthValue!;
+        if (currentDepth !== null) {
+          clipHeight = Math.max(clipHeight, currentDepth);
+        }
 
-        // Hatch area: follows the curve but capped at the limit line
+        const clipY = this._heightToY(clipHeight).toFixed(2);
+        const pathDataClamped = this.pointsData.map(p =>
+          `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(p.heightNum, clipHeight)).toFixed(2)}`
+        ).join(' ').replace('L', 'M');
+        fillPath = `M ${firstX.toFixed(2)} ${clipY} ${pathDataClamped.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${clipY} Z`;
+
+        // Calculate exclusion zones (gaps) for the limit line where it intersects with tide text
+        const gaps: { start: number, end: number }[] = [];
+        const tideEventsForDayGaps: TideEventTuple[] | undefined = tideData[selectedDay];
+        if (Array.isArray(tideEventsForDayGaps)) {
+          tideEventsForDayGaps.forEach((tideArr: TideEventTuple) => {
+            if (!Array.isArray(tideArr) || tideArr.length < 3) return;
+            const typeStr = tideArr[0], time = tideArr[1], height = parseFloat(tideArr[2]);
+            const isHigh = typeStr === 'tide.high' || typeStr === 'tide_high';
+            if ((!isHigh && (typeStr !== 'tide.low' && typeStr !== 'tide_low')) || !time || isNaN(height) || !time.includes(':')) return;
+            const [hours, minutes] = time.split(':').map(Number);
+            if (isNaN(hours) || isNaN(minutes)) return;
+            const totalMinutes = hours * 60 + minutes, x = this._timeToX(totalMinutes), y = this._heightToY(height);
+
+            // Reconstruct text Y positions (logic must match the main drawing loop)
+            const arrowSize = 8, textSpacing = 10, textLineHeight = 14.4;
+            const arrowYOffset = isHigh ? arrowSize * 2.1 : -arrowSize * 2.1;
+            const arrowY = y + arrowYOffset;
+            const arrowTipY = arrowY + (isHigh ? -arrowSize * 0.4 : arrowSize * 0.4);
+            let timeTextY, heightTextY;
+            if (isHigh) {
+              timeTextY = arrowTipY + textSpacing;
+              heightTextY = timeTextY + textLineHeight;
+            } else {
+              heightTextY = arrowTipY - textSpacing - textLineHeight;
+              timeTextY = heightTextY - textLineHeight;
+            }
+
+            // Define text block vertical range with padding
+            const topTextY = Math.min(timeTextY, heightTextY) - 15;
+            const bottomTextY = Math.max(timeTextY, heightTextY) + 15;
+
+            // Check intersection with minDepthY
+            if (minDepthY >= topTextY && minDepthY <= bottomTextY) {
+              // Intersection found! Add gap.
+              // Text width approx 45px (5 chars), half is ~22.5px. User wants ~4px padding.
+              // So +/- 28px around X.
+              gaps.push({ start: x - 28, end: x + 28 });
+            }
+          });
+        }
+        gaps.sort((a, b) => a.start - b.start);
+
+        // Construct dashed line path
+        let limitLinePath = '';
+        let currentX = firstX;
+
+        const addSegment = (toX: number) => {
+          if (toX > currentX + 0.1) { // Avoid tiny segments
+            limitLinePath += `M ${currentX.toFixed(2)} ${minDepthYStr} L ${toX.toFixed(2)} ${minDepthYStr} `;
+          }
+        };
+
+        if (gaps.length === 0) {
+          limitLinePath = `M ${firstX.toFixed(2)} ${minDepthYStr} L ${lastX.toFixed(2)} ${minDepthYStr}`;
+        } else {
+          for (const gap of gaps) {
+            const segmentEnd = Math.max(currentX, Math.min(gap.start, lastX));
+            addSegment(segmentEnd);
+            currentX = Math.max(currentX, Math.min(gap.end, lastX));
+          }
+          addSegment(lastX);
+        }
+
+        // Hatch area: follows the curve but capped at the limit line (unchanged)
         const pathDataHatchTop = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue!)).toFixed(2)}`).join(' ').replace('L', 'M');
         const fillPathHatch = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataHatchTop.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
 
-        // Draw horizontal limit line
+        // Draw dashed/broken limit line (stroke-dasharray="6" for dashes)
         draw.path(limitLinePath).fill('none').stroke({ color: dangerZoneBorderColor, width: dangerZoneBorderWidth, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
 
         // Draw hatch fill area
