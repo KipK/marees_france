@@ -205,12 +205,13 @@ export class GraphRenderer {
     id: string,
     strokeColor: string,
     size = 10,
-    opacity = 0.4
+    opacity = 0.8,
+    strokeWidth = 3
   ): SvgElement {
     return svg.pattern(size, size, (add) => {
       const strokeConfig = {
         color: strokeColor,
-        width: 0.8,
+        width: strokeWidth,
         linecap: 'square',
         opacity: opacity,
       };
@@ -381,12 +382,16 @@ export class GraphRenderer {
     const curveColor = 'var(--primary-color, blue)';
     //Define hatch pattern for danger/no-go zone
     var dangerZoneLineOpacity = 1;
+    var dangerZoneLineOpacity = 1;
+    var dangerZoneColor = 'rgba(40, 90, 120, 0.35)';
+    var dangerZoneBorderColor = 'var(--warning-color, #ffc107)';
     var dangerZoneHatch = this.createHatchPattern(
       this.svgDraw,
       'dangerZoneHatch', //Id of the pattern
-      'var(--ha-color-focus, orange)', //Stroke color of the pattern
+      dangerZoneColor, //Stroke color of the pattern
       18, //Size of the pattern square
       dangerZoneLineOpacity, //Line opacity to fade the pattern
+      3 // Stroke width
     );
 
     //Drawing Height Curve & fill area under curve (to bottomY or current depth for current day)
@@ -408,7 +413,7 @@ export class GraphRenderer {
         const pathDataMinDepth = this.pointsData.map(p => `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.min(p.heightNum, harborMinDepthValue!)).toFixed(2)}`).join(' ').replace('L', 'M');
         const fillPathMinDepth = `M ${firstX.toFixed(2)} ${fillBottomY.toFixed(2)} ${pathDataMinDepth.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${fillBottomY.toFixed(2)} Z`;
         //Draw min depth line & filled hatch area under the min depth line
-        draw.path(pathDataMinDepth).fill('none').stroke({ color: 'var(--ha-color-focus, orange)', width: 0.8, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
+        draw.path(pathDataMinDepth).fill('none').stroke({ color: dangerZoneBorderColor, width: 0.8, opacity: dangerZoneLineOpacity }).attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '6' });
         draw.path(fillPathMinDepth).fill(dangerZoneHatch).stroke('none').attr({ 'shape-rendering': 'geometricPrecision', 'vector-effect': 'non-scaling-stroke' });
       }
     }
