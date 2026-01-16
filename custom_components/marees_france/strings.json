@@ -9,6 +9,9 @@
           "harbor_id": "Harbor Name",
           "scan_interval": "Update interval (hours)",
           "harbor_min_depth": "Minimum Depth (meters)"
+        },
+        "data_description": {
+          "harbor_min_depth": "Defines the minimum water height required for the boat to float or leave the harbor. Allows visualization of grounding periods on the card."
         }
       }
     },
