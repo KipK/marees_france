@@ -102,6 +102,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             _LOGGER,
             name=f"{DOMAIN}_{self.harbor_id}",
             update_interval=update_interval,
+            config_entry=entry,
         )
 
     async def prune_watertemp_cache(self) -> None:
