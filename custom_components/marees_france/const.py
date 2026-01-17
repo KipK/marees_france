@@ -136,7 +136,7 @@ SERVICE_GET_HARBOR_MIN_DEPTH: Final[str] = "get_harbor_min_depth"
 # --- Frontend Modules ---
 JSMODULES: Final[list[dict[str, str]]] = [
     {
-        "name": "Carte Marées France",
+        "name": "Marées France",
         "filename": "marees-france-card.js",
         "version": INTEGRATION_VERSION,
     },

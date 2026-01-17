@@ -427,7 +427,7 @@ declare global { interface Window { customCards?: CustomCard[]; } }
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'marees-france-card',
-  name: 'Carte Marées France',
+  name: 'Marées France',
   preview: true,
   description: "Carte pour l'integration Marées France",
   documentationURL: 'https://github.com/KipK/marees_france/blob/main/README-fr.md',
