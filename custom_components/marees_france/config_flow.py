@@ -41,7 +41,7 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
     retrieve tide, coefficient, and water level data.
     """
 
-    VERSION = 2
+    VERSION = 3
     _harbors_cache: dict[str, dict[str, str]] | None = None
 
     async def async_step_user(

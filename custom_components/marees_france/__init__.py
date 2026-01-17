@@ -220,10 +220,24 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             harbor_name,
         )
 
-    elif config_entry.version > 2:
+    if config_entry.version == 2:
+        _LOGGER.debug(
+            "Migrating config entry %s from version 2 to 3", config_entry.entry_id
+        )
+        new_data = {**config_entry.data}
+        if CONF_HARBOR_MIN_DEPTH not in new_data:
+            new_data[CONF_HARBOR_MIN_DEPTH] = 0.0
+
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=3)
+        _LOGGER.info(
+            "Successfully migrated config entry %s to version 3, added default harbor_min_depth",
+            config_entry.entry_id,
+        )
+
+    if config_entry.version > 3:
         _LOGGER.error(
             "Cannot migrate config entry %s: Config entry version %s is newer than "
-            "integration version 2",
+            "integration version 3",
             config_entry.entry_id,
             config_entry.version,
         )
