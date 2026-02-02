@@ -48,6 +48,9 @@
       },
       "water_temp": {
         "name": "Water Temperature"
+      },
+      "water_height": {
+        "name": "Current Water Height"
       }
     }
   }

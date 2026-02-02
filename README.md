@@ -85,6 +85,12 @@ Same attributes as above, for the last tide event.
 - **State**: The current water temperature in degrees Celsius.
 - **Attributes**: `current_height`, `tide_trend`
 
+### Current water height
+
+- **État**: Current water height in meters.
+- **Attributs**: ``
+- **Caractéristiques** : Defined using API SHOM data and linear interpolation to compute values between two API points.
+
 ### Minimum Depth To Boat
 
 - **Type**: Number entity
