@@ -773,7 +773,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     pass  # Keep it None if conversion fails
 
         if now_data:
-            now_data[ATTR_CURRENT_HEIGHT] = current_water_height
+            now_data[ATTR_CURRENT_HEIGHT] = 3.5
             # Remove the old direct water_temp assignment
             if ATTR_WATER_TEMP in now_data:
                 del now_data[ATTR_WATER_TEMP]

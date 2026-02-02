@@ -58,10 +58,11 @@ async def async_setup_entry(
         MareesFranceNextSpringTideSensor(coordinator, entry),
         MareesFranceNextNeapTideSensor(coordinator, entry),
         MareesFranceWaterTempSensor(coordinator, entry),
+        MareesFranceCurrentHeightSensor(coordinator, entry),
     ]
 
     async_add_entities(sensors_to_add, update_before_add=True)
-    _LOGGER.debug("Added 6 Marées France sensors for harbor: %s", harbor_id)
+    _LOGGER.debug("Added 7 Marées France sensors for harbor: %s", harbor_id)
 
 
 class MareesFranceBaseSensor(
@@ -395,6 +396,53 @@ class MareesFranceNextNeapTideSensor(MareesFranceNextSpecialTideSensor):
         """Initialize the next neap tide sensor."""
         super().__init__(coordinator, config_entry, "next_neap_date", "next_neap_tide")
 
+class MareesFranceCurrentHeightSensor(MareesFranceBaseSensor):
+    """Sensor representing the current water height.
+
+    The state of this sensor indicates the current water height in meters.
+    """
+
+    _attr_translation_key = "water_height"
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_native_unit_of_measurement = "m"
+    _attr_icon = "mdi:arrow-expand-vertical"
+    _attr_suggested_display_precision = 1
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the water height sensor."""
+        super().__init__(coordinator, config_entry, "water_height")
+
+    @property
+    def _sensor_data(self) -> dict[str, Any] | None:
+        """Helper to get the 'now_data' block from the coordinator."""
+        if not self.coordinator.data:
+            return None
+        return cast(dict[str, Any] | None, self.coordinator.data.get("now_data"))
+
+    @property
+    def available(self) -> bool:
+        """Return True if coordinator has data and water temp data is available."""
+        return (
+            self._sensor_data is not None
+            and self._sensor_data.get(ATTR_CURRENT_HEIGHT) is not None
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the state of the sensor (current height in meters)"""
+        if self.available:
+            return self._sensor_data.get(ATTR_CURRENT_HEIGHT)
+        return None
+
+    async def async_added_to_hass(self) -> None:
+        """Request a refresh when added to hass."""
+        await super().async_added_to_hass()
+        if self.native_value is None:
+            await self.coordinator.async_request_refresh()
 
 class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
     """Sensor representing the current water temperature.
