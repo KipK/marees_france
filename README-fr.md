@@ -80,6 +80,12 @@ Même attributs que ci-dessus, pour l’événement de marée précédent.
 - **État**: La température actuelle de l'eau en degrés Celsius.
 - **Attributs**: `current_height`, `tide_trend`
 
+### Hauteur d'eau actuelle
+
+- **État**: La hauteur d'eau actuelle en mètres.
+- **Attributs**: ``
+- **Caractéristiques** : Définie à partir des valeurs récupérer via l'API SHOM et par interpolation linéaire entre les points fournis par l'API
+
 ### Profondeur minimale pour naviguer
 
 - **Type** : Entité nombre (Number)
