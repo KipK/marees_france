@@ -396,6 +396,7 @@ class MareesFranceNextNeapTideSensor(MareesFranceNextSpecialTideSensor):
         """Initialize the next neap tide sensor."""
         super().__init__(coordinator, config_entry, "next_neap_date", "next_neap_tide")
 
+
 class MareesFranceCurrentHeightSensor(MareesFranceBaseSensor):
     """Sensor representing the current water height.
 
@@ -406,7 +407,7 @@ class MareesFranceCurrentHeightSensor(MareesFranceBaseSensor):
     _attr_device_class = SensorDeviceClass.DISTANCE
     _attr_native_unit_of_measurement = "m"
     _attr_icon = "mdi:arrow-expand-vertical"
-    _attr_suggested_display_precision = 1
+    _attr_suggested_display_precision = 2
 
     def __init__(
         self,
@@ -443,6 +444,7 @@ class MareesFranceCurrentHeightSensor(MareesFranceBaseSensor):
         await super().async_added_to_hass()
         if self.native_value is None:
             await self.coordinator.async_request_refresh()
+
 
 class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
     """Sensor representing the current water temperature.
