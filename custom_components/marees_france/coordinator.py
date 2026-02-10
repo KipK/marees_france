@@ -537,7 +537,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 STATE_LOW_TIDE.replace("_", " ").title(),
             )
 
-            self.pointsData = await self._process_pointsData(water_level_data_for_parser.get(today_str))
+            self.pointsData = await self._process_pointsData(
+                water_level_data_for_parser.get(today_str)
+            )
 
             _LOGGER.debug(
                 "Marées France Coordinator: Calling _parse_tide_data with "
@@ -559,27 +561,32 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
             raise UpdateFailed(f"Error processing data: {err}") from err
 
-    async def _process_pointsData(self, levels_data: List[Tuple[str, str]]) -> List[PointData]:
+    async def _process_pointsData(
+        self, levels_data: List[Tuple[str, str]]
+    ) -> List[PointData]:
         """
         Transform raw data to objet PointData(totalMinute;height)
         """
-        if hasattr(self, "_last_levels_input") and levels_data == self._last_levels_input:
+        if (
+            hasattr(self, "_last_levels_input")
+            and levels_data == self._last_levels_input
+        ):
             return self.points_data
 
         results = []
-        minHeight = float('inf')
-        maxHeight = float('-inf')
+        minHeight = float("inf")
+        maxHeight = float("-inf")
         for item in levels_data:
             try:
                 # Extraction et validation de base
                 time_str = item[0]
                 height_val = float(item[1])
 
-                if not time_str or ':' not in time_str:
+                if not time_str or ":" not in time_str:
                     continue
 
                 # Conversion du temps (HH:MM)
-                hours_str, minutes_str, seconds = time_str.split(':')
+                hours_str, minutes_str, seconds = time_str.split(":")
                 hours, minutes = int(hours_str), int(minutes_str)
                 total_min = hours * 60 + minutes
 
@@ -588,8 +595,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 maxHeight = max(maxHeight, height_val)
 
                 # Création de l'instance Dataclass
-                point = PointData(total_minutes=total_min,
-                                  height_num=height_val)
+                point = PointData(total_minutes=total_min, height_num=height_val)
                 results.append(point)
 
             except (ValueError, IndexError, TypeError):
@@ -602,34 +608,34 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return self.points_data
 
-    async def _interpolateHeight(
-            self,
-            targetTotalMinutes: int) -> float | None:
+    async def _interpolateHeight(self, targetTotalMinutes: int) -> float | None:
         if not self.pointsData or len(self.pointsData) < 2:
             return None
         prevPoint: PointData | None = None
         nextPoint: PointData | None = None
 
         for i, pointData in enumerate(self.pointsData):
-            if (pointData.total_minutes <= targetTotalMinutes):
+            if pointData.total_minutes <= targetTotalMinutes:
                 prevPoint = pointData
-            if (pointData.total_minutes > targetTotalMinutes):
+            if pointData.total_minutes > targetTotalMinutes:
                 nextPoint = pointData
                 break
 
-        if (not prevPoint and nextPoint):
+        if not prevPoint and nextPoint:
             return nextPoint.height_num
-        if (prevPoint and not nextPoint):
+        if prevPoint and not nextPoint:
             return prevPoint.height_num
-        if (not prevPoint or not nextPoint):
+        if not prevPoint or not nextPoint:
             return None
 
         timeDiff = nextPoint.total_minutes - prevPoint.total_minutes
-        if (timeDiff <= 0):
+        if timeDiff <= 0:
             return prevPoint.height_num
-        timeProgress = (targetTotalMinutes -
-                        prevPoint.total_minutes) / timeDiff
-        return prevPoint.height_num + (nextPoint.height_num - prevPoint.height_num) * timeProgress
+        timeProgress = (targetTotalMinutes - prevPoint.total_minutes) / timeDiff
+        return (
+            prevPoint.height_num
+            + (nextPoint.height_num - prevPoint.height_num) * timeProgress
+        )
 
     async def _parse_tide_data(
         self,
@@ -818,7 +824,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             now_local = dt_util.now()
             currentMinutes = now_local.hour * 60 + now_local.minute
 
-            now_data[ATTR_CURRENT_HEIGHT] = await self._interpolateHeight(currentMinutes)
+            now_data[ATTR_CURRENT_HEIGHT] = await self._interpolateHeight(
+                currentMinutes
+            )
 
             # Remove the old direct water_temp assignment
             if ATTR_WATER_TEMP in now_data:

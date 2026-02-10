@@ -149,6 +149,7 @@ JSMODULES: Final[list[dict[str, str]]] = [
 ]
 URL_BASE: Final[str] = "/marees-france"  # Base URL for frontend resources
 
+
 @dataclass
 class PointData:
     total_minutes: int
