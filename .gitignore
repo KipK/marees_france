@@ -4,7 +4,8 @@ plans
 .venv
 *.bak
 __pycache__/
-/node_modules
-/frontend/node_modules/
-/context_portal
+node_modules
+frontend/node_modules
+context_portal
+.vscode
 .roo
