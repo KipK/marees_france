@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>marees_france.number &mdash; Marées France Integration  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Marées France Integration
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../init.html">__init__ Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_harbor_min_depth"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_harbor_min_depth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_version"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_version()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_water_temp"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_water_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.ws_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_tides"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_tides()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_harbor_min_depth"><code class="docutils literal notranslate"><span class="pre">async_handle_get_harbor_min_depth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_handle_get_water_temp"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_check_and_prefetch_watertemp"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_watertemp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_process_updates"><code class="docutils literal notranslate"><span class="pre">async_process_updates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../init.html#marees_france.async_remove_entry"><code class="docutils literal notranslate"><span class="pre">async_remove_entry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sensor.html">sensor Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceBaseSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceBaseSensor.available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.extra_state_attributes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNowSensor.icon"><code class="docutils literal notranslate"><span class="pre">MareesFranceNowSensor.icon</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceTimestampSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceTimestampSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFrancePreviousSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFrancePreviousSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpecialTideSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpecialTideSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextSpringTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextSpringTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.async_added_to_hass()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.async_added_to_hass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../number.html">number Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../number.html#marees_france.number.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_added_to_hass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_update_coordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_update_coordinator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_set_native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_set_native_value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../coordinator.html">coordinator Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.prune_watertemp_cache"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.prune_watertemp_cache()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../config_flow.html">config_flow Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.InvalidAuth"><code class="docutils literal notranslate"><span class="pre">InvalidAuth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.VERSION"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.VERSION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../config_flow.html#marees_france.config_flow.MareesFranceConfigFlow.async_step_user"><code class="docutils literal notranslate"><span class="pre">MareesFranceConfigFlow.async_step_user()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_helpers.html">api_helpers Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../const.html">const Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../const.html#marees_france.const.PointData"><code class="docutils literal notranslate"><span class="pre">PointData</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../const.html#marees_france.const.PointData.total_minutes"><code class="docutils literal notranslate"><span class="pre">PointData.total_minutes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../const.html#marees_france.const.PointData.height_num"><code class="docutils literal notranslate"><span class="pre">PointData.height_num</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Marées France Integration</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../marees_france.html">marees_france</a></li>
+      <li class="breadcrumb-item active">marees_france.number</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for marees_france.number</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Number platform for Marées France integration.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.components.number</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberDeviceClass</span><span class="p">,</span> <span class="n">NumberMode</span><span class="p">,</span> <span class="n">RestoreNumber</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.config_entries</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">HomeAssistant</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.device_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.entity_platform</span><span class="w"> </span><span class="kn">import</span> <span class="n">AddEntitiesCallback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.helpers.update_coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoordinatorEntity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">homeassistant.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnitOfLength</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CONF_HARBOR_ID</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_NAME</span><span class="p">,</span>
+    <span class="n">CONF_HARBOR_MIN_DEPTH</span><span class="p">,</span>
+    <span class="n">DOMAIN</span><span class="p">,</span>
+    <span class="n">MANUFACTURER</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.coordinator</span><span class="w"> </span><span class="kn">import</span> <span class="n">MareesFranceUpdateCoordinator</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="async_setup_entry">
+<a class="viewcode-back" href="../../number.html#marees_france.number.async_setup_entry">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_setup_entry</span><span class="p">(</span>
+    <span class="n">hass</span><span class="p">:</span> <span class="n">HomeAssistant</span><span class="p">,</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="n">async_add_entities</span><span class="p">:</span> <span class="n">AddEntitiesCallback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up the Marées France sensor entities from a config entry.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hass: The Home Assistant instance.</span>
+<span class="sd">        entry: The config entry.</span>
+<span class="sd">        async_add_entities: Callback to add entities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span> <span class="o">=</span> <span class="n">hass</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">DOMAIN</span><span class="p">][</span><span class="n">entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">]</span>
+    <span class="n">harbor_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+
+    <span class="n">number_to_add</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">MareesFranceDepthToBoatNumber</span><span class="p">(</span><span class="n">coordinator</span><span class="p">,</span> <span class="n">entry</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">async_add_entities</span><span class="p">(</span><span class="n">number_to_add</span><span class="p">,</span> <span class="n">update_before_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Added 1 Marées France number for harbor: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">harbor_id</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MareesFranceDepthToBoatNumber">
+<a class="viewcode-back" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MareesFranceDepthToBoatNumber</span><span class="p">(</span>
+    <span class="n">CoordinatorEntity</span><span class="p">[</span><span class="n">MareesFranceUpdateCoordinator</span><span class="p">],</span> <span class="n">RestoreNumber</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sensor representing the depth needed to navigate.&quot;&quot;&quot;</span>
+
+    <span class="n">_attr_native_step</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">_attr_device_class</span> <span class="o">=</span> <span class="n">NumberDeviceClass</span><span class="o">.</span><span class="n">DISTANCE</span>
+    <span class="n">_attr_mode</span> <span class="o">=</span> <span class="n">NumberMode</span><span class="o">.</span><span class="n">BOX</span>
+    <span class="n">_attr_native_unit_of_measurement</span> <span class="o">=</span> <span class="n">UnitOfLength</span><span class="o">.</span><span class="n">METERS</span>
+    <span class="n">_attr_translation_key</span> <span class="o">=</span> <span class="s2">&quot;min_depth&quot;</span>
+    <span class="n">_attr_has_entity_name</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Uses the name defined by `translation_key`.</span>
+
+<div class="viewcode-block" id="MareesFranceDepthToBoatNumber.__init__">
+<a class="viewcode-back" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coordinator</span><span class="p">:</span> <span class="n">MareesFranceUpdateCoordinator</span><span class="p">,</span>
+        <span class="n">config_entry</span><span class="p">:</span> <span class="n">ConfigEntry</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the &#39;depth to boat&#39; number.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">coordinator</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_native_min_value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_entry</span> <span class="o">=</span> <span class="n">config_entry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_ID</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">CONF_HARBOR_NAME</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_available</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_native_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">CONF_HARBOR_MIN_DEPTH</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_icon</span> <span class="o">=</span> <span class="s2">&quot;mdi:wave-arrow-up&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_unique_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">DOMAIN</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_harbor_id</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">_depth_to_boat&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_device_info</span> <span class="o">=</span> <span class="n">DeviceInfo</span><span class="p">(</span>
+            <span class="n">identifiers</span><span class="o">=</span><span class="p">{(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">config_entry</span><span class="o">.</span><span class="n">entry_id</span><span class="p">)},</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_harbor_name</span><span class="p">,</span>
+            <span class="n">manufacturer</span><span class="o">=</span><span class="n">MANUFACTURER</span><span class="p">,</span>
+            <span class="n">entry_type</span><span class="o">=</span><span class="s2">&quot;service&quot;</span><span class="p">,</span>  <span class="c1"># Using &quot;service&quot; as it&#39;s data from an external service</span>
+            <span class="n">configuration_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># No specific URL for device configuration</span>
+        <span class="p">)</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initialized number with unique_id: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MareesFranceDepthToBoatNumber.async_added_to_hass">
+<a class="viewcode-back" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_added_to_hass">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_added_to_hass</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;When entity is added to Home Assistant.&quot;&quot;&quot;</span>
+        <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">async_added_to_hass</span><span class="p">()</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_get_last_state</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">&quot;unavailable&quot;</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_set_native_value</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="MareesFranceDepthToBoatNumber.async_update_coordinator">
+<a class="viewcode-back" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_update_coordinator">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_update_coordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinator</span><span class="o">.</span><span class="n">_async_update_from_number</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="MareesFranceDepthToBoatNumber.async_set_native_value">
+<a class="viewcode-back" href="../../number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_set_native_value">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_set_native_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_native_value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_write_ha_state</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_update_coordinator</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, The Marées France Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>api_helpers Module &mdash; Marées France Integration  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -48,6 +48,12 @@
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.CannotConnect"><code class="docutils literal notranslate"><span class="pre">CannotConnect</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.fetch_harbors"><code class="docutils literal notranslate"><span class="pre">fetch_harbors()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_migrate_entry"><code class="docutils literal notranslate"><span class="pre">async_migrate_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_harbor_min_depth"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_harbor_min_depth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_version"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_version()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_water_temp"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_water_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_water_levels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_tides_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.ws_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">ws_handle_get_coefficients_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_reinitialize_harbor_data"><code class="docutils literal notranslate"><span class="pre">async_handle_reinitialize_harbor_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_check_and_prefetch_water_levels"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_water_levels()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_get_water_levels"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_levels()</span></code></a></li>
@@ -55,8 +61,12 @@
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_get_tides_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_tides_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_check_and_prefetch_coefficients"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_coefficients()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_get_coefficients_data"><code class="docutils literal notranslate"><span class="pre">async_handle_get_coefficients_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_get_harbor_min_depth"><code class="docutils literal notranslate"><span class="pre">async_handle_get_harbor_min_depth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_handle_get_water_temp"><code class="docutils literal notranslate"><span class="pre">async_handle_get_water_temp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_check_and_prefetch_watertemp"><code class="docutils literal notranslate"><span class="pre">async_check_and_prefetch_watertemp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_register_frontend_modules_when_ready"><code class="docutils literal notranslate"><span class="pre">async_register_frontend_modules_when_ready()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_setup"><code class="docutils literal notranslate"><span class="pre">async_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_process_updates"><code class="docutils literal notranslate"><span class="pre">async_process_updates()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_unload_entry"><code class="docutils literal notranslate"><span class="pre">async_unload_entry()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="init.html#marees_france.async_reload_entry"><code class="docutils literal notranslate"><span class="pre">async_reload_entry()</span></code></a></li>
@@ -106,12 +116,39 @@
 <li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceNextNeapTideSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceNextNeapTideSensor.__init__()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceCurrentHeightSensor.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceCurrentHeightSensor.async_added_to_hass()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.available"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.available</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.native_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.async_added_to_hass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sensor.html#marees_france.sensor.MareesFranceWaterTempSensor.extra_state_attributes"><code class="docutils literal notranslate"><span class="pre">MareesFranceWaterTempSensor.extra_state_attributes</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="number.html">number Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="number.html#marees_france.number.async_setup_entry"><code class="docutils literal notranslate"><span class="pre">async_setup_entry()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="number.html#marees_france.number.MareesFranceDepthToBoatNumber"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="number.html#marees_france.number.MareesFranceDepthToBoatNumber.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_added_to_hass"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_added_to_hass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_update_coordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_update_coordinator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="number.html#marees_france.number.MareesFranceDepthToBoatNumber.async_set_native_value"><code class="docutils literal notranslate"><span class="pre">MareesFranceDepthToBoatNumber.async_set_native_value()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="coordinator.html">coordinator Module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.__init__"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.config_entry"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.config_entry</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="coordinator.html#marees_france.coordinator.MareesFranceUpdateCoordinator.prune_watertemp_cache"><code class="docutils literal notranslate"><span class="pre">MareesFranceUpdateCoordinator.prune_watertemp_cache()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -127,7 +164,14 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">api_helpers Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="const.html">const Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="const.html">const Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="const.html#marees_france.const.PointData"><code class="docutils literal notranslate"><span class="pre">PointData</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="const.html#marees_france.const.PointData.total_minutes"><code class="docutils literal notranslate"><span class="pre">PointData.total_minutes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="const.html#marees_france.const.PointData.height_num"><code class="docutils literal notranslate"><span class="pre">PointData.height_num</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
         </div>
