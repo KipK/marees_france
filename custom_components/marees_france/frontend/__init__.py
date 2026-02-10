@@ -25,7 +25,12 @@ class JSModuleRegistration:
     async def async_register(self) -> None:
         """Register view_assist path."""
         await self._async_register_path()
-        if getattr(self.lovelace, "mode", getattr(self.lovelace, "resource_mode", "yaml")) == "storage":
+        if (
+            getattr(
+                self.lovelace, "mode", getattr(self.lovelace, "resource_mode", "yaml")
+            )
+            == "storage"
+        ):
             await self._async_wait_for_lovelace_resources()
 
     # install card resources
@@ -120,7 +125,12 @@ class JSModuleRegistration:
 
     async def async_unregister(self) -> None:
         """Unload lovelace module resource."""
-        if getattr(self.lovelace, "mode", getattr(self.lovelace, "resource_mode", "yaml")) == "storage":
+        if (
+            getattr(
+                self.lovelace, "mode", getattr(self.lovelace, "resource_mode", "yaml")
+            )
+            == "storage"
+        ):
             for module in JSMODULES:
                 url = f"{URL_BASE}/{module.get('filename')}"
                 # Use a unique name for the list comprehension variable
