@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 import logging
-from typing import Any, Callable, Coroutine, List, Tuple, TypeVar, cast
+from typing import Any, Callable, Coroutine, List, Tuple, TypeVar
 
 import aiohttp
 import pytz
@@ -812,14 +812,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
 
         # Keep water height calculation, but simplify water temp handling.
-        current_water_height = None
-        water_levels: list[list[str]] | None = None
         today_str_key = date.today().strftime(DATE_FORMAT)
-
-        if isinstance(water_level_raw_data, dict) and isinstance(
-            water_level_raw_data.get(today_str_key), list
-        ):
-            water_levels = cast(list[list[str]], water_level_raw_data[today_str_key])
 
         if now_data:
             now_local = dt_util.now()
