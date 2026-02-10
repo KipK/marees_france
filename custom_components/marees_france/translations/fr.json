@@ -178,6 +178,9 @@
           }
         }
       },
+      "water_height": {
+        "name": "Hauteur d'eau Actuelle"
+      },
       "water_temp": {
         "name": "Température de l'Eau",
         "state_attributes": {

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 import logging
-from typing import Any, Callable, Coroutine, TypeVar, cast
+from typing import Any, Callable, Coroutine, List, Tuple, TypeVar, cast
 
 import aiohttp
 import pytz
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.util import dt as dt_util
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
@@ -36,6 +37,7 @@ from .const import (
     STATE_LOW_TIDE,
     TIDE_HIGH,
     TIDE_LOW,
+    PointData,
 )
 from .api_helpers import (
     _async_fetch_and_store_water_level,
@@ -93,6 +95,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.water_level_store = water_level_store
         self.watertemp_store = watertemp_store
         self.harborMinDepth_store = harborMinDepth_store
+        self.pointsData: List[PointData] = []
         self.websession = websession or async_get_clientsession(hass)
 
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
@@ -534,6 +537,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 STATE_LOW_TIDE.replace("_", " ").title(),
             )
 
+            self.pointsData = await self._process_pointsData(water_level_data_for_parser.get(today_str))
+
             _LOGGER.debug(
                 "Marées France Coordinator: Calling _parse_tide_data with "
                 "water_level_data_for_parser: %s",
@@ -553,6 +558,78 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.harbor_id,
             )
             raise UpdateFailed(f"Error processing data: {err}") from err
+
+    async def _process_pointsData(self, levels_data: List[Tuple[str, str]]) -> List[PointData]:
+        """
+        Transform raw data to objet PointData(totalMinute;height)
+        """
+        if hasattr(self, "_last_levels_input") and levels_data == self._last_levels_input:
+            return self.points_data
+
+        results = []
+        minHeight = float('inf')
+        maxHeight = float('-inf')
+        for item in levels_data:
+            try:
+                # Extraction et validation de base
+                time_str = item[0]
+                height_val = float(item[1])
+
+                if not time_str or ':' not in time_str:
+                    continue
+
+                # Conversion du temps (HH:MM)
+                hours_str, minutes_str, seconds = time_str.split(':')
+                hours, minutes = int(hours_str), int(minutes_str)
+                total_min = hours * 60 + minutes
+
+                # Mise à jour des extrêmes (min/max)
+                minHeight = min(minHeight, height_val)
+                maxHeight = max(maxHeight, height_val)
+
+                # Création de l'instance Dataclass
+                point = PointData(total_minutes=total_min,
+                                  height_num=height_val)
+                results.append(point)
+
+            except (ValueError, IndexError, TypeError):
+                continue
+
+        self.points_data = results
+
+        # Copy for cache comparison - avoid compute at each refresh
+        self._last_levels_input = list(levels_data)
+
+        return self.points_data
+
+    async def _interpolateHeight(
+            self,
+            targetTotalMinutes: int) -> float | None:
+        if not self.pointsData or len(self.pointsData) < 2:
+            return None
+        prevPoint: PointData | None = None
+        nextPoint: PointData | None = None
+
+        for i, pointData in enumerate(self.pointsData):
+            if (pointData.total_minutes <= targetTotalMinutes):
+                prevPoint = pointData
+            if (pointData.total_minutes > targetTotalMinutes):
+                nextPoint = pointData
+                break
+
+        if (not prevPoint and nextPoint):
+            return nextPoint.height_num
+        if (prevPoint and not nextPoint):
+            return prevPoint.height_num
+        if (not prevPoint or not nextPoint):
+            return None
+
+        timeDiff = nextPoint.total_minutes - prevPoint.total_minutes
+        if (timeDiff <= 0):
+            return prevPoint.height_num
+        timeProgress = (targetTotalMinutes -
+                        prevPoint.total_minutes) / timeDiff
+        return prevPoint.height_num + (nextPoint.height_num - prevPoint.height_num) * timeProgress
 
     async def _parse_tide_data(
         self,
@@ -744,36 +821,12 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ):
             water_levels = cast(list[list[str]], water_level_raw_data[today_str_key])
 
-        if water_levels:
-            closest_entry = None
-            min_diff = timedelta.max
-            for entry in water_levels:
-                try:
-                    if len(entry) < 2:
-                        continue
-                    time_str, height_str = entry, entry
-                    if len(time_str) == 5:
-                        time_str += ":00"
-                    dt_naive = datetime.strptime(
-                        f"{today_str_key} {time_str}", f"{DATE_FORMAT} %H:%M:%S"
-                    )
-                    dt_local = paris_tz.localize(dt_naive)
-                    entry_dt = dt_local.astimezone(timezone.utc)
-                    diff = abs(now_utc - entry_dt)
-                    if diff < min_diff:
-                        min_diff = diff
-                        closest_entry = height_str
-                except (ValueError, TypeError, pytz.exceptions.Error):
-                    continue
-
-            if closest_entry and min_diff <= timedelta(minutes=15):
-                try:
-                    current_water_height = float(closest_entry)
-                except (ValueError, TypeError):
-                    pass  # Keep it None if conversion fails
-
         if now_data:
-            now_data[ATTR_CURRENT_HEIGHT] = current_water_height
+            now_local = dt_util.now()
+            currentMinutes = now_local.hour * 60 + now_local.minute
+
+            now_data[ATTR_CURRENT_HEIGHT] = await self._interpolateHeight(currentMinutes)
+
             # Remove the old direct water_temp assignment
             if ATTR_WATER_TEMP in now_data:
                 del now_data[ATTR_WATER_TEMP]
