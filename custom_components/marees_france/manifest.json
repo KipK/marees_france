@@ -3,7 +3,7 @@
   "name": "Marées France",
   "after_dependencies": [],
   "codeowners": [
-    "@yKipK"
+    "@KipK"
   ],
   "config_flow": true,
   "dependencies": [
