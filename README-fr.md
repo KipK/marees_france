@@ -219,4 +219,15 @@ Puis retirez l'intégration depuis HACS ou effacez le dossier custom_components/
 
 ---
 
+
+## ☕ Support
+
+Si cette intégration vous est utile, vous pouvez soutenir le developement ici:
+
+<p>
+  <a href="https://www.buymeacoffee.com/kipk" target="_blank" rel="noopener noreferrer">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="217" height="60" />
+  </a>
+</p>
+
 👉 [🇬🇧 Read this documentation in English](./README.md)
