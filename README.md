@@ -227,4 +227,14 @@ npm run test
 
 ---
 
+## ☕ Support
+
+If this integration is useful to you, you can support its development here:
+
+<p>
+  <a href="https://www.buymeacoffee.com/kipk" target="_blank" rel="noopener noreferrer">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="217" height="60" />
+  </a>
+</p>
+
 👉 [🇫🇷 Read this documentation in French](./README-fr.md)
