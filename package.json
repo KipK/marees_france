@@ -3,7 +3,9 @@
     "test": "pytest -v ./tests",
     "docs:integration": "sphinx-build -b html tools/sphinx-docs docs/integration -W --keep-going -a -E",
     "docs:frontend": "cd frontend && npm run docs && cd ..",
-    "docs": "npm run docs:integration && npm run docs:frontend"
+    "docs": "npm run docs:integration && npm run docs:frontend",
+    "install": "npm install && cd frontend && npm install && cd ..",
+    "build": "cd frontend && npm run build && cd .."
   },
   "devDependencies": {
     "tsx": "^4.19.4",

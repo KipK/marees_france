@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020", // Target modern browsers
     "module": "ESNext", // Use ES modules
-    "moduleResolution": "node", // How modules get resolved
+    "moduleResolution": "Bundler", // How modules get resolved
     "strict": true, // Enable all strict type-checking options
     "esModuleInterop": true, // Enables emit interoperability between CommonJS and ES Modules
     "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file.
