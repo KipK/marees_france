@@ -59,10 +59,12 @@ async def async_setup_entry(
         MareesFranceNextNeapTideSensor(coordinator, entry),
         MareesFranceWaterTempSensor(coordinator, entry),
         MareesFranceCurrentHeightSensor(coordinator, entry),
+        MareesFranceNextTideCoeffSensor(coordinator, entry),
+        MareesFranceNextTideHeightSensor(coordinator, entry),
     ]
 
     async_add_entities(sensors_to_add, update_before_add=True)
-    _LOGGER.debug("Added 7 Marées France sensors for harbor: %s", harbor_id)
+    _LOGGER.debug("Added %d Marées France sensors for harbor: %s", len(sensors_to_add), harbor_id)
 
 
 class MareesFranceBaseSensor(
@@ -545,3 +547,82 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
 
             return attrs if attrs else None
         return None
+
+
+class MareesFranceNextTideCoeffSensor(MareesFranceBaseSensor):
+    """Sensor donnant le coefficient de la prochaine marée."""
+
+    _attr_translation_key = "next_tide_coeff"
+    _attr_icon = "mdi:wave"
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the next tide coefficient sensor."""
+        super().__init__(coordinator, config_entry, "next_tide_coeff")
+
+    @property
+    def available(self) -> bool:
+        return (
+            self.coordinator.data is not None
+            and self.coordinator.data.get("next_data") is not None
+        )
+
+    @property
+    def native_value(self) -> int | None:
+        if self.available:
+            coeff = self.coordinator.data["next_data"].get(ATTR_COEFFICIENT)
+            if coeff is not None:
+                try:
+                    return int(coeff)
+                except (ValueError, TypeError):
+                    return None
+        return None
+
+
+class MareesFranceNextTideHeightSensor(MareesFranceBaseSensor):
+    """Sensor donnant la hauteur d'eau attendue pour la prochaine marée."""
+
+    _attr_translation_key = "next_tide_height"
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_native_unit_of_measurement = "m"
+    _attr_icon = "mdi:arrow-collapse-up"
+    _attr_suggested_display_precision = 2
+
+    def __init__(
+        self,
+        coordinator: MareesFranceUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the next tide max height sensor."""
+        super().__init__(coordinator, config_entry, "next_tide_max_height")
+
+    @property
+    def available(self) -> bool:
+        return (
+            self.coordinator.data is not None
+            and self.coordinator.data.get("next_data") is not None
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        if self.available:
+            height = self.coordinator.data["next_data"].get(ATTR_FINISHED_HEIGHT)
+            if height is not None:
+                try:
+                    return float(height)
+                except (ValueError, TypeError):
+                    return None
+        return None
+
+    @property
+    def icon(self) -> str:
+        if self.available and self.coordinator.data:
+            trend = self.coordinator.data["next_data"].get(ATTR_TIDE_TREND)
+            if trend == "tide_high":
+                return "mdi:arrow-collapse-up"
+            if trend == "tide_low":
+                return "mdi:arrow-collapse-down"
+        return "mdi:arrow-expand-vertical"

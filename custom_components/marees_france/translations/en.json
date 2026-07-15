@@ -188,6 +188,12 @@
                         "name": "Tide Trend"
                     }
                 }
+            },
+            "next_tide_coeff": {
+                "name": "Next tide coeff"
+            },
+            "next_tide_height": {
+                "name": "Height next tide"
             }
         },
         "number": {
