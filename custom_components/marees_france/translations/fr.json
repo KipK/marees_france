@@ -192,6 +192,12 @@
           }
         }
       },
+      "next_tide_coeff": {
+        "name": "Coefficient prochaine marée"
+      },
+      "next_tide_height": {
+        "name": "Hauteur prochaine marée"
+      },
       "number": {
         "min_depth": {
           "name": "Profondeur minimale"
