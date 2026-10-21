@@ -55,7 +55,7 @@ def fixture_mock_fetch_harbors():
 
 
 async def test_async_step_user_success(
-    hass: HomeAssistant, mock_fetch_harbors: AsyncMock
+    hass: HomeAssistant, mock_fetch_harbors: AsyncMock, mock_setup_entry: AsyncMock
 ) -> None:
     """Test a successful user initiated config flow."""
     # Initialize the config flow
@@ -92,6 +92,11 @@ async def test_async_step_user_success(
     }
     # No second call to fetch_harbors expected here
     mock_fetch_harbors.assert_called_once()
+    mock_setup_entry.assert_called_once()
+
+    # Unload the entry while the setup/unload mocks are still active
+    assert await hass.config_entries.async_unload(result2["result"].entry_id)
+    await hass.async_block_till_done()
 
 
 async def test_async_step_user_invalid_harbor(

@@ -1,6 +1,6 @@
 """Test with mocked dependencies."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.setup import async_setup_component
@@ -31,7 +31,7 @@ def mock_hass_frontend():
 def mock_js_module():
     """Mock the JSModuleRegistration class."""
     mock_instance = MagicMock()
-    mock_instance.async_register = MagicMock(return_value=True)
+    mock_instance.async_register = AsyncMock(return_value=True)
 
     with patch(
         "custom_components.marees_france.frontend.JSModuleRegistration",

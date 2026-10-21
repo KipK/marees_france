@@ -1,6 +1,6 @@
 """Test setup with explicit fixtures."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.setup import async_setup_component
@@ -26,7 +26,7 @@ def expected_lingering_timers():
 def mock_frontend():
     """Mock the frontend module."""
     mock_js_module = MagicMock()
-    mock_js_module.async_register = MagicMock(return_value=True)
+    mock_js_module.async_register = AsyncMock(return_value=True)
 
     with patch(
         "custom_components.marees_france.frontend.JSModuleRegistration",
@@ -40,9 +40,7 @@ async def test_setup_with_fixtures(hass, aioclient_mock):
     # Set up the component
     # Mock the JSModuleRegistration to prevent lingering timers
     with (
-        patch(
-            "custom_components.marees_france.__init__.JSModuleRegistration"
-        ) as mock_js,
+        patch("custom_components.marees_france.JSModuleRegistration") as mock_js,
         patch(
             "custom_components.marees_france.frontend.JSModuleRegistration._async_wait_for_lovelace_resources",
             return_value=None,
@@ -52,7 +50,7 @@ async def test_setup_with_fixtures(hass, aioclient_mock):
         ),
     ):
         mock_instance = MagicMock()
-        mock_instance.async_register = MagicMock(return_value=True)
+        mock_instance.async_register = AsyncMock(return_value=True)
         mock_js.return_value = mock_instance
 
         # Try to set up the component

@@ -44,7 +44,7 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
             "homeassistant.helpers.event.async_call_later", return_value=lambda: None
         ),
         patch(
-            "custom_components.marees_france.__init__.fetch_harbors",
+            "custom_components.marees_france.fetch_harbors",
             return_value={"BREST": {"name": "Brest", "id": "BREST"}},
         ),
         patch("custom_components.marees_france.async_setup", return_value=True),
@@ -87,7 +87,7 @@ async def test_async_unload_entry(hass: HomeAssistant) -> None:
             "homeassistant.helpers.event.async_call_later", return_value=lambda: None
         ),
         patch(
-            "custom_components.marees_france.__init__.fetch_harbors",
+            "custom_components.marees_france.fetch_harbors",
             return_value={"BREST": {"name": "Brest", "id": "BREST"}},
         ),
         patch("custom_components.marees_france.async_setup", return_value=True),

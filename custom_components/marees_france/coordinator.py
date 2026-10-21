@@ -539,7 +539,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
             self.pointsData = await self._process_pointsData(
-                water_level_data_for_parser.get(today_str)
+                (water_level_data_for_parser or {}).get(today_str) or []
             )
 
             _LOGGER.debug(

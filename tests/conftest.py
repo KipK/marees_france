@@ -1,7 +1,10 @@
 """Module providing configuration for tests"""
 
+from __future__ import annotations
+
 from collections.abc import Generator
 from datetime import timedelta
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,9 +14,14 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.marees_france.const import (
+    COEFF_STORAGE_KEY,
     CONF_HARBOR_ID,
     CONF_HARBOR_MIN_DEPTH,
     DOMAIN,
+    HARBORMINDEPTH_STORAGE_KEY,
+    TIDES_STORAGE_KEY,
+    WATERLEVELS_STORAGE_KEY,
+    WATERTEMP_STORAGE_KEY,
 )
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator
 
@@ -114,11 +122,17 @@ MOCK_PORT_DATA = {
 
 @pytest.fixture
 def mock_setup_entry() -> Generator[AsyncMock, None, None]:
-    """Override async_setup_entry."""
-    with patch(
-        "custom_components.marees_france.async_setup_entry",
-        return_value=AsyncMock(return_value=True),
-    ) as mock_setup:
+    """Override async_setup_entry (and async_unload_entry, as nothing is set up)."""
+    with (
+        patch(
+            "custom_components.marees_france.async_setup_entry",
+            return_value=True,
+        ) as mock_setup,
+        patch(
+            "custom_components.marees_france.async_unload_entry",
+            return_value=True,
+        ),
+    ):
         yield mock_setup
 
 
@@ -180,7 +194,7 @@ def mock_all_network_requests():
         patch("aiohttp.ClientSession.post", return_value=mock_response),
         patch("aiohttp.ClientSession.request", return_value=mock_response),
         patch(
-            "custom_components.marees_france.__init__.fetch_harbors",
+            "custom_components.marees_france.fetch_harbors",
             return_value={"BREST": {"name": "Brest", "id": "BREST"}},
         ),
         patch("socket.socket", side_effect=RuntimeError("Socket creation blocked")),
@@ -240,6 +254,25 @@ def reduce_timeouts():
         yield
 
 
+class _FakeStore:
+    """Minimal in-memory replacement for homeassistant.helpers.storage.Store."""
+
+    def __init__(self, data: dict[str, Any] | None = None) -> None:
+        self._data = data
+
+    async def async_load(self) -> dict[str, Any] | None:
+        """Return the stored data."""
+        return self._data
+
+    async def async_save(self, data: dict[str, Any]) -> None:
+        """Store the data."""
+        self._data = data
+
+    async def async_remove(self) -> None:
+        """Remove the stored data."""
+        self._data = None
+
+
 @pytest.fixture
 def mock_api_fetchers_detailed(freezer):
     """Mock the API fetchers with detailed data for coordinator tests.
@@ -268,15 +301,19 @@ def mock_api_fetchers_detailed(freezer):
         "2025-05-13": ["88", "90"],
     }
 
+    # Water levels cache is keyed by date, and each entry is the API response
+    # (itself keyed by date)
     mock_water_level_data = {
-        "2025-05-12": [
-            ["02:55:00", "8.15"],
-            ["03:00:00", "8.20"],
-            ["03:05:00", "8.18"],
-            ["09:10:00", "1.55"],
-            ["09:15:00", "1.50"],
-            ["09:20:00", "1.52"],
-        ]
+        "2025-05-12": {
+            "2025-05-12": [
+                ["02:55:00", "8.15"],
+                ["03:00:00", "8.20"],
+                ["03:05:00", "8.18"],
+                ["09:10:00", "1.55"],
+                ["09:15:00", "1.50"],
+                ["09:20:00", "1.52"],
+            ]
+        }
     }
 
     # Create a properly structured mock data for the coordinator
@@ -336,39 +373,29 @@ def mock_api_fetchers_detailed(freezer):
             return_value=mock_parsed_data,
         ),
     ):
-        # Mock the store objects
-        mock_tides_store = MagicMock()
-        mock_tides_store.async_load = AsyncMock(return_value={"BREST": mock_tides_data})
-        mock_tides_store.async_save = AsyncMock(return_value=None)
-
-        mock_coeffs_store = MagicMock()
-        mock_coeffs_store.async_load = AsyncMock(
-            return_value={"BREST": mock_coeffs_data}
+        # Mock the store objects (in-memory, so that saved data can be read back)
+        mock_tides_store = _FakeStore({"BREST": mock_tides_data})
+        mock_coeffs_store = _FakeStore({"BREST": mock_coeffs_data})
+        mock_water_store = _FakeStore({"BREST": mock_water_level_data})
+        mock_watertemp_store = _FakeStore({})
+        mock_harborMinDepth_store = _FakeStore(
+            {"BREST": {"harborMinDepth": MOCK_PORT_DATA["harborMinDepth"]}}
         )
-        mock_coeffs_store.async_save = AsyncMock(return_value=None)
 
-        mock_water_store = MagicMock()
-        mock_water_store.async_load = AsyncMock(
-            return_value={"BREST": mock_water_level_data}
+        # Patch the store creation: `Store[...](hass, version, key)` returns the
+        # mock store matching the storage key
+        mock_stores = {
+            TIDES_STORAGE_KEY: mock_tides_store,
+            COEFF_STORAGE_KEY: mock_coeffs_store,
+            WATERLEVELS_STORAGE_KEY: mock_water_store,
+            WATERTEMP_STORAGE_KEY: mock_watertemp_store,
+            HARBORMINDEPTH_STORAGE_KEY: mock_harborMinDepth_store,
+        }
+        mock_store_class = MagicMock()
+        mock_store_class.__getitem__.return_value = (
+            lambda _hass, _version, key, **_kwargs: mock_stores[key]
         )
-        mock_water_store.async_save = AsyncMock(return_value=None)
-
-        mock_harborMinDepth_store = MagicMock()
-        mock_harborMinDepth_store.async_load = AsyncMock(
-            return_value={"BREST": MOCK_PORT_DATA["harborMinDepth"]}
-        )
-        mock_harborMinDepth_store.async_save = AsyncMock(return_value=None)
-
-        # Patch the store creation
-        with patch(
-            "custom_components.marees_france.__init__.Store",
-            side_effect=[
-                mock_tides_store,
-                mock_coeffs_store,
-                mock_water_store,
-                mock_harborMinDepth_store,
-            ],
-        ):
+        with patch("custom_components.marees_france.Store", mock_store_class):
             yield (
                 fetch_tides_mock,
                 fetch_coeffs_mock,
@@ -382,9 +409,7 @@ async def init_integration(hass: HomeAssistant, mock_api_fetchers_detailed) -> N
     """Set up the Marees France integration for testing."""
     # Mock the frontend module to prevent lingering timers
     with (
-        patch(
-            "custom_components.marees_france.__init__.JSModuleRegistration"
-        ) as mock_js,
+        patch("custom_components.marees_france.JSModuleRegistration") as mock_js,
         patch(
             "custom_components.marees_france.frontend.JSModuleRegistration._async_wait_for_lovelace_resources",
             return_value=None,
@@ -393,12 +418,12 @@ async def init_integration(hass: HomeAssistant, mock_api_fetchers_detailed) -> N
             "homeassistant.helpers.event.async_call_later", return_value=lambda: None
         ),
         patch(
-            "custom_components.marees_france.__init__.fetch_harbors",
+            "custom_components.marees_france.fetch_harbors",
             return_value={"BREST": {"name": "Brest", "id": "BREST"}},
         ),
     ):
         mock_instance = MagicMock()
-        mock_instance.async_register = MagicMock(return_value=True)
+        mock_instance.async_register = AsyncMock(return_value=True)
         mock_js.return_value = mock_instance
 
         # Create a mock config entry

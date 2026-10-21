@@ -34,7 +34,7 @@ async def test_setup_integration(hass):
     # Mock the frontend module
     with (
         patch(
-            "custom_components.marees_france.__init__.JSModuleRegistration",
+            "custom_components.marees_france.JSModuleRegistration",
             MockJSModuleRegistration,
         ),
         patch("custom_components.marees_france.async_setup", return_value=True),
