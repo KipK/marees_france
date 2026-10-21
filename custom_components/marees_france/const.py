@@ -37,6 +37,7 @@ CONF_HARBOR_NAME: Final[str] = (
 )
 CONF_HARBOR_LAT: Final[str] = "harbor_lat"
 CONF_HARBOR_LON: Final[str] = "harbor_lon"
+CONF_HARBOR_TIMEZONE: Final[str] = "harbor_timezone"
 
 # --- Default Values ---
 DEFAULT_HARBOR: Final[str] = "PORNICHET"  # Default harbor for config flow

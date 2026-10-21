@@ -53,6 +53,7 @@ from .const import (
     CONF_HARBOR_LON,
     CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
+    CONF_HARBOR_TIMEZONE,
     DATE_FORMAT,
     DOMAIN,
     HARBORMINDEPTH_STORAGE_KEY,
@@ -76,6 +77,7 @@ from .const import (
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration
+from .harbor_timezone import harbor_timezone_from_properties
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -128,6 +130,7 @@ async def fetch_harbors(
                     "name": harbor_name,
                     "lat": lat,
                     "lon": lon,
+                    "timezone": harbor_timezone_from_properties(properties),
                 }
 
         if not harbors:
@@ -212,6 +215,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new_data[CONF_HARBOR_NAME] = harbor_name
         new_data[CONF_HARBOR_LAT] = harbor_details.get("lat")
         new_data[CONF_HARBOR_LON] = harbor_details.get("lon")
+        new_data[CONF_HARBOR_TIMEZONE] = harbor_details.get("timezone")
 
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
         _LOGGER.info(

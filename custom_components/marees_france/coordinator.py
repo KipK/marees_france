@@ -8,7 +8,6 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable, TypeVar
 
 import aiohttp
-import pytz
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -36,6 +35,7 @@ from .const import (
     CONF_HARBOR_ID,
     CONF_HARBOR_LAT,
     CONF_HARBOR_LON,
+    CONF_HARBOR_TIMEZONE,
     DATE_FORMAT,
     DOMAIN,
     NEAP_TIDE_THRESHOLD,
@@ -46,6 +46,7 @@ from .const import (
     TIDE_LOW,
     PointData,
 )
+from .harbor_timezone import get_harbor_tzinfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -355,11 +356,12 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         await self.prune_watertemp_cache()
 
         if not all(
-            k in self.config_entry.data for k in [CONF_HARBOR_LAT, CONF_HARBOR_LON]
+            k in self.config_entry.data
+            for k in [CONF_HARBOR_LAT, CONF_HARBOR_LON, CONF_HARBOR_TIMEZONE]
         ):
             _LOGGER.info(
-                "Marées France Coordinator: lat/lon not found in config entry for %s. "
-                "Attempting to fetch and update.",
+                "Marées France Coordinator: lat/lon/timezone not found in config entry "
+                "for %s. Attempting to fetch and update.",
                 self.harbor_id,
             )
             try:
@@ -375,12 +377,13 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     new_data = {**self.config_entry.data}
                     new_data[CONF_HARBOR_LAT] = harbor_details["lat"]
                     new_data[CONF_HARBOR_LON] = harbor_details["lon"]
+                    new_data[CONF_HARBOR_TIMEZONE] = harbor_details.get("timezone")
                     self.hass.config_entries.async_update_entry(
                         self.config_entry, data=new_data
                     )
                     _LOGGER.info(
                         "Marées France Coordinator: Successfully updated config entry for %s "
-                        "with lat/lon.",
+                        "with lat/lon/timezone.",
                         self.harbor_id,
                     )
                 else:
@@ -678,7 +681,9 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return {"last_update": last_update_iso}
 
         all_tides_flat: list[dict[str, Any]] = []
-        paris_tz = await self.hass.async_add_executor_job(pytz.timezone, "Europe/Paris")
+        harbor_tz = await self.hass.async_add_executor_job(
+            get_harbor_tzinfo, self.config_entry.data.get(CONF_HARBOR_TIMEZONE)
+        )
 
         for day_str, tides in tides_raw_data.items():
             for tide_info in tides:
@@ -697,7 +702,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     tide_dt_naive = datetime.strptime(
                         f"{day_str} {time_str}", f"{DATE_FORMAT} %H:%M"
                     )
-                    tide_dt_local = paris_tz.localize(tide_dt_naive)
+                    tide_dt_local = harbor_tz.localize(tide_dt_naive)
                     tide_dt_utc = tide_dt_local.astimezone(timezone.utc)
                 except ValueError:
                     _LOGGER.warning(

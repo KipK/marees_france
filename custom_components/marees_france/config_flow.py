@@ -15,6 +15,7 @@ from .const import (
     CONF_HARBOR_ID,
     CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
+    CONF_HARBOR_TIMEZONE,
     DEFAULT_HARBOR,
     DOMAIN,
     INTEGRATION_NAME,
@@ -84,6 +85,7 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
 
                 harbor_name = self._harbors_cache[selected_harbor_id]["name"]
                 harbor_depth = user_input.get(CONF_HARBOR_MIN_DEPTH, 0)
+                harbor_details = self._harbors_cache[selected_harbor_id]
 
                 return self.async_create_entry(
                     title=f"{INTEGRATION_NAME} - {harbor_name}",
@@ -91,6 +93,7 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_HARBOR_ID: selected_harbor_id,
                         CONF_HARBOR_NAME: harbor_name,
                         CONF_HARBOR_MIN_DEPTH: harbor_depth,
+                        CONF_HARBOR_TIMEZONE: harbor_details.get("timezone"),
                     },
                 )
 
