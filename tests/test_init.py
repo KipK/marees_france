@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 import pytest
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -32,8 +33,8 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
     # Mock all the necessary functions
     with (
         patch(
-            "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator.async_refresh",
-            return_value=None,
+            "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._async_update_data",
+            return_value={"last_update": "2025-05-12T00:00:00+00:00"},
         ),
         patch(
             "custom_components.marees_france.frontend.JSModuleRegistration._async_wait_for_lovelace_resources",
@@ -52,12 +53,8 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
         assert await async_setup_component(hass, DOMAIN, {})
         await hass.async_block_till_done()
 
-        # Import the setup entry function
-        from custom_components.marees_france import async_setup_entry
-
-        # Set up the entry
-        assert await async_setup_entry(hass, entry)
-        await hass.async_block_till_done()
+        # Setting up the component also sets up its config entries
+        assert entry.state is ConfigEntryState.LOADED
 
         # Basic assertions
         assert DOMAIN in hass.data
@@ -79,8 +76,8 @@ async def test_async_unload_entry(hass: HomeAssistant) -> None:
     # Mock all the necessary functions
     with (
         patch(
-            "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator.async_refresh",
-            return_value=None,
+            "custom_components.marees_france.coordinator.MareesFranceUpdateCoordinator._async_update_data",
+            return_value={"last_update": "2025-05-12T00:00:00+00:00"},
         ),
         patch(
             "custom_components.marees_france.frontend.JSModuleRegistration._async_wait_for_lovelace_resources",
@@ -99,23 +96,17 @@ async def test_async_unload_entry(hass: HomeAssistant) -> None:
         assert await async_setup_component(hass, DOMAIN, {})
         await hass.async_block_till_done()
 
-        # Import the setup and unload entry functions
-        from custom_components.marees_france import (
-            async_setup_entry,
-            async_unload_entry,
-        )
-
-        # Set up the entry
-        assert await async_setup_entry(hass, entry)
-        await hass.async_block_till_done()
+        # Setting up the component also sets up its config entries
+        assert entry.state is ConfigEntryState.LOADED
 
         # Basic assertions before unloading
         assert DOMAIN in hass.data
         assert entry.entry_id in hass.data[DOMAIN]
 
         # Unload the entry
-        assert await async_unload_entry(hass, entry)
+        assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()
 
         # Check that the entry was unloaded
+        assert entry.state is ConfigEntryState.NOT_LOADED
         assert entry.entry_id not in hass.data.get(DOMAIN, {})

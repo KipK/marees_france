@@ -241,8 +241,13 @@ def reduce_timeouts():
 
 
 @pytest.fixture
-def mock_api_fetchers_detailed():
-    """Mock the API fetchers with detailed data for coordinator tests."""
+def mock_api_fetchers_detailed(freezer):
+    """Mock the API fetchers with detailed data for coordinator tests.
+
+    Time is frozen to the date of the mock data, otherwise the coordinator
+    considers the cached data outdated and tries to refetch it.
+    """
+    freezer.move_to("2025-05-12 12:00:00+00:00")
     # Create mock data for the coordinator
     mock_tides_data = {
         "2025-05-11": [["BM", "20:45", "1.8", "---"]],
