@@ -20,7 +20,7 @@ def test_import():
 
     assert coordinator.MareesFranceUpdateCoordinator is not None
 
-    from custom_components.marees_france import sensor, number
+    from custom_components.marees_france import number, sensor
 
     assert sensor is not None
     assert number is not None

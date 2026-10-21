@@ -1,22 +1,21 @@
 """Module providing configuration for tests"""
 
-from typing import Generator
-from unittest.mock import AsyncMock, patch, MagicMock
+from collections.abc import Generator
 from datetime import timedelta
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from homeassistant.const import CONF_DEVICE_ID, CONF_FRIENDLY_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
-from homeassistant.const import CONF_DEVICE_ID, CONF_FRIENDLY_NAME
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.marees_france.const import (
-    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
+    CONF_HARBOR_MIN_DEPTH,
     DOMAIN,
 )
 from custom_components.marees_france.coordinator import MareesFranceUpdateCoordinator
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 
 # Apply the enable_socket marker to all tests in this directory and subdirectories
 pytestmark = [

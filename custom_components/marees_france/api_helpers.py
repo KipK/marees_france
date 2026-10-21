@@ -2,25 +2,24 @@
 
 from __future__ import annotations
 
-import logging
 import asyncio
+import logging
 from datetime import date, timedelta
 from typing import Any
 
 import aiohttp
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 
 from .const import (
-    HEADERS,
-    WATERLEVELS_URL_TEMPLATE,
-    TIDESURL_TEMPLATE,
-    COEFF_URL_TEMPLATE,
-    WATERTEMP_URL_TEMPLATE,
-    DATE_FORMAT,
     API_REQUEST_DELAY,
+    COEFF_URL_TEMPLATE,
+    DATE_FORMAT,
+    HEADERS,
+    TIDESURL_TEMPLATE,
+    WATERLEVELS_URL_TEMPLATE,
+    WATERTEMP_URL_TEMPLATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -112,7 +111,7 @@ async def _async_fetch_with_retry(
                 err,
                 current_delay,
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             _LOGGER.warning(
                 "Marées France Helper: Unexpected error fetching %s for %s (attempt %d/%d): %s. "
                 "Retrying in %ds...",
@@ -461,11 +460,10 @@ async def _async_fetch_and_store_water_temp(
                 data,
             )
             return False
-    except Exception as e:
+    except Exception:
         _LOGGER.exception(
-            "Marées France Helper: Unexpected error accessing water temp data for %s. Error: %s",
+            "Marées France Helper: Unexpected error accessing water temp data for %s",
             harbor_id,
-            e,
         )
         return False
 
@@ -532,14 +530,10 @@ async def _async_store_harbor_min_depth(
                 min_depth,
             )
             return False
-    except Exception as e:
+    except Exception:
         _LOGGER.exception(
-            "Marées France Helper: Unexpected error accessing min depth data for %s. Error: %s",
+            "Marées France Helper: Unexpected error accessing min depth data for %s",
             harbor_id,
-            e,
-            "Marées France Helper: Min depth is not a float for %s. Data: %s",
-            harbor_id,
-            min_depth,
         )
         return False
     try:

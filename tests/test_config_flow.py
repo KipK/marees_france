@@ -3,25 +3,22 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.marees_france.const import (
-    CONF_HARBOR_MIN_DEPTH,
-    CONF_HARBOR_ID,
-    CONF_HARBOR_NAME,
-    DOMAIN,
-    INTEGRATION_NAME,
-)
 from custom_components.marees_france.config_flow import (
     CannotConnect,
     MareesFranceConfigFlow,
 )
-
+from custom_components.marees_france.const import (
+    CONF_HARBOR_ID,
+    CONF_HARBOR_MIN_DEPTH,
+    CONF_HARBOR_NAME,
+    DOMAIN,
+    INTEGRATION_NAME,
+)
 from tests.conftest import MOCK_CONFIG_ENTRY_DATA, MOCK_PORT_DATA
 
 # Define a mock harbor cache based on MOCK_PORT_DATA

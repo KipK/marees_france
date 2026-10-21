@@ -7,46 +7,54 @@ It sets up sensors, services, and handles data fetching and caching.
 
 from __future__ import annotations
 
-import logging
 import asyncio
-from datetime import date, timedelta
+import logging
 import random
+from datetime import date, timedelta
 from typing import Any
 
 # Third-party imports
 import aiohttp
+import homeassistant.helpers.config_validation as cv
+import homeassistant.helpers.device_registry as dr
 import voluptuous as vol
+from homeassistant.components import websocket_api
 
 # Home Assistant core imports
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import (
+    EVENT_HOMEASSISTANT_STARTED,
+    CoreState,
     HomeAssistant,
     ServiceCall,
     ServiceResponse,
     SupportsResponse,
-    CoreState,
-    EVENT_HOMEASSISTANT_STARTED,
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.storage import Store
-import homeassistant.helpers.config_validation as cv
-import homeassistant.helpers.device_registry as dr
-from homeassistant.components import websocket_api
+
+from .api_helpers import (
+    _async_fetch_and_store_coefficients,
+    _async_fetch_and_store_tides,
+    _async_fetch_and_store_water_level,
+    _async_fetch_and_store_water_temp,
+    _async_store_harbor_min_depth,
+)
 
 # Local application/library specific imports
 from .const import (
     ATTR_DATE,
     COEFF_STORAGE_KEY,
     COEFF_STORAGE_VERSION,
-    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
+    CONF_HARBOR_LAT,
+    CONF_HARBOR_LON,
+    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
     DATE_FORMAT,
     DOMAIN,
-    CONF_HARBOR_LAT,
-    CONF_HARBOR_LON,
     HARBORMINDEPTH_STORAGE_KEY,
     HARBORMINDEPTH_STORAGE_VERSION,
     HARBORSURL,
@@ -54,11 +62,11 @@ from .const import (
     INTEGRATION_VERSION,
     PLATFORMS,
     SERVICE_GET_COEFFICIENTS_DATA,
+    SERVICE_GET_HARBOR_MIN_DEPTH,
     SERVICE_GET_TIDES_DATA,
     SERVICE_GET_WATER_LEVELS,
-    SERVICE_REINITIALIZE_HARBOR_DATA,
     SERVICE_GET_WATER_TEMP,
-    SERVICE_GET_HARBOR_MIN_DEPTH,
+    SERVICE_REINITIALIZE_HARBOR_DATA,
     TIDES_STORAGE_KEY,
     TIDES_STORAGE_VERSION,
     WATERLEVELS_STORAGE_KEY,
@@ -68,14 +76,6 @@ from .const import (
 )
 from .coordinator import MareesFranceUpdateCoordinator
 from .frontend import JSModuleRegistration
-from .api_helpers import (
-    _async_fetch_and_store_water_level,
-    _async_fetch_and_store_tides,
-    _async_fetch_and_store_coefficients,
-    _async_fetch_and_store_water_temp,
-    _async_store_harbor_min_depth,
-)
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1737,10 +1737,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Marées France: Running daily water temperature prefetch job.")
         try:
             await async_check_and_prefetch_watertemp(hass, entry, watertemp_store)
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Marées France: Error during scheduled water temperature prefetch job: %s",
-                e,
+                "Marées France: Error during scheduled water temperature prefetch job"
             )
 
     rand_wt_hour = random.randint(1, 5)
@@ -1869,12 +1868,11 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
                     store_name,
                     harbor_id,
                 )
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Error removing %s cache data for harbor %s: %s",
+                "Error removing %s cache data for harbor %s",
                 store_name,
                 harbor_id,
-                e,
             )
 
     _LOGGER.info("Finished removing cached data for harbor %s.", harbor_id)

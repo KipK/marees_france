@@ -9,7 +9,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 
-from ..const import JSMODULES, URL_BASE  # noqa: TID252
+from ..const import JSMODULES, URL_BASE
 
 _LOGGER = logging.getLogger(__name__)
 

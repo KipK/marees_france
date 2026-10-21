@@ -18,7 +18,7 @@ export function localizeCard(
 ): string {
   const lang = hass?.language || 'en';
   const langTranslations = translations[lang] || translations.en; // Fallback to English
-  let translated: string = key; // Default to key, explicitly typed
+  let translated: string;
 
   try {
     // Use type assertion for the accumulator 'o' to handle nested structure

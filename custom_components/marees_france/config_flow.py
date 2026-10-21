@@ -6,15 +6,14 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import fetch_harbors  # fetch_harbors is defined in __init__.py
 from .const import (
-    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
+    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
     DEFAULT_HARBOR,
     DOMAIN,
@@ -67,8 +66,8 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
             except CannotConnect as err:
                 _LOGGER.error("Failed to connect to SHOM API to fetch harbors: %s", err)
                 return self.async_abort(reason="cannot_connect")
-            except Exception as err:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected error fetching harbors: %s", err)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected error fetching harbors")
                 return self.async_abort(reason="unknown")
 
         if user_input is not None:

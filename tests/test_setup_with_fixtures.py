@@ -1,10 +1,10 @@
 """Test setup with explicit fixtures."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from homeassistant.setup import async_setup_component
+
 from custom_components.marees_france.const import DOMAIN
 
 

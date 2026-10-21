@@ -117,11 +117,11 @@ export class DataManager {
       if (error instanceof Error) {
         const haError = error as Error & { code?: string | number };
         if (haError.code) {
-          throw new Error(`${haError.message} (Code: ${haError.code})`);
+          throw new Error(`${haError.message} (Code: ${haError.code})`, { cause: error });
         }
         throw haError;
       }
-      throw new Error(`Unknown error calling websocket command ${type}`);
+      throw new Error(`Unknown error calling websocket command ${type}`, { cause: error });
     }
   }
 

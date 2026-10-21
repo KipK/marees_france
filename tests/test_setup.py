@@ -1,9 +1,10 @@
 """Test basic setup of the integration."""
 
-import pytest
 from unittest.mock import patch
 
+import pytest
 from homeassistant.setup import async_setup_component
+
 from custom_components.marees_france.const import DOMAIN
 
 
@@ -12,7 +13,6 @@ class MockJSModuleRegistration:
 
     def __init__(self, *args, **kwargs):
         """Initialize."""
-        pass
 
     async def async_register(self):
         """Mock register method."""

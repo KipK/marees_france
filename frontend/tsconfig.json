@@ -14,7 +14,7 @@
     "noEmit": true, // Do not emit output files, let Webpack handle it
     "resolveJsonModule": true, // Allow importing JSON modules
     "isolatedModules": true, // Ensure modules can be transpiled independently (required by some tools)
-    "lib": ["ES2020", "DOM", "DOM.Iterable"], // Standard libraries to include
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], // Standard libraries to include
     "sourceMap": true // Generate source maps for debugging
   },
   "include": ["src/**/*"], // Which files to include

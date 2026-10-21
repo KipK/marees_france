@@ -2,21 +2,28 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
 import logging
-from typing import Any, Callable, Coroutine, List, Tuple, TypeVar
+from collections.abc import Coroutine
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Callable, TypeVar
 
 import aiohttp
 import pytz
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.util import dt as dt_util
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
+from .api_helpers import (
+    _async_fetch_and_store_coefficients,
+    _async_fetch_and_store_tides,
+    _async_fetch_and_store_water_level,
+    _async_fetch_and_store_water_temp,
+    _async_store_harbor_min_depth,
+)
 from .const import (
     ATTR_COEFFICIENT,
     ATTR_CURRENT_HEIGHT,
@@ -38,13 +45,6 @@ from .const import (
     TIDE_HIGH,
     TIDE_LOW,
     PointData,
-)
-from .api_helpers import (
-    _async_fetch_and_store_water_level,
-    _async_fetch_and_store_tides,
-    _async_fetch_and_store_coefficients,
-    _async_fetch_and_store_water_temp,
-    _async_store_harbor_min_depth,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.water_level_store = water_level_store
         self.watertemp_store = watertemp_store
         self.harborMinDepth_store = harborMinDepth_store
-        self.pointsData: List[PointData] = []
+        self.pointsData: list[PointData] = []
         self.websession = websession or async_get_clientsession(hass)
 
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
@@ -132,11 +132,10 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     len(keys_to_prune),
                     self.harbor_id,
                 )
-        except Exception as e:
+        except Exception:
             _LOGGER.exception(
-                "Marées France Coordinator: Error pruning water temperature cache for %s: %s",
+                "Marées France Coordinator: Error pruning water temperature cache for %s",
                 self.harbor_id,
-                e,
             )
 
     async def _validate_and_repair_cache(
@@ -314,15 +313,14 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         :param value: The new value for the number
         """
 
-        if value >= 0:
-            if not await _async_store_harbor_min_depth(
-                self.hass, self.harborMinDepth_store, self.harbor_id, value
-            ):
-                _LOGGER.error(
-                    "Marées France Coordinator: Failed to store new min depth to boat "
-                    "value for %s after update from number.",
-                    self.harbor_id,
-                )
+        if value >= 0 and not await _async_store_harbor_min_depth(
+            self.hass, self.harborMinDepth_store, self.harbor_id, value
+        ):
+            _LOGGER.error(
+                "Marées France Coordinator: Failed to store new min depth to boat "
+                "value for %s after update from number.",
+                self.harbor_id,
+            )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch and process tide, coefficient, and water level data.
@@ -423,7 +421,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Validate water levels, but repair fetch only targets today if triggered by validation.
         # Full prefetch is handled by scheduled jobs in __init__.py.
-        _, harbor_water_level_cache_validated = await self._validate_and_repair_cache(
+        _, _harbor_water_level_cache_validated = await self._validate_and_repair_cache(
             self.water_level_store,
             water_level_cache_full,
             "water_levels",
@@ -562,8 +560,8 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Error processing data: {err}") from err
 
     async def _process_pointsData(
-        self, levels_data: List[Tuple[str, str]]
-    ) -> List[PointData]:
+        self, levels_data: list[tuple[str, str]]
+    ) -> list[PointData]:
         """
         Transform raw data to objet PointData(totalMinute;height)
         """
@@ -586,7 +584,7 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     continue
 
                 # Conversion du temps (HH:MM)
-                hours_str, minutes_str, seconds = time_str.split(":")
+                hours_str, minutes_str, _seconds = time_str.split(":")
                 hours, minutes = int(hours_str), int(minutes_str)
                 total_min = hours * 60 + minutes
 

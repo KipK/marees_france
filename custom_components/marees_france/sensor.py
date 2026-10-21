@@ -64,7 +64,9 @@ async def async_setup_entry(
     ]
 
     async_add_entities(sensors_to_add, update_before_add=True)
-    _LOGGER.debug("Added %d Marées France sensors for harbor: %s", len(sensors_to_add), harbor_id)
+    _LOGGER.debug(
+        "Added %d Marées France sensors for harbor: %s", len(sensors_to_add), harbor_id
+    )
 
 
 class MareesFranceBaseSensor(

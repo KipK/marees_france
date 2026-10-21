@@ -414,19 +414,6 @@ export class GraphRenderer {
         const minDepthY = this._heightToY(harborMinDepthValue!); // Keep numeric for comparison
         const minDepthYStr = minDepthY.toFixed(2); // String for path
 
-        // Avoid double opacity: Clip the standard fillPath so it stops at the danger zone limit
-        // We must respect currentDepth if it exists (for current day display)
-        let clipHeight = harborMinDepthValue!;
-        if (currentDepth !== null) {
-          clipHeight = Math.max(clipHeight, currentDepth);
-        }
-
-        const clipY = this._heightToY(clipHeight).toFixed(2);
-        const pathDataClamped = this.pointsData.map(p =>
-          `L ${this._timeToX(p.totalMinutes).toFixed(2)} ${this._heightToY(Math.max(p.heightNum, clipHeight)).toFixed(2)}`
-        ).join(' ').replace('L', 'M');
-        fillPath = `M ${firstX.toFixed(2)} ${clipY} ${pathDataClamped.replace(/^M/, 'L')} L ${lastX.toFixed(2)} ${clipY} Z`;
-
         // Calculate exclusion zones (gaps) for the limit line where it intersects with tide text
         const gaps: { start: number, end: number }[] = [];
         const tideEventsForDayGaps: TideEventTuple[] | undefined = tideData[selectedDay];

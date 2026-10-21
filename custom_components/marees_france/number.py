@@ -5,22 +5,20 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.number import NumberDeviceClass, NumberMode, RestoreNumber
-
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import UnitOfLength
 
 from .const import (
     CONF_HARBOR_ID,
-    CONF_HARBOR_NAME,
     CONF_HARBOR_MIN_DEPTH,
+    CONF_HARBOR_NAME,
     DOMAIN,
     MANUFACTURER,
 )
-
 from .coordinator import MareesFranceUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
