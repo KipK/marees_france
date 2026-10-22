@@ -1,7 +1,7 @@
 {
   "domain": "marees_france",
   "name": "Marées France",
-  "integration_type": "weather_alerts.forecasts",
+  "integration_type": "service",
   "after_dependencies": [],
   "codeowners": [
     "@KipK"
