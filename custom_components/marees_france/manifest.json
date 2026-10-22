@@ -1,6 +1,7 @@
 {
   "domain": "marees_france",
   "name": "Marées France",
+  "integration_type": "service",
   "after_dependencies": [],
   "codeowners": [
     "@KipK"
@@ -17,8 +18,5 @@
     "marees_france"
   ],
   "quality_scale": "platinum",
-  "requirements": [
-    "aiohttp>=3.9.0"
-  ],
   "version": "0.0.0"
 }

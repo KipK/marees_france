@@ -1,26 +1,35 @@
 name: Release
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2	
-      - name: "Set version number from trigger's tag"
+        uses: actions/checkout@v7
+
+      - name: Inject release version into manifest.json
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
         run: |
-          yq -i -o json '.version="${{ github.ref_name }}"' \
-            "${{ github.workspace }}/custom_components/marees_france/manifest.json"
+          CLEAN_VERSION="${VERSION#v}"
+          jq --arg v "$CLEAN_VERSION" '.version = $v' \
+            custom_components/marees_france/manifest.json > manifest.tmp \
+            && mv manifest.tmp custom_components/marees_france/manifest.json
+
       - name: Build frontend
-        run:  cd frontend && npm install && npm run lint && npm run build
+        run: cd frontend && npm ci && npm run lint && npm run build
+
       - name: Create ZIP archive
         run: mkdir -p tmp_dist && cd custom_components/marees_france/ && zip -r ../../tmp_dist/marees_france.zip .
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Upload ZIP to Release
+        uses: softprops/action-gh-release@v3
         with:
-          draft: true
-          generate_release_notes: true
-          files: tmp_dist/*.zip
+          tag_name: ${{ github.event.release.tag_name }}
+          files: tmp_dist/marees_france.zip
