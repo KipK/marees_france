@@ -354,9 +354,11 @@ async def test_network_failure_is_one_bounded_attempt(error):
     session = MagicMock()
     session.get.return_value.__aenter__ = AsyncMock(return_value=response)
     session.get.return_value.__aexit__ = AsyncMock(return_value=None)
-    with patch("custom_components.marees_france.api_helpers.API_REQUEST_DELAY", 0):
-        with pytest.raises(ServiceUnavailable):
-            await _async_fetch(session, "https://example.test", {}, 1, "BREST", "tides")
+    with (
+        patch("custom_components.marees_france.api_helpers.API_REQUEST_DELAY", 0),
+        pytest.raises(ServiceUnavailable),
+    ):
+        await _async_fetch(session, "https://example.test", {}, 1, "BREST", "tides")
     session.get.assert_called_once()
 
 

@@ -9,7 +9,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14.2"
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout git
         uses: actions/checkout@v2
       - name: Install the code linting and formatting tool Ruff
-        run: pipx install ruff
+        run: pipx install ruff==0.17.1
       - name: Lint code with Ruff
         run: ruff check --output-format=github --target-version=py39
       - name: Check code formatting with Ruff

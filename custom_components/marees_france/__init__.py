@@ -652,8 +652,10 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
     await coordinator.async_stop_fetching()
     try:
         for store in (
-            coordinator.tides_store, coordinator.coeff_store,
-            coordinator.water_level_store, coordinator.watertemp_store,
+            coordinator.tides_store,
+            coordinator.coeff_store,
+            coordinator.water_level_store,
+            coordinator.watertemp_store,
         ):
             locks = hass.data.setdefault(f"{DOMAIN}_cache_locks", {})
             async with locks.setdefault(store.key, asyncio.Lock()):
