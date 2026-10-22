@@ -343,11 +343,11 @@ async def _get_device_and_harbor_id(
     device_entry = dev_reg.async_get(device_id)
     if not device_entry:
         raise HomeAssistantError(f"Device not found: {device_id}")
-    if not device_entry.config_entries:
+    if not device_entry.config_entry_id:
         raise HomeAssistantError(
             f"Device {device_id} not associated with a config entry"
         )
-    config_entry_id = next(iter(device_entry.config_entries))
+    config_entry_id = device_entry.config_entry_id
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
         raise HomeAssistantError(
@@ -703,7 +703,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
 
     dev_reg = dr.async_get(hass)
     device_entry = dev_reg.async_get(device_id)
-    if not device_entry or not device_entry.config_entries:
+    if not device_entry or not device_entry.config_entry_id:
         _LOGGER.error(
             "Reinitialize Service: Device %s not found or not linked to Marées France.",
             device_id,
@@ -711,7 +711,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         raise HomeAssistantError(
             f"Device {device_id} not found or not linked to Marées France."
         )
-    config_entry_id = next(iter(device_entry.config_entries))
+    config_entry_id = device_entry.config_entry_id
     config_entry = hass.config_entries.async_get_entry(config_entry_id)
     if not config_entry or config_entry.domain != DOMAIN:
         _LOGGER.error(
