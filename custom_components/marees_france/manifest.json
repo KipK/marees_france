@@ -17,8 +17,5 @@
     "marees_france"
   ],
   "quality_scale": "platinum",
-  "requirements": [
-    "aiohttp>=3.9.0"
-  ],
   "version": "0.0.0"
 }
