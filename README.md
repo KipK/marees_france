@@ -216,9 +216,15 @@ npm run docs
 
 ### Unit Tests
 
+Tests target Home Assistant 2026.10.2 and require Python 3.14.2 or newer.
+The Home Assistant and pytest plugin versions are pinned together in
+`requirements-test.txt` and used by GitHub Actions.
+
 ```bash
-pip install -r requirements-test.txt
-npm run test
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-test.txt
+python -m pytest -q --timeout=30
 ```
 
 ---

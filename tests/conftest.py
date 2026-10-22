@@ -60,7 +60,7 @@ def mock_js_module():
     mock_instance.async_register = AsyncMock(return_value=True)
 
     with patch(
-        "custom_components.marees_france.frontend.JSModuleRegistration",
+        "custom_components.marees_france.JSModuleRegistration",
         return_value=mock_instance,
     ):
         yield
