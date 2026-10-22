@@ -13,6 +13,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from . import fetch_harbors  # fetch_harbors is defined in __init__.py
 from .const import (
     CONF_HARBOR_ID,
+    CONF_HARBOR_LAT,
+    CONF_HARBOR_LON,
     CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
     CONF_HARBOR_TIMEZONE,
@@ -94,6 +96,8 @@ class MareesFranceConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_HARBOR_NAME: harbor_name,
                         CONF_HARBOR_MIN_DEPTH: harbor_depth,
                         CONF_HARBOR_TIMEZONE: harbor_details.get("timezone"),
+                        CONF_HARBOR_LAT: harbor_details.get("lat"),
+                        CONF_HARBOR_LON: harbor_details.get("lon"),
                     },
                 )
 

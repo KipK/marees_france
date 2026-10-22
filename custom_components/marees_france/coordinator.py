@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from collections.abc import Coroutine
+import random
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Callable, TypeVar
+from typing import Any
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -23,6 +25,7 @@ from .api_helpers import (
     _async_fetch_and_store_water_temp,
     _async_store_harbor_min_depth,
 )
+from .availability import ServiceUnavailable, async_get_availability
 from .const import (
     ATTR_COEFFICIENT,
     ATTR_CURRENT_HEIGHT,
@@ -35,6 +38,7 @@ from .const import (
     CONF_HARBOR_ID,
     CONF_HARBOR_LAT,
     CONF_HARBOR_LON,
+    CONF_HARBOR_NAME,
     CONF_HARBOR_TIMEZONE,
     DATE_FORMAT,
     DOMAIN,
@@ -50,7 +54,15 @@ from .harbor_timezone import get_harbor_tzinfo
 
 _LOGGER = logging.getLogger(__name__)
 
-T = TypeVar("T")
+SOURCES = (
+    "harbor metadata",
+    "tides",
+    "coefficients",
+    "water levels",
+    "water temperature",
+)
+FETCH_INTERVAL = 300
+RETRY_INTERVAL = 30
 
 
 class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -99,6 +111,13 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.pointsData: list[PointData] = []
         self.websession = websession or async_get_clientsession(hass)
 
+        self._fetching = False
+        self._fetch_tasks: dict[str, asyncio.Task] = {}
+        self._fetch_timers: dict[str, Any] = {}
+        self._retry_delays: dict[str, float] = {}
+        self._availability = async_get_availability(hass)
+        self.options = dict(entry.options)
+
         update_interval = timedelta(minutes=5)  # Frequent updates for water levels
 
         super().__init__(
@@ -109,201 +128,227 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config_entry=entry,
         )
 
-    async def prune_watertemp_cache(self) -> None:
-        """Remove water temperature entries older than today."""
+    @callback
+    def async_start_fetching(self) -> None:
+        """Start entry-owned tasks that Home Assistant never waits for at startup."""
+        self._fetching = True
+        for source in SOURCES:
+            self._async_launch_source(source)
+
+    @callback
+    def _async_launch_source(self, source: str) -> None:
+        if not self._fetching or self.hass.is_stopping:
+            return
+        task = self._fetch_tasks.get(source)
+        if task is not None and not task.done():
+            return
+        if cancel := self._fetch_timers.pop(source, None):
+            cancel()
+        self._fetch_tasks[source] = self.config_entry.async_create_background_task(
+            self.hass,
+            self._async_refresh_source(source),
+            f"{DOMAIN} {self.harbor_id} {source}",
+        )
+
+    async def async_stop_fetching(self) -> None:
+        """Cancel requests and pending retries before unload or reinitialization."""
+        self._fetching = False
+        for cancel in self._fetch_timers.values():
+            cancel()
+        self._fetch_timers.clear()
+        tasks = list(self._fetch_tasks.values())
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        self._fetch_tasks.clear()
+
+    async def async_shutdown(self) -> None:
+        await self.async_stop_fetching()
+        self._availability.async_remove_entry(self.config_entry.entry_id)
+        await super().async_shutdown()
+
+    async def _async_refresh_source(self, source: str) -> None:
+        """Fetch one source, publish promptly, and schedule its next attempt."""
+        provider = "Meteoconsult" if source == "water temperature" else "SHOM"
+        delay = FETCH_INTERVAL
         try:
-            cache = await self.watertemp_store.async_load() or {}
-            harbor_cache = cache.get(self.harbor_id)
-            if not harbor_cache:
-                return
-
-            today = date.today()
-            keys_to_prune = [
-                key
-                for key in harbor_cache
-                if date.fromisoformat(key.split("T")[0]) < today
-            ]
-
-            if keys_to_prune:
-                for key in keys_to_prune:
-                    del harbor_cache[key]
-                await self.watertemp_store.async_save(cache)
-                _LOGGER.debug(
-                    "Marées France Coordinator: Pruned %d old water temperature entries for %s",
-                    len(keys_to_prune),
-                    self.harbor_id,
-                )
+            result = await self._async_fetch_source(source)
+            if result is False:
+                # Local storage failures are logged by the helpers, not reported
+                # as upstream outages.
+                delay = self._retry_delays.get(source, RETRY_INTERVAL)
+            else:
+                self._retry_delays.pop(source, None)
+                if result is True:
+                    self._availability.async_update(
+                        self.config_entry.entry_id,
+                        self.harbor_id,
+                        source,
+                        provider,
+                        True,
+                    )
+        except ServiceUnavailable as err:
+            _LOGGER.warning("%s: %s", self.harbor_id, err)
+            self._availability.async_update(
+                self.config_entry.entry_id, self.harbor_id, source, provider, False
+            )
+            delay = self._retry_delays.get(source, RETRY_INTERVAL)
         except Exception:
-            _LOGGER.exception(
-                "Marées France Coordinator: Error pruning water temperature cache for %s",
-                self.harbor_id,
-            )
+            _LOGGER.exception("Error updating %s for %s", source, self.harbor_id)
+            delay = self._retry_delays.get(source, RETRY_INTERVAL)
+        finally:
+            # Also publish partial results (e.g. today's levels before a future
+            # day's request fails). Cancellation must propagate without retries.
+            if self._fetching and not asyncio.current_task().cancelling():
+                await self.async_refresh()
+                if delay != FETCH_INTERVAL or source in self._retry_delays:
+                    self._retry_delays[source] = min(delay * 2, FETCH_INTERVAL)
+                    delay *= random.uniform(0.8, 1.0)
 
-    async def _validate_and_repair_cache(
-        self,
-        store: Store[dict[str, dict[str, Any]]],
-        cache_full: dict[str, dict[str, Any]],
-        data_type: str,
-        fetch_function: Callable[
-            [
-                HomeAssistant,
-                Store[dict[str, dict[str, Any]]],
-                dict[str, dict[str, Any]],
-                str,
-                *Any,
-                aiohttp.ClientSession | None,
-            ],
-            Coroutine[Any, Any, bool | dict[str, Any] | None],
-        ],
-        fetch_args: tuple[Any, ...],
-    ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
-        """Validate cache for the harbor, repair if needed, and return caches.
+                @callback
+                def _retry(_):
+                    self._async_launch_source(source)
 
-        Checks if the cache for the specific harbor and data type is present and
-        has a valid basic structure. If not, it attempts to clear the invalid
-        entry and re-fetch the data using the provided `fetch_function`.
+                self._fetch_timers[source] = async_call_later(self.hass, delay, _retry)
 
-        Args:
-            store: The data store instance (tides, coefficients, or water levels).
-            cache_full: The entire cache dictionary loaded from the store.
-            data_type: A string identifying the type of data ("tides",
-                       "coefficients", "water_levels").
-            fetch_function: The async function to call to re-fetch data if repair
-                            is needed.
-            fetch_args: A tuple of arguments to pass to the `fetch_function`
-                        (excluding hass, store, cache_full, harbor_id which are
-                        passed automatically).
+    async def _async_fetch_source(self, source: str) -> bool | None:
+        """Fill gaps in one cache without waiting for another provider."""
+        today = date.today()
+        if source == "harbor metadata":
+            data = self.config_entry.data
+            if (
+                data.get(CONF_HARBOR_LAT) is not None
+                and data.get(CONF_HARBOR_LON) is not None
+                and CONF_HARBOR_TIMEZONE in data
+                and data.get(CONF_HARBOR_NAME) is not None
+            ):
+                return True
+            from . import CannotConnect, fetch_harbors
 
-        Returns:
-            A tuple containing:
-                - The (potentially modified) full cache dictionary.
-                - The harbor-specific cache dictionary (potentially re-fetched).
-        """
-        harbor_cache = cache_full.get(self.harbor_id, {})
-        needs_repair = False
-
-        if not isinstance(harbor_cache, dict):
-            _LOGGER.warning(
-                "Marées France Coordinator: Invalid cache format for %s harbor '%s': "
-                "Expected dict, got %s.",
-                data_type,
-                self.harbor_id,
-                type(harbor_cache).__name__,
-            )
-            needs_repair = True
-        elif (
-            not harbor_cache and data_type != "water_levels"
-        ):  # Allow empty water_levels initially
-            _LOGGER.warning(
-                "Marées France Coordinator: Empty %s cache entry found for harbor '%s'.",
-                data_type,
-                self.harbor_id,
-            )
-            needs_repair = True
-        else:
-            # Specific validation for data structures within the harbor_cache
-            if data_type == "water_levels":
-                for date_key, daily_data in harbor_cache.items():
-                    if (
-                        not isinstance(daily_data, dict)
-                        or date_key not in daily_data
-                        or not isinstance(daily_data.get(date_key), list)
-                    ):
-                        _LOGGER.warning(
-                            "Marées France Coordinator: Invalid %s cache structure for "
-                            "harbor '%s', date '%s'.",
-                            data_type,
-                            self.harbor_id,
-                            date_key,
-                        )
-                        needs_repair = True
-                        break
-            elif data_type == "watertemp":
-                for date_key, daily_data in harbor_cache.items():
-                    if not isinstance(daily_data, list) or not all(
-                        isinstance(item, dict) for item in daily_data
-                    ):
-                        _LOGGER.warning(
-                            "Marées France Coordinator: Invalid %s cache data for harbor '%s', "
-                            "date '%s': Expected list of dicts, got %s.",
-                            data_type,
-                            self.harbor_id,
-                            date_key,
-                            type(daily_data).__name__,
-                        )
-                        needs_repair = True
-                        break
-            else:  # Tides and Coefficients expect a list of items per date
-                for date_key, daily_data in harbor_cache.items():
-                    if not isinstance(daily_data, list):
-                        _LOGGER.warning(
-                            "Marées France Coordinator: Invalid %s cache data for harbor '%s', "
-                            "date '%s': Expected list, got %s.",
-                            data_type,
-                            self.harbor_id,
-                            date_key,
-                            type(daily_data).__name__,
-                        )
-                        needs_repair = True
-                        break
-
-        if needs_repair:
-            _LOGGER.warning(
-                "Marées France Coordinator: Invalid or empty %s cache detected "
-                "for %s. Attempting repair.",
-                data_type,
-                self.harbor_id,
-            )
             try:
-                if self.harbor_id in cache_full:
-                    del cache_full[self.harbor_id]
-                await store.async_save(cache_full)
-                _LOGGER.info(
-                    "Marées France Coordinator: Removed invalid %s cache entry for %s.",
-                    data_type,
-                    self.harbor_id,
-                )
+                details = (await fetch_harbors(self.websession)).get(self.harbor_id)
+            except CannotConnect as err:
+                raise ServiceUnavailable(str(err)) from err
+            if not details or details.get("lat") is None or details.get("lon") is None:
+                raise ServiceUnavailable(f"Missing SHOM metadata for {self.harbor_id}")
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={
+                    **data,
+                    CONF_HARBOR_NAME: details.get("name", self.harbor_id),
+                    CONF_HARBOR_LAT: details["lat"],
+                    CONF_HARBOR_LON: details["lon"],
+                    CONF_HARBOR_TIMEZONE: details.get("timezone"),
+                },
+            )
+            self._async_launch_source("water temperature")
+            return True
 
-                _LOGGER.info(
-                    "Marées France Coordinator: Triggering immediate fetch for %s data "
-                    "for %s.",
-                    data_type,
-                    self.harbor_id,
-                )
-                fetch_successful = await fetch_function(
-                    self.hass,
-                    store,
-                    cache_full,
-                    self.harbor_id,
-                    *fetch_args,
-                    websession=self.websession,
-                )
+        if source == "water temperature":
+            lat = self.config_entry.data.get(CONF_HARBOR_LAT)
+            lon = self.config_entry.data.get(CONF_HARBOR_LON)
+            if lat is None or lon is None:
+                return None
+            store = self.watertemp_store
+            start, days = today, 7
+        elif source == "tides":
+            store = self.tides_store
+            start, days = today - timedelta(days=1), 8
+        elif source == "coefficients":
+            store = self.coeff_store
+            start, days = today.replace(day=1), 365
+        else:
+            store = self.water_level_store
+            start, days = today, 8
 
-                if fetch_successful:
-                    _LOGGER.info(
-                        "Marées France Coordinator: Successfully re-fetched %s data for %s "
-                        "after cache repair.",
-                        data_type,
-                        self.harbor_id,
+        cache = await store.async_load() or {}
+        cache = dict(cache) if isinstance(cache, dict) else {}
+        harbor_cache = self._valid_harbor_cache(cache, source)
+        missing = [
+            (start + timedelta(days=i)).strftime(DATE_FORMAT)
+            for i in range(days)
+            if (start + timedelta(days=i)).strftime(DATE_FORMAT) not in harbor_cache
+        ]
+        if not missing:
+            return True
+        # Repair in memory. Never delete usable cached dates before a fetch.
+        cache[self.harbor_id] = harbor_cache
+        if source == "tides":
+            return await _async_fetch_and_store_tides(
+                self.hass,
+                store,
+                cache,
+                self.harbor_id,
+                start.strftime(DATE_FORMAT),
+                days,
+                websession=self.websession,
+            )
+        if source == "coefficients":
+            return await _async_fetch_and_store_coefficients(
+                self.hass,
+                store,
+                cache,
+                self.harbor_id,
+                start,
+                days,
+                websession=self.websession,
+            )
+        if source == "water temperature":
+            return await _async_fetch_and_store_water_temp(
+                self.hass,
+                store,
+                cache,
+                self.harbor_id,
+                lat,
+                lon,
+                websession=self.websession,
+            )
+        for date_str in missing:
+            if not await _async_fetch_and_store_water_level(
+                self.hass,
+                store,
+                cache,
+                self.harbor_id,
+                date_str,
+                websession=self.websession,
+            ):
+                return False
+            await self.async_refresh()
+        return True
+
+    def _valid_harbor_cache(self, cache: Any, source: str) -> dict[str, Any]:
+        """Ignore invalid or expired dates without destroying other cached data."""
+        if not isinstance(cache, dict):
+            return {}
+        harbor_cache = cache.get(self.harbor_id)
+        if not isinstance(harbor_cache, dict):
+            return {}
+        result = {}
+        earliest = date.today() - timedelta(days=1 if source == "tides" else 0)
+        if source == "coefficients":
+            earliest = date.today().replace(day=1)
+        for key, value in harbor_cache.items():
+            try:
+                if date.fromisoformat(key) < earliest:
+                    continue
+            except (TypeError, ValueError):
+                continue
+            if source == "water levels":
+                valid = isinstance(value, dict) and isinstance(value.get(key), list)
+            elif source == "water temperature":
+                valid = (
+                    isinstance(value, list)
+                    and bool(value)
+                    and all(
+                        isinstance(item, dict) and "datetime" in item and "temp" in item
+                        for item in value
                     )
-                    cache_full = await store.async_load() or {}
-                    harbor_cache = cache_full.get(self.harbor_id, {})
-                else:
-                    _LOGGER.error(
-                        "Marées France Coordinator: Failed to re-fetch %s data for %s "
-                        "after cache repair.",
-                        data_type,
-                        self.harbor_id,
-                    )
-                    harbor_cache = {}
-            except Exception:
-                _LOGGER.exception(
-                    "Marées France Coordinator: Error during %s cache repair for %s.",
-                    data_type,
-                    self.harbor_id,
                 )
-                harbor_cache = {}
-        return cache_full, harbor_cache
+            else:
+                valid = isinstance(value, list)
+            if valid:
+                result[key] = value
+        return result
 
     async def _async_update_from_number(self, unique_id: str, value: float) -> None:
         """
@@ -324,206 +369,27 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch and process tide, coefficient, and water level data.
-
-        This is the core method called by DataUpdateCoordinator to refresh data.
-        It loads data from caches, validates/repairs them, fetches today's
-        water levels if missing, and then parses all data into a structured
-        format for sensors.
-
-        Returns:
-            A dictionary containing the processed data for the harbor.
-
-        Raises:
-            UpdateFailed: If essential data (like tides) cannot be loaded or fetched.
-        """
-        _LOGGER.debug(
-            "Marées France Coordinator: Starting update cycle for %s", self.harbor_id
-        )
-
+        """Process cached data only; network I/O belongs to background workers."""
         try:
-            tides_cache_full = await self.tides_store.async_load() or {}
-            coeff_cache_full = await self.coeff_store.async_load() or {}
-            water_level_cache_full = await self.water_level_store.async_load() or {}
-            watertemp_cache_full = await self.watertemp_store.async_load() or {}
-        except Exception as e:
-            _LOGGER.exception(
-                "Marées France Coordinator: Failed to load cache stores for %s",
-                self.harbor_id,
+            harbor_tides_cache = self._valid_harbor_cache(
+                await self.tides_store.async_load(), "tides"
             )
-            raise UpdateFailed(f"Failed to load cache: {e}") from e
-
-        await self.prune_watertemp_cache()
-
-        if not all(
-            k in self.config_entry.data
-            for k in [CONF_HARBOR_LAT, CONF_HARBOR_LON, CONF_HARBOR_TIMEZONE]
-        ):
-            _LOGGER.info(
-                "Marées France Coordinator: lat/lon/timezone not found in config entry "
-                "for %s. Attempting to fetch and update.",
-                self.harbor_id,
+            harbor_coeff_cache = self._valid_harbor_cache(
+                await self.coeff_store.async_load(), "coefficients"
             )
-            try:
-                from . import fetch_harbors  # pylint: disable=import-outside-toplevel
-
-                all_harbors = await fetch_harbors(self.websession)
-                harbor_details = all_harbors.get(self.harbor_id)
-                if (
-                    harbor_details
-                    and "lat" in harbor_details
-                    and "lon" in harbor_details
-                ):
-                    new_data = {**self.config_entry.data}
-                    new_data[CONF_HARBOR_LAT] = harbor_details["lat"]
-                    new_data[CONF_HARBOR_LON] = harbor_details["lon"]
-                    new_data[CONF_HARBOR_TIMEZONE] = harbor_details.get("timezone")
-                    self.hass.config_entries.async_update_entry(
-                        self.config_entry, data=new_data
-                    )
-                    _LOGGER.info(
-                        "Marées France Coordinator: Successfully updated config entry for %s "
-                        "with lat/lon/timezone.",
-                        self.harbor_id,
-                    )
-                else:
-                    _LOGGER.warning(
-                        "Marées France Coordinator: Could not find lat/lon for %s in "
-                        "fetched harbor list.",
-                        self.harbor_id,
-                    )
-            except Exception:
-                _LOGGER.exception(
-                    "Marées France Coordinator: Error fetching harbor list to update "
-                    "lat/lon for %s.",
-                    self.harbor_id,
-                )
-
-        today = date.today()
-        today_str = today.strftime(DATE_FORMAT)
-        yesterday_str = (today - timedelta(days=1)).strftime(DATE_FORMAT)
-        tide_fetch_duration = 8
-
-        tides_cache_full, harbor_tides_cache = await self._validate_and_repair_cache(
-            self.tides_store,
-            tides_cache_full,
-            "tides",
-            _async_fetch_and_store_tides,
-            (yesterday_str, tide_fetch_duration),
-        )
-
-        first_day_of_current_month = today.replace(day=1)
-        coeff_fetch_days = 365
-        coeff_cache_full, harbor_coeff_cache = await self._validate_and_repair_cache(
-            self.coeff_store,
-            coeff_cache_full,
-            "coefficients",
-            _async_fetch_and_store_coefficients,
-            (first_day_of_current_month, coeff_fetch_days),
-        )
-
-        # Validate water levels, but repair fetch only targets today if triggered by validation.
-        # Full prefetch is handled by scheduled jobs in __init__.py.
-        _, _harbor_water_level_cache_validated = await self._validate_and_repair_cache(
-            self.water_level_store,
-            water_level_cache_full,
-            "water_levels",
-            _async_fetch_and_store_water_level,
-            (today_str,),
-        )
-        # Reload full water level cache as repair might have modified it.
-        water_level_cache_full = await self.water_level_store.async_load() or {}
-        # Use the potentially repaired harbor-specific cache for today's data.
-        harbor_water_level_cache = water_level_cache_full.get(self.harbor_id, {})
-
-        lat = self.config_entry.data.get(CONF_HARBOR_LAT)
-        lon = self.config_entry.data.get(CONF_HARBOR_LON)
-        if lat and lon:
-            (
-                watertemp_cache_full,
-                _,
-            ) = await self._validate_and_repair_cache(
-                self.watertemp_store,
-                watertemp_cache_full,
-                "watertemp",
-                _async_fetch_and_store_water_temp,
-                (lat, lon),
+            harbor_water_level_cache = self._valid_harbor_cache(
+                await self.water_level_store.async_load(), "water levels"
             )
+            harbor_watertemp_cache = self._valid_harbor_cache(
+                await self.watertemp_store.async_load(), "water temperature"
+            )
+        except Exception as err:
+            raise UpdateFailed(f"Failed to load cache: {err}") from err
 
-        future_window_days = 366
-        tides_data_for_parser = {}
-        coeff_data_for_parser = {}
+        today_str = date.today().strftime(DATE_FORMAT)
+        tides_data_for_parser = harbor_tides_cache
+        coeff_data_for_parser = harbor_coeff_cache
         water_level_data_for_parser = harbor_water_level_cache.get(today_str)
-        harbor_watertemp_cache = watertemp_cache_full.get(self.harbor_id, {})
-
-        if water_level_data_for_parser is None:
-            _LOGGER.info(
-                "Marées France Coordinator: Today's (%s) water level data missing "
-                "from cache for %s post-validation. Attempting fetch...",
-                today_str,
-                self.harbor_id,
-            )
-            fetched_data = await _async_fetch_and_store_water_level(
-                self.hass,
-                self.water_level_store,
-                water_level_cache_full,
-                self.harbor_id,
-                today_str,
-                websession=self.websession,
-            )
-            if fetched_data:
-                _LOGGER.info(
-                    "Marées France Coordinator: Successfully fetched today's water "
-                    "level data on demand."
-                )
-                water_level_data_for_parser = fetched_data
-                harbor_water_level_cache[today_str] = fetched_data  # Update local view
-            else:
-                _LOGGER.warning(
-                    "Marées France Coordinator: Failed to fetch today's water level data "
-                    "on demand. Current height will be unavailable.",
-                )
-
-        for i in range(-1, future_window_days + 1):  # Yesterday for tides
-            check_date = today + timedelta(days=i)
-            check_date_str = check_date.strftime(DATE_FORMAT)
-            if check_date_str in harbor_tides_cache:
-                tides_data_for_parser[check_date_str] = harbor_tides_cache[
-                    check_date_str
-                ]
-
-        for i in range(future_window_days + 1):  # Today for coeffs
-            check_date = today + timedelta(days=i)
-            check_date_str = check_date.strftime(DATE_FORMAT)
-            if check_date_str in harbor_coeff_cache:
-                coeff_data_for_parser[check_date_str] = harbor_coeff_cache[
-                    check_date_str
-                ]
-
-        _LOGGER.debug(
-            "Marées France Coordinator: Loaded %d days of tide data and %d days of "
-            "coeff data for parser post-validation.",
-            len(tides_data_for_parser),
-            len(coeff_data_for_parser),
-        )
-
-        if not tides_data_for_parser:
-            _LOGGER.error(
-                "Marées France Coordinator: No tide data available for %s even after "
-                "validation/repair.",
-                self.harbor_id,
-            )
-            raise UpdateFailed(
-                f"No tide data available for {self.harbor_id} after validation/repair."
-            )
-        if (
-            not coeff_data_for_parser
-        ):  # Allow proceeding without coeffs, but log warning
-            _LOGGER.warning(
-                "Marées France Coordinator: No coefficient data available for %s after "
-                "validation/repair. Proceeding without it.",
-                self.harbor_id,
-            )
 
         try:
             translations = await async_get_translations(
@@ -673,12 +539,6 @@ class MareesFranceUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         now_utc = datetime.now(timezone.utc)
         last_update_iso = now_utc.isoformat()
-
-        if not tides_raw_data:
-            _LOGGER.warning(
-                "Marées France Coordinator: No tide data provided to _parse_tide_data."
-            )
-            return {"last_update": last_update_iso}
 
         all_tides_flat: list[dict[str, Any]] = []
         harbor_tz = await self.hass.async_add_executor_job(

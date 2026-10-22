@@ -183,6 +183,7 @@ def mock_all_network_requests():
     # Create a mock response for get requests
     mock_response = AsyncMock()
     mock_response.status = 200
+    mock_response.raise_for_status = MagicMock()
     mock_response.json = AsyncMock(return_value={"features": []})
     mock_response.text = AsyncMock(return_value="")
     mock_response.__aenter__.return_value = mock_response

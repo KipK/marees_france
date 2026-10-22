@@ -171,8 +171,11 @@ If you've not installed it with HACS, you will perhaps have to clear your browse
 
 ## Fetch policy
 
-Integration coordinator fetch data from Shom.fr and stores them in cache.
-It then sabity check the cache everyday at a random time, if there's missing or corrupted data it will get missing ones autonomously.
+The integration loads valid cached data during setup, then fetches missing data from SHOM and Meteoconsult in background tasks. An unavailable service does not delay Home Assistant startup or prevent updates from the other service. Sensors without usable data remain unavailable until fetching succeeds.
+
+Caches are checked every five minutes. Failed requests are retried automatically with increasing delays, starting around 30 seconds and capped at five minutes. One persistent notification per provider lists the affected harbors and data, and is dismissed when those requests recover. Reloading or unloading a harbor cancels its pending requests and retries.
+
+The `reinitialize_harbor_data` action clears that harbor's downloaded data and restarts background fetching; it returns without waiting for the APIs.
 
 ---
 

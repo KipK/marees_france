@@ -67,7 +67,7 @@ marees_france/
 
 - __Purpose__: Handles all external API communications
 - __Key Functions__:
-  - `_async_fetch_with_retry()`: Robust API fetching with exponential backoff
+  - `_async_fetch()`: One bounded API attempt; background workers schedule retries with capped exponential backoff
   - `_async_fetch_and_store_water_level()`: Water level data retrieval
   - `_async_fetch_and_store_tides()`: Tide event data retrieval
   - `_async_fetch_and_store_coefficients()`: Tide coefficient data retrieval
@@ -121,10 +121,10 @@ marees_france/
 
 #### Cache Management
 
-- __Automatic Pruning__: Old data removed daily
+- __Automatic Pruning__: Expired dates removed when fetched data is saved
 - __Validation__: Cache integrity checked on each coordinator update
 - __Repair__: Missing/corrupted data automatically refetched
-- __Prefetching__: Scheduled jobs maintain cache freshness
+- __Prefetching__: Independent background workers fill cache gaps and retry failed sources
 
 ## Frontend Card (frontend/src/)
 
@@ -330,7 +330,7 @@ npm run docs
 ### Caching Strategy
 
 - __Persistent Storage__: Data survives HA restarts
-- __Prefetching__: Scheduled jobs maintain cache freshness
+- __Prefetching__: Independent background workers fill cache gaps and retry failed sources
 - __Pruning__: Automatic removal of old data
 
 ### API Rate Limiting

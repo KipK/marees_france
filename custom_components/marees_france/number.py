@@ -43,7 +43,7 @@ async def async_setup_entry(
         MareesFranceDepthToBoatNumber(coordinator, entry),
     ]
 
-    async_add_entities(number_to_add, update_before_add=True)
+    async_add_entities(number_to_add)
     _LOGGER.debug("Added 1 Marées France number for harbor: %s", harbor_id)
 
 
@@ -88,6 +88,11 @@ class MareesFranceDepthToBoatNumber(
         )
 
         _LOGGER.debug("Initialized number with unique_id: %s", self.unique_id)
+
+    @property
+    def available(self) -> bool:
+        """The locally stored navigation depth does not depend on the APIs."""
+        return True
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to Home Assistant."""

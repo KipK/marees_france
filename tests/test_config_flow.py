@@ -14,6 +14,8 @@ from custom_components.marees_france.config_flow import (
 )
 from custom_components.marees_france.const import (
     CONF_HARBOR_ID,
+    CONF_HARBOR_LAT,
+    CONF_HARBOR_LON,
     CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_NAME,
     CONF_HARBOR_TIMEZONE,
@@ -30,6 +32,8 @@ MOCK_HARBORS_CACHE = {
         "name": MOCK_HARBOR_NAME,
         "display": f"{MOCK_HARBOR_NAME} ({MOCK_HARBOR_ID})",
         "timezone": "Europe/Paris",
+        "lat": MOCK_PORT_DATA["lat"],
+        "lon": MOCK_PORT_DATA["lon"],
     },
     "OTHER_ID": {"name": "Other Port", "display": "Other Port (OTHER_ID)"},
 }
@@ -89,6 +93,8 @@ async def test_async_step_user_success(
         CONF_HARBOR_NAME: MOCK_HARBOR_NAME,  # Ensure name is also stored
         CONF_HARBOR_MIN_DEPTH: 2.5,  # Default depth value
         CONF_HARBOR_TIMEZONE: "Europe/Paris",  # Harbor timezone is stored
+        CONF_HARBOR_LAT: MOCK_PORT_DATA["lat"],
+        CONF_HARBOR_LON: MOCK_PORT_DATA["lon"],
     }
     # No second call to fetch_harbors expected here
     mock_fetch_harbors.assert_called_once()

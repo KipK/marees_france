@@ -63,7 +63,7 @@ async def async_setup_entry(
         MareesFranceNextTideHeightSensor(coordinator, entry),
     ]
 
-    async_add_entities(sensors_to_add, update_before_add=True)
+    async_add_entities(sensors_to_add)
     _LOGGER.debug(
         "Added %d Marées France sensors for harbor: %s", len(sensors_to_add), harbor_id
     )
@@ -443,12 +443,6 @@ class MareesFranceCurrentHeightSensor(MareesFranceBaseSensor):
             return self._sensor_data.get(ATTR_CURRENT_HEIGHT)
         return None
 
-    async def async_added_to_hass(self) -> None:
-        """Request a refresh when added to hass."""
-        await super().async_added_to_hass()
-        if self.native_value is None:
-            await self.coordinator.async_request_refresh()
-
 
 class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
     """Sensor representing the current water temperature.
@@ -522,12 +516,6 @@ class MareesFranceWaterTempSensor(MareesFranceBaseSensor):
                 continue
 
         return latest_temp
-
-    async def async_added_to_hass(self) -> None:
-        """Request a refresh when added to hass."""
-        await super().async_added_to_hass()
-        if self.native_value is None:
-            await self.coordinator.async_request_refresh()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

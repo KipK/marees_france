@@ -200,8 +200,11 @@ npm run test
 
 ## Politique de récupération des données
 
-Le coordinateur de l'intégration récupère les données depuis Shom.fr et les stocke en cache.
-Il effectue ensuite une vérification de l'intégrité du cache quotidiennement à une heure aléatoire. S'il y a des données manquantes ou corrompues, il récupérera automatiquement les données manquantes de façon autonome.
+L'intégration charge les données valides du cache lors de son initialisation, puis récupère les données manquantes auprès du SHOM et de Meteoconsult en arrière-plan. Un service indisponible ne ralentit pas le démarrage de Home Assistant et ne bloque pas les mises à jour provenant de l'autre service. Les capteurs sans données utilisables restent indisponibles jusqu'à la réussite de la récupération.
+
+Les caches sont vérifiés toutes les cinq minutes. Les requêtes en échec sont relancées automatiquement avec un délai croissant, d'environ 30 secondes à cinq minutes maximum. Une notification persistante par fournisseur indique les ports et les données concernés, puis disparaît lorsque les requêtes fonctionnent à nouveau. Le rechargement ou le déchargement d'un port annule ses requêtes et ses nouvelles tentatives en attente.
+
+L'action `reinitialize_harbor_data` efface les données téléchargées du port et relance leur récupération en arrière-plan ; elle se termine sans attendre la réponse des API.
 
 ---
 

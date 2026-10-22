@@ -12,130 +12,111 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 
+from .availability import ServiceUnavailable
 from .const import (
     API_REQUEST_DELAY,
+    COEFF_STORAGE_KEY,
     COEFF_URL_TEMPLATE,
     DATE_FORMAT,
+    DOMAIN,
     HEADERS,
+    TIDES_STORAGE_KEY,
     TIDESURL_TEMPLATE,
+    WATERLEVELS_STORAGE_KEY,
     WATERLEVELS_URL_TEMPLATE,
+    WATERTEMP_STORAGE_KEY,
     WATERTEMP_URL_TEMPLATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_fetch_with_retry(
+async def _async_fetch(
     session: aiohttp.ClientSession,
     url: str,
     headers: dict[str, str],
     timeout: int,
     harbor_id: str,
     data_type: str,
-) -> dict[str, Any] | list[Any] | None:
-    """Fetch data from a URL with retry logic and a mandatory delay.
-
-    This function attempts to fetch data from the given URL up to `max_retries`
-    times, with an exponential backoff delay between attempts. It also enforces
-    a minimum delay (`API_REQUEST_DELAY`) before each request.
-
-    Args:
-        session: The aiohttp client session.
-        url: The URL to fetch data from.
-        headers: The HTTP headers for the request.
-        timeout: The timeout in seconds for each request attempt.
-        harbor_id: The ID of the harbor, used for logging context.
-        data_type: A string describing the type of data being fetched (e.g.,
-                   "water levels", "tides"), used for logging context.
-
-    Returns:
-        The JSON response as a dictionary or list if successful, otherwise None.
-    """
-    max_retries = 5
-    initial_delay = 5  # seconds
-
+) -> dict[str, Any] | list[Any]:
+    """Make one bounded request; background workers own retry scheduling."""
     await asyncio.sleep(API_REQUEST_DELAY)
-    _LOGGER.debug(
-        "Marées France Helper: Preparing to fetch %s for %s from %s",
-        data_type,
-        harbor_id,
-        url,
-    )
-
-    for attempt in range(max_retries):
-        current_delay = initial_delay * (2**attempt)
-        try:
-            async with asyncio.timeout(timeout):
-                response = await session.get(url, headers=headers)
+    try:
+        async with asyncio.timeout(timeout):
+            async with session.get(url, headers=headers) as response:
                 response.raise_for_status()
                 data = await response.json()
-                _LOGGER.debug(
-                    "Marées France Helper: Successfully fetched %s for %s (attempt %d/%d)",
-                    data_type,
-                    harbor_id,
-                    attempt + 1,
-                    max_retries,
-                )
+                if not isinstance(data, (dict, list)):
+                    raise ServiceUnavailable(
+                        f"Invalid {data_type} response for {harbor_id}"
+                    )
                 return data
+    except (TimeoutError, aiohttp.ClientError, ValueError) as err:
+        raise ServiceUnavailable(
+            f"Unable to fetch {data_type} for {harbor_id}: {err}"
+        ) from err
 
-        except asyncio.TimeoutError:
-            _LOGGER.warning(
-                "Marées France Helper: Timeout fetching %s for %s (attempt %d/%d). "
-                "Retrying in %ds...",
-                data_type,
-                harbor_id,
-                attempt + 1,
-                max_retries,
-                current_delay,
-            )
-        except aiohttp.ClientResponseError as err:
-            _LOGGER.warning(
-                "Marées France Helper: HTTP error %s fetching %s for %s (attempt %d/%d): %s. "
-                "Retrying in %ds...",
-                err.status,
-                data_type,
-                harbor_id,
-                attempt + 1,
-                max_retries,
-                err.message,
-                current_delay,
-            )
-        except aiohttp.ClientError as err:
-            _LOGGER.warning(
-                "Marées France Helper: Client error fetching %s for %s (attempt %d/%d): %s. "
-                "Retrying in %ds...",
-                data_type,
-                harbor_id,
-                attempt + 1,
-                max_retries,
-                err,
-                current_delay,
-            )
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.warning(
-                "Marées France Helper: Unexpected error fetching %s for %s (attempt %d/%d): %s. "
-                "Retrying in %ds...",
-                data_type,
-                harbor_id,
-                attempt + 1,
-                max_retries,
-                err,
-                current_delay,
-            )
 
-        if attempt < max_retries - 1:
-            await asyncio.sleep(current_delay)
-        else:
-            _LOGGER.error(
-                "Marées France Helper: Failed to fetch %s for %s after %d attempts.",
-                data_type,
-                harbor_id,
-                max_retries,
-            )
-    return None
+async def _async_merge_harbor_cache(
+    hass: HomeAssistant,
+    store: Store,
+    cache: dict[str, Any],
+    harbor_id: str,
+    updates: dict[str, Any],
+) -> None:
+    """Merge only fetched dates, preserving concurrent writes for other harbors."""
+    locks = hass.data.setdefault(f"{DOMAIN}_cache_locks", {})
+    async with locks.setdefault(store.key, asyncio.Lock()):
+        current = await store.async_load() or {}
+        current = dict(current) if isinstance(current, dict) else {}
+        harbor_cache = current.get(harbor_id, {})
+        harbor_cache = dict(harbor_cache) if isinstance(harbor_cache, dict) else {}
+        earliest = {
+            TIDES_STORAGE_KEY: date.today() - timedelta(days=1),
+            COEFF_STORAGE_KEY: date.today().replace(day=1),
+            WATERLEVELS_STORAGE_KEY: date.today(),
+            WATERTEMP_STORAGE_KEY: date.today(),
+        }.get(store.key)
+        if earliest is not None:
+            for key in list(harbor_cache):
+                try:
+                    keep = date.fromisoformat(key) >= earliest
+                except (TypeError, ValueError):
+                    keep = False
+                if not keep:
+                    del harbor_cache[key]
+        harbor_cache.update(updates)
+        current[harbor_id] = harbor_cache
+        await store.async_save(current)
+        cache[harbor_id] = harbor_cache
 
 
 async def _async_fetch_and_store_water_level(
+    hass: HomeAssistant,
+    store: Store[dict[str, dict[str, Any]]],
+    cache: dict[str, dict[str, Any]],
+    harbor_name: str,
+    date_str: str,
+    websession: aiohttp.ClientSession | None = None,
+) -> dict[str, list[list[str]]] | None:
+    """Share requests for a date between background prefetch and card requests."""
+    locks = hass.data.setdefault(f"{DOMAIN}_water_level_locks", {})
+    key = (harbor_name, date_str)
+    async with locks.setdefault(key, asyncio.Lock()):
+        latest = await store.async_load() or {}
+        harbor_cache = latest.get(harbor_name, {}) if isinstance(latest, dict) else {}
+        existing = (
+            harbor_cache.get(date_str) if isinstance(harbor_cache, dict) else None
+        )
+        if isinstance(existing, dict) and isinstance(existing.get(date_str), list):
+            cache[harbor_name] = harbor_cache
+            return existing
+        return await _async_fetch_water_level(
+            hass, store, cache, harbor_name, date_str, websession=websession
+        )
+
+
+async def _async_fetch_water_level(
     hass: HomeAssistant,
     store: Store[dict[str, dict[str, Any]]],
     cache: dict[str, dict[str, Any]],
@@ -160,7 +141,7 @@ async def _async_fetch_and_store_water_level(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 30
 
-    data = await _async_fetch_with_retry(
+    data = await _async_fetch(
         session=session,
         url=url,
         headers=HEADERS,
@@ -168,9 +149,6 @@ async def _async_fetch_and_store_water_level(
         harbor_id=harbor_name,
         data_type="water levels",
     )
-
-    if data is None:
-        return None
 
     valid_structure = (
         isinstance(data, dict) and date_str in data and isinstance(data[date_str], list)
@@ -184,11 +162,14 @@ async def _async_fetch_and_store_water_level(
             date_str,
             data,
         )
-        return None
+        raise ServiceUnavailable(
+            f"Invalid water levels for {harbor_name} on {date_str}"
+        )
 
     try:
-        cache.setdefault(harbor_name, {})[date_str] = data
-        await store.async_save(cache)
+        await _async_merge_harbor_cache(
+            hass, store, cache, harbor_name, {date_str: data}
+        )
         _LOGGER.debug(
             "Marées France Helper: Cached new water level data for %s on %s and saved cache",
             harbor_name,
@@ -234,7 +215,7 @@ async def _async_fetch_and_store_tides(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 15 + (duration * 5)
 
-    fetched_data_dict = await _async_fetch_with_retry(
+    fetched_data_dict = await _async_fetch(
         session=session,
         url=url,
         headers=HEADERS,
@@ -250,19 +231,24 @@ async def _async_fetch_and_store_tides(
             harbor_id,
             start_date_str,
         )
-        return False
+        raise ServiceUnavailable(f"Invalid tide data for {harbor_id}")
+
+    if not fetched_data_dict or not all(
+        isinstance(tides, list) for tides in fetched_data_dict.values()
+    ):
+        raise ServiceUnavailable(f"Invalid tide data for {harbor_id}")
 
     try:
-        cache.setdefault(harbor_id, {})
-        for day_str, tides in fetched_data_dict.items():
-            cache[harbor_id][day_str] = tides
+        await _async_merge_harbor_cache(
+            hass, store, cache, harbor_id, fetched_data_dict
+        )
+        for day_str in fetched_data_dict:
             _LOGGER.debug(
                 "Marées France Helper: Updated tide cache for %s on %s",
                 harbor_id,
                 day_str,
             )
 
-        await store.async_save(cache)
         _LOGGER.debug(
             "Marées France Helper: Saved updated tides cache for %s", harbor_id
         )
@@ -307,7 +293,7 @@ async def _async_fetch_and_store_coefficients(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 60
 
-    fetched_data_list = await _async_fetch_with_retry(
+    fetched_data_list = await _async_fetch(
         session=session,
         url=url,
         headers=HEADERS,
@@ -324,10 +310,10 @@ async def _async_fetch_and_store_coefficients(
             start_date_str,
             days,
         )
-        return False
+        raise ServiceUnavailable(f"Invalid coefficient data for {harbor_id}")
 
     try:
-        cache.setdefault(harbor_id, {})
+        updates = {}
         processed_days_count = 0
         for monthly_coeffs_list in fetched_data_list:
             if isinstance(monthly_coeffs_list, list):
@@ -359,7 +345,7 @@ async def _async_fetch_and_store_coefficients(
                                 )
 
                         if parsed_coeffs:
-                            cache[harbor_id][day_str] = parsed_coeffs
+                            updates[day_str] = parsed_coeffs
                             _LOGGER.debug(
                                 "Marées France Helper: Updated coefficient cache for %s on %s: %s",
                                 harbor_id,
@@ -386,8 +372,8 @@ async def _async_fetch_and_store_coefficients(
             if processed_days_count >= days:
                 break
 
-        if processed_days_count == days:
-            await store.async_save(cache)
+        if processed_days_count == days and updates:
+            await _async_merge_harbor_cache(hass, store, cache, harbor_id, updates)
             _LOGGER.debug(
                 "Marées France Helper: Saved updated coefficients cache for %s "
                 "after processing %d days.",
@@ -404,16 +390,18 @@ async def _async_fetch_and_store_coefficients(
             harbor_id,
             start_date_str,
         )
-        if processed_days_count > 0:  # Save partial data if any was processed
-            await store.async_save(cache)
+        if updates:  # Save usable partial data without discarding existing dates.
+            await _async_merge_harbor_cache(hass, store, cache, harbor_id, updates)
             _LOGGER.debug(
                 "Marées France Helper: Saved partially updated coefficients cache for %s "
                 "(%d days processed).",
                 harbor_id,
                 processed_days_count,
             )
-        return False
+        raise ServiceUnavailable(f"Incomplete coefficient data for {harbor_id}")
 
+    except ServiceUnavailable:
+        raise
     except Exception:
         _LOGGER.exception(
             "Marées France Helper: Unexpected error saving coefficients cache for %s "
@@ -439,7 +427,7 @@ async def _async_fetch_and_store_water_temp(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 30
 
-    data = await _async_fetch_with_retry(
+    data = await _async_fetch(
         session=session,
         url=url,
         headers=HEADERS,
@@ -448,27 +436,25 @@ async def _async_fetch_and_store_water_temp(
         data_type="water temperature",
     )
 
-    if data is None:
-        return False
-
     try:
         previsions = data.get("contenu", {}).get("previs", {}).get("detail")
-        if not isinstance(previsions, list):
+        if not isinstance(previsions, list) or not all(
+            isinstance(item, dict) and isinstance(item.get("datetime"), str)
+            for item in previsions
+        ):
             _LOGGER.error(
                 "Marées France Helper: Water temp 'detail' is not a list for %s. Data: %s",
                 harbor_id,
                 data,
             )
-            return False
-    except Exception:
-        _LOGGER.exception(
-            "Marées France Helper: Unexpected error accessing water temp data for %s",
-            harbor_id,
-        )
-        return False
+            raise ServiceUnavailable(f"Invalid water temperature data for {harbor_id}")
+    except (AttributeError, TypeError) as err:
+        raise ServiceUnavailable(
+            f"Invalid water temperature data for {harbor_id}"
+        ) from err
 
     try:
-        harbor_cache = cache.setdefault(harbor_id, {})
+        harbor_cache = {}
 
         today = date.today()
         for i in range(7):
@@ -489,12 +475,16 @@ async def _async_fetch_and_store_water_temp(
             if daily_temps:
                 harbor_cache[date_str] = daily_temps
 
-        await store.async_save(cache)
+        if not harbor_cache:
+            raise ServiceUnavailable(f"Empty water temperature data for {harbor_id}")
+        await _async_merge_harbor_cache(hass, store, cache, harbor_id, harbor_cache)
         _LOGGER.debug(
             "Marées France Helper: Cached new water temperature data for %s",
             harbor_id,
         )
         return True
+    except ServiceUnavailable:
+        raise
     except Exception:
         _LOGGER.exception(
             "Marées France Helper: Unexpected error saving water temperature cache for %s",

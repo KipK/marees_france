@@ -9,7 +9,8 @@
   "config_flow": true,
   "dependencies": [
     "frontend",
-    "http"
+    "http",
+    "persistent_notification"
   ],
   "documentation": "https://github.com/KipK/marees_france",
   "iot_class": "cloud_polling",
