@@ -430,7 +430,8 @@ async def _async_fetch_and_store_water_temp(
     data = await _async_fetch(
         session=session,
         url=url,
-        headers=HEADERS,
+        # This Android endpoint rejects the browser User-Agent used by SHOM.
+        headers={**HEADERS, "User-Agent": "okhttp/4.12.0"},
         timeout=timeout_seconds,
         harbor_id=harbor_id,
         data_type="water temperature",

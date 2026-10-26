@@ -26,6 +26,7 @@ from custom_components.marees_france import (
 from custom_components.marees_france.api_helpers import (
     _async_fetch,
     _async_fetch_and_store_water_level,
+    _async_fetch_and_store_water_temp,
     _async_merge_harbor_cache,
 )
 from custom_components.marees_france.availability import ServiceUnavailable
@@ -39,6 +40,7 @@ from custom_components.marees_france.const import (
     CONF_HARBOR_TIMEZONE,
     DOMAIN,
     HARBORMINDEPTH_STORAGE_KEY,
+    HEADERS,
     SERVICE_REINITIALIZE_HARBOR_DATA,
     TIDES_STORAGE_KEY,
     WATERLEVELS_STORAGE_KEY,
@@ -360,6 +362,41 @@ async def test_network_failure_is_one_bounded_attempt(error):
     ):
         await _async_fetch(session, "https://example.test", {}, 1, "BREST", "tides")
     session.get.assert_called_once()
+
+
+async def test_water_temperature_uses_android_user_agent(hass):
+    """The Android endpoint rejects the browser headers accepted by SHOM."""
+    original_headers = dict(HEADERS)
+    response = MagicMock()
+    response.json = AsyncMock(return_value=response_for("https://example.test"))
+
+    def get_response(url, *, headers):
+        if headers.get("User-Agent") != "okhttp/4.12.0":
+            response.raise_for_status.side_effect = aiohttp.ClientResponseError(
+                MagicMock(), (), status=403, message="Forbidden"
+            )
+        else:
+            response.raise_for_status.side_effect = None
+        context = MagicMock()
+        context.__aenter__ = AsyncMock(return_value=response)
+        context.__aexit__ = AsyncMock(return_value=None)
+        return context
+
+    session = MagicMock()
+    session.get.side_effect = get_response
+    store = Store(hass, 1, WATERTEMP_STORAGE_KEY)
+    cache = {}
+    with patch("custom_components.marees_france.api_helpers.API_REQUEST_DELAY", 0):
+        assert await _async_fetch_and_store_water_temp(
+            hass, store, cache, "BREST", "48.38", "-4.5", session
+        )
+
+    assert len(cache["BREST"]) == 7
+    assert cache["BREST"][TODAY][0]["temp"] == 15.5
+    assert await store.async_load() == cache
+    assert HEADERS == original_headers
+    session.get.assert_called_once()
+    assert session.get.call_args.kwargs["headers"]["Referer"] == HEADERS["Referer"]
 
 
 async def test_storage_failure_is_not_reported_as_service_outage(hass, coordinator):
