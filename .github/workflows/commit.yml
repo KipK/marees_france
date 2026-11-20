@@ -4,7 +4,7 @@ name: Run Unit Tests and Lint Files
   pull_request:
 jobs:
   Lint_and_Build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
