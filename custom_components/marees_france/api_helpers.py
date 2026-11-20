@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
+import time
 from datetime import date, timedelta
 from typing import Any
 
@@ -20,6 +22,10 @@ from .const import (
     DATE_FORMAT,
     DOMAIN,
     HEADERS,
+    SHOM_CHALLENGE_URL,
+    SHOM_TOKEN_HEADER,
+    SHOM_TOKEN_RENEW_MARGIN,
+    SHOM_TOKEN_URL,
     TIDES_STORAGE_KEY,
     TIDESURL_TEMPLATE,
     WATERLEVELS_STORAGE_KEY,
@@ -55,6 +61,106 @@ async def _async_fetch(
         raise ServiceUnavailable(
             f"Unable to fetch {data_type} for {harbor_id}: {err}"
         ) from err
+
+
+def _solve_shom_challenge(salt: str, difficulty: int) -> int:
+    """Find the proof-of-work nonce expected by maree.shom.fr (CPU bound)."""
+    prefix = "0" * difficulty
+    nonce = 0
+    while True:
+        nonce += 1
+        digest = hashlib.sha256(f"{salt}{nonce}".encode()).hexdigest()
+        if digest.startswith(prefix):
+            return nonce
+
+
+async def _async_request_shom_token(
+    hass: HomeAssistant, session: aiohttp.ClientSession
+) -> tuple[str, int]:
+    """Solve a SHOM session challenge and exchange it for a token."""
+    async with asyncio.timeout(30):
+        async with session.get(SHOM_CHALLENGE_URL, headers=HEADERS) as response:
+            response.raise_for_status()
+            challenge = await response.json()
+        nonce = await hass.async_add_executor_job(
+            _solve_shom_challenge,
+            str(challenge["salt"]),
+            int(challenge["difficulty"]),
+        )
+        async with session.post(
+            SHOM_TOKEN_URL,
+            headers=HEADERS,
+            json={"challenge": challenge["challenge"], "nonce": nonce},
+        ) as response:
+            response.raise_for_status()
+            data = await response.json()
+    return str(data["token"]), int(data.get("expiresIn", 1800))
+
+
+async def _async_get_shom_token(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    rejected: str | None = None,
+) -> str:
+    """Return a cached SHOM session token, requesting a new one when needed.
+
+    The token is bound to the client's IP and User-Agent, so every SHOM request
+    must keep sending HEADERS unchanged.
+    """
+    state = hass.data.setdefault(f"{DOMAIN}_shom_token", {})
+    async with state.setdefault("lock", asyncio.Lock()):
+        token = state.get("token")
+        if token and token != rejected and state["expires_at"] > time.monotonic():
+            return token
+        try:
+            token, expires_in = await _async_request_shom_token(hass, session)
+        except (
+            TimeoutError,
+            aiohttp.ClientError,
+            ValueError,
+            KeyError,
+            TypeError,
+        ) as err:
+            state.pop("token", None)
+            raise ServiceUnavailable(
+                f"Unable to get SHOM session token: {err}"
+            ) from err
+        state["token"] = token
+        state["expires_at"] = time.monotonic() + expires_in - SHOM_TOKEN_RENEW_MARGIN
+        return token
+
+
+async def _async_fetch_shom(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    url: str,
+    timeout: int,
+    harbor_id: str,
+    data_type: str,
+) -> dict[str, Any] | list[Any]:
+    """Fetch a SHOM endpoint with a session token, renewing it once if rejected."""
+
+    async def fetch(token: str) -> dict[str, Any] | list[Any]:
+        return await _async_fetch(
+            session=session,
+            url=url,
+            headers={**HEADERS, SHOM_TOKEN_HEADER: token},
+            timeout=timeout,
+            harbor_id=harbor_id,
+            data_type=data_type,
+        )
+
+    token = await _async_get_shom_token(hass, session)
+    try:
+        return await fetch(token)
+    except ServiceUnavailable as err:
+        cause = err.__cause__
+        if not (
+            isinstance(cause, aiohttp.ClientResponseError)
+            and cause.status in (401, 403)
+        ):
+            raise
+    return await fetch(await _async_get_shom_token(hass, session, rejected=token))
 
 
 async def _async_merge_harbor_cache(
@@ -141,13 +247,8 @@ async def _async_fetch_water_level(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 30
 
-    data = await _async_fetch(
-        session=session,
-        url=url,
-        headers=HEADERS,
-        timeout=timeout_seconds,
-        harbor_id=harbor_name,
-        data_type="water levels",
+    data = await _async_fetch_shom(
+        hass, session, url, timeout_seconds, harbor_name, "water levels"
     )
 
     valid_structure = (
@@ -215,13 +316,8 @@ async def _async_fetch_and_store_tides(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 15 + (duration * 5)
 
-    fetched_data_dict = await _async_fetch(
-        session=session,
-        url=url,
-        headers=HEADERS,
-        timeout=timeout_seconds,
-        harbor_id=harbor_id,
-        data_type="tides",
+    fetched_data_dict = await _async_fetch_shom(
+        hass, session, url, timeout_seconds, harbor_id, "tides"
     )
 
     if fetched_data_dict is None or not isinstance(fetched_data_dict, dict):
@@ -293,13 +389,8 @@ async def _async_fetch_and_store_coefficients(
     session = websession or async_get_clientsession(hass)
     timeout_seconds = 60
 
-    fetched_data_list = await _async_fetch(
-        session=session,
-        url=url,
-        headers=HEADERS,
-        timeout=timeout_seconds,
-        harbor_id=harbor_id,
-        data_type="coefficients",
+    fetched_data_list = await _async_fetch_shom(
+        hass, session, url, timeout_seconds, harbor_id, "coefficients"
     )
 
     if fetched_data_list is None or not isinstance(fetched_data_list, list):

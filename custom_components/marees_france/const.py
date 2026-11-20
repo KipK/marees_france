@@ -50,16 +50,22 @@ HARBORSURL: Final[str] = (
     "service=WFS&version=1.0.0&srsName=EPSG:3857&request=GetFeature"
     "&typeName=SPM_PORTS_WFS:liste_ports_spm_h2m&outputFormat=application/json"
 )
+SHOM_API_BASE_URL: Final[str] = "https://maree.shom.fr/api/hdm"
+SHOM_CHALLENGE_URL: Final[str] = f"{SHOM_API_BASE_URL}/session/challenge"
+SHOM_TOKEN_URL: Final[str] = f"{SHOM_API_BASE_URL}/session/token"
+SHOM_TOKEN_HEADER: Final[str] = "X-Maree-Token"
+# Renew the session token this long before SHOM expires it, like maree.shom.fr.
+SHOM_TOKEN_RENEW_MARGIN: Final[int] = 120
 TIDESURL_TEMPLATE: Final[str] = (
-    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?"
+    f"{SHOM_API_BASE_URL}/spm/hlt?"
     "harborName={harbor_id}&date={date}&utc=standard&correlation=1"
 )
 WATERLEVELS_URL_TEMPLATE: Final[str] = (
-    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/wl?"
+    f"{SHOM_API_BASE_URL}/spm/wl?"
     "harborName={harbor_name}&duration=1&date={date}&utc=standard&nbWaterLevels=288"
 )
 COEFF_URL_TEMPLATE: Final[str] = (
-    "https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/coeff?"
+    f"{SHOM_API_BASE_URL}/spm/coeff?"
     "harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1"
 )
 WATERTEMP_URL_TEMPLATE: Final[str] = (

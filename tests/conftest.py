@@ -178,6 +178,16 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 
 @pytest.fixture(autouse=True)
+def mock_shom_token():
+    """Skip the SHOM session challenge; tests mock the data requests themselves."""
+    with patch(
+        "custom_components.marees_france.api_helpers._async_get_shom_token",
+        return_value="test-token",
+    ) as mock_token:
+        yield mock_token
+
+
+@pytest.fixture(autouse=True)
 def mock_all_network_requests():
     """Mock all network requests to prevent hanging tests."""
     # Create a mock response for get requests

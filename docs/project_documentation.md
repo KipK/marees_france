@@ -195,10 +195,27 @@ GET https://services.data.shom.fr/x13f1b4faeszdyinv9zqxmx1/wfs?service=WFS&versi
 
 - Returns GeoJSON with harbor information
 
+#### Session Token
+
+The tide, water level and coefficient endpoints require an `X-Maree-Token`
+header obtained through a proof-of-work challenge, as done by maree.shom.fr:
+
+1. `GET https://maree.shom.fr/api/hdm/session/challenge` returns `salt`,
+   `challenge` and `difficulty`.
+2. Find the first integer `nonce` (from 1) such that
+   `sha256(salt + str(nonce))` starts with `difficulty` hexadecimal zeros.
+3. `POST https://maree.shom.fr/api/hdm/session/token` with
+   `{"challenge": challenge, "nonce": nonce}` returns `token` and `expiresIn`
+   (seconds).
+
+The token is bound to the client IP and User-Agent, so the same headers must be
+sent for every request. It is cached and renewed before expiry or after a
+401/403. Note: `hlt` with `duration=1` is blocked by SHOM's firewall.
+
 #### Tide Data
 
 ```
-GET https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?harborName={harbor_id}&date={date}&utc=standard&correlation=1&duration={days}
+GET https://maree.shom.fr/api/hdm/spm/hlt?harborName={harbor_id}&date={date}&utc=standard&correlation=1&duration={days}
 ```
 
 - Returns tide events for specified harbor and date range
@@ -206,7 +223,7 @@ GET https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?harborNam
 #### Water Levels
 
 ```
-GET https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/wl?harborName={harbor_name}&duration=1&date={date}&utc=standard&nbWaterLevels=288
+GET https://maree.shom.fr/api/hdm/spm/wl?harborName={harbor_name}&duration=1&date={date}&utc=standard&nbWaterLevels=288
 ```
 
 - Returns 288 hourly water level measurements (12 hours × 24 readings)
@@ -214,7 +231,7 @@ GET https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/wl?harborName
 #### Coefficients
 
 ```
-GET https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/coeff?harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1
+GET https://maree.shom.fr/api/hdm/spm/coeff?harborName={harbor_name}&duration={days}&date={date}&utc=1&correlation=1
 ```
 
 - Returns daily tide coefficients
